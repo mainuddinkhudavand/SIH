@@ -15,7 +15,7 @@ export default function WorkerManagement() {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("departmentToken");
-  const BACKEND_URL = "http://localhost:5000";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   // Fetch existing workers
   const fetchWorkers = useCallback(async () => {

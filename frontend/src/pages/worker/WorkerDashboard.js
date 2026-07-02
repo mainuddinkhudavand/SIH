@@ -24,7 +24,7 @@ export default function WorkerDashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem("workerToken");
   const workerInfo = JSON.parse(localStorage.getItem("workerInfo") || "{}");
-  const BACKEND_URL = "http://localhost:5000";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   // --- 1. Fetch Assigned Tasks ---
   const fetchMyTasks = useCallback(async () => {

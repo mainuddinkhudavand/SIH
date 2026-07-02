@@ -7,11 +7,12 @@ import "leaflet/dist/leaflet.css";
 export default function ComplaintDetails() {
   const { id } = useParams();
   const [complaint, setComplaint] = useState(null);
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   useEffect(() => {
     const fetchComplaint = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/admin/complaints/${id}`);
+        const res = await axios.get(`${BACKEND_URL}/api/admin/complaints/${id}`);
         setComplaint(res.data);
       } catch (err) {
         console.error("Error fetching complaint:", err);

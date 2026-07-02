@@ -15,7 +15,7 @@ export default function AdminComplaints() {
   const [selectedImage, setSelectedImage] = useState(null); 
   
   const year = new Date().getFullYear();
-  const BACKEND_URL = "http://localhost:5000"; 
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"; 
 
   // Ensure Admin Token is passed
   const token = localStorage.getItem("token"); 

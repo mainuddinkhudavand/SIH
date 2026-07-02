@@ -16,7 +16,7 @@ export default function DepartmentDashboard() {
   const [selectedImage, setSelectedImage] = useState(null); 
 
   const token = localStorage.getItem("departmentToken");
-  const BACKEND_URL = "http://localhost:5000"; 
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"; 
 
   const fetchMyComplaints = useCallback(async () => {
     try {

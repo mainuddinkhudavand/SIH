@@ -11,6 +11,7 @@ export default function DepartmentLogin() {
   
   const navigate = useNavigate();
   const { t } = useTranslation(); // Keeps it compatible with your language switcher
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ export default function DepartmentLogin() {
 
     try {
       // Hits the backend route we created in departmentRoutes.js
-      const res = await axios.post("http://localhost:5000/api/department/login", {
+      const res = await axios.post(`${BACKEND_URL}/api/department/login`, {
         email,
         password,
       });

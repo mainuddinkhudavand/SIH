@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
   
   // 1. Initialize Default Year
   const currentYear = new Date().getFullYear();
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
         setErr("");
         // Pass the selected year as a query param
         const res = await axios.get(
-          "http://localhost:5000/api/admin/complaints/monthly-status",
+          `${BACKEND_URL}/api/admin/complaints/monthly-status`,
           { params: { year } }
         );
         setMonthlyStats(res.data.stats || []);
@@ -43,7 +44,7 @@ export default function AdminDashboard() {
   const refreshStats = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/complaints/monthly-status",
+        `${BACKEND_URL}/api/admin/complaints/monthly-status`,
         { params: { year } }
       );
       setMonthlyStats(res.data.stats || []);
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
 
   const updateStatus = async (id, status) => {
     try {
-      await axios.put(`http://localhost:5000/api/admin/complaints/${id}`, { status });
+      await axios.put(`${BACKEND_URL}/api/admin/complaints/${id}`, { status });
       await refreshStats();
     } catch (e) {
       console.error("Error updating status", e);

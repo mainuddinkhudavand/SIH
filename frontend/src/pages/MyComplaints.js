@@ -14,7 +14,7 @@ export default function MyComplaints() {
   const [selectedImage, setSelectedImage] = useState(null); // 🚀 NEW: For Image Lightbox
 
   const { t } = useTranslation();
-  const BACKEND_URL = "http://localhost:5000"; // 🚀 Added to resolve image paths
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"; // 🚀 Added to resolve image paths
 
   useEffect(() => {
     (async () => {

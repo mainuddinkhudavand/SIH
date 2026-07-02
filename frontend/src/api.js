@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Create axios instance with base URL
-const API = axios.create({ baseURL: "http://localhost:5000/api" });
+const API = axios.create({ baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api" });
 
 // Add token automatically to every request
 API.interceptors.request.use((req) => {

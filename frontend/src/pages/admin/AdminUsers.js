@@ -3,6 +3,7 @@ import axios from "axios";
 import { useTranslation } from "react-i18next";
 
 export default function AdminUsers() {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +28,7 @@ export default function AdminUsers() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/admin/users");
+      const res = await axios.get(`${BACKEND_URL}/api/admin/users`);
       setUsers(res.data);
       setFilteredUsers(res.data);
 
@@ -36,7 +37,7 @@ export default function AdminUsers() {
         res.data.map(async (u) => {
           try {
             const countRes = await axios.get(
-              `http://localhost:5000/api/admin/users/${u._id}/complaints-count`
+              `${BACKEND_URL}/api/admin/users/${u._id}/complaints-count`
             );
             countsMap[u._id] = countRes.data.count ?? 0;
           } catch {
@@ -56,7 +57,7 @@ export default function AdminUsers() {
     setComplaintCount(null);
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/admin/users/${userId}/complaints-count`
+        `${BACKEND_URL}/api/admin/users/${userId}/complaints-count`
       );
       setComplaintCount(res.data.count);
     } catch (err) {

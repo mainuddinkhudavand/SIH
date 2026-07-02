@@ -14,6 +14,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function AdminMonthlyStatistics() {
   const { t } = useTranslation();
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
   
   // State for year selection
   const currentYear = new Date().getFullYear();
@@ -47,7 +48,7 @@ export default function AdminMonthlyStatistics() {
         
         // Pass the selected year as a query parameter
         const res = await axios.get(
-            "http://localhost:5000/api/admin/complaints/monthly-status",
+            `${BACKEND_URL}/api/admin/complaints/monthly-status`,
             { params: { year } }
         );
         const incoming = res.data.stats || [];

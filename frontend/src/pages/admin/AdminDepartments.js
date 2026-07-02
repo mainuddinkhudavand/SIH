@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 export default function AdminDepartments() {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -15,7 +16,7 @@ export default function AdminDepartments() {
   const fetchDepartments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/admin/departments");
+      const res = await axios.get(`${BACKEND_URL}/api/admin/departments`);
       setDepartments(res.data);
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -33,7 +34,7 @@ export default function AdminDepartments() {
     setMessage({ type: "", text: "" });
 
     try {
-      await axios.post("http://localhost:5000/api/admin/departments", {
+      await axios.post(`${BACKEND_URL}/api/admin/departments`, {
         name,
         email,
         password,

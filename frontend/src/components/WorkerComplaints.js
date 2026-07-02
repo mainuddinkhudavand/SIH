@@ -3,11 +3,12 @@ import axios from "axios";
 
 export default function WorkerComplaints() {
   const [complaints, setComplaints] = useState([]);
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   useEffect(() => {
     const fetchComplaints = async () => {
       const token = localStorage.getItem("workerToken");
-      const res = await axios.get("http://localhost:5000/api/worker/complaints", {
+      const res = await axios.get(`${BACKEND_URL}/api/worker/complaints`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setComplaints(res.data);
@@ -19,7 +20,7 @@ export default function WorkerComplaints() {
     const message = prompt("Enter completion message:");
     const token = localStorage.getItem("workerToken");
     await axios.put(
-      `http://localhost:5000/api/worker/complaints/${id}/complete`,
+      `${BACKEND_URL}/api/worker/complaints/${id}/complete`,
       { message },
       { headers: { Authorization: `Bearer ${token}` } }
     );

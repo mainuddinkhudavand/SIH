@@ -12,7 +12,7 @@ export default function WorkerLogin() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  const BACKEND_URL = "http://localhost:5000";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   const handleLogin = async (e) => {
     e.preventDefault();

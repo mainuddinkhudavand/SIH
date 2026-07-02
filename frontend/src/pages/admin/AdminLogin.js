@@ -11,6 +11,7 @@ export default function AdminLogin() {
   const [messageType, setMessageType] = useState(null);
   const [showForgot, setShowForgot] = useState(false); // ✅ modal toggle
   const [resetEmail, setResetEmail] = useState("");
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ export default function AdminLogin() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/admin/login", {
+      const res = await axios.post(`${BACKEND_URL}/api/admin/login`, {
         email,
         password,
       });
@@ -48,7 +49,7 @@ export default function AdminLogin() {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/admin/forgot-password", {
+      await axios.post(`${BACKEND_URL}/api/admin/forgot-password`, {
         email: resetEmail,
       });
       setMessage("Password reset link sent to your email.");
