@@ -39,5 +39,11 @@ app.use("/api/worker", workerRoutes);
 // Chatbot API
 app.use("/api/chat", chatRoutes);
 
+// Root Status Check Route
+app.get("/", (req, res) => {
+  res.json({ message: "E-Gram Panchayat API is running..." });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
