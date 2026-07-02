@@ -1,0 +1,63 @@
+.App {
+  text-align: center;
+}
+
+/* Logo */
+.App-logo {
+  height: 40vmin;
+  max-height: 200px; /* prevents oversized logo on small screens */
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+/* Header */
+.App-header {
+  background-color: #2e4d2c; /* Panchayat theme green */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+  padding: 1rem;
+}
+
+/* Links */
+.App-link {
+  color: #61dafb;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.App-link:hover,
+.App-link:active {
+  color: #47c0f5;
+}
+
+/* Logo animation */
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 📱 Mobile adjustments */
+@media (max-width: 480px) {
+  .App-header {
+    font-size: calc(8px + 2vmin);
+    padding: 0.5rem;
+  }
+
+  .App-logo {
+    max-height: 150px;
+  }
+}
