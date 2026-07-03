@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
+  const [totalComplaints, setTotalComplaints] = useState(0); // 🚀 NEW
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -37,6 +38,16 @@ export default function Profile() {
       setEditName(data.name || "");
       setEditEmail(data.email || "");
       setEditPhone(data.phone || "");
+
+      // 🚀 NEW: Fetch complaints count
+      try {
+        const compRes = await axios.get(`${BACKEND_URL}/api/complaints/mine`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setTotalComplaints(compRes.data.complaints ? compRes.data.complaints.length : 0);
+      } catch (compErr) {
+        console.error("Error fetching user complaints count:", compErr);
+      }
     } catch (err) {
       console.error("Error fetching profile:", err);
       setError("Failed to load profile information.");
@@ -342,8 +353,13 @@ export default function Profile() {
           </div>
           <h1 style={styles.userName}>{user.name}</h1>
           <p style={styles.userEmail}>Citizen Portal</p>
-          <div style={styles.kycBadge(user.kycCompleted)}>
-            {user.kycCompleted ? "✓ KYC VERIFIED" : "⚠ PENDING KYC"}
+          <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "12px", flexWrap: "wrap" }}>
+            <div style={{ ...styles.kycBadge(user.kycCompleted), marginTop: 0 }}>
+              {user.kycCompleted ? "✓ KYC VERIFIED" : "⚠ PENDING KYC"}
+            </div>
+            <div style={{ ...styles.kycBadge(true), background: "#eff6ff", color: "#1e3a8a", border: "1px solid #bfdbfe", marginTop: 0 }}>
+              📋 {totalComplaints} {totalComplaints === 1 ? "Complaint" : "Complaints"} Raised
+            </div>
           </div>
         </div>
 
