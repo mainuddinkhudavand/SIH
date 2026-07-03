@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { FaBars, FaTimes } from "react-icons/fa";
 import "./navbar.css";
 import Logo from "./e-gram-logo.jpeg";
 import API from "../services/api"; 
@@ -16,6 +17,7 @@ const Navbar = () => {
   const isDepartment = localStorage.getItem("departmentToken"); 
 
   const [pendingComplaints, setPendingComplaints] = useState(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 🚀 UPDATED: Fetch active complaints count for the logged-in Department
   useEffect(() => {
@@ -39,10 +41,19 @@ const Navbar = () => {
     }
   }, [isDepartment]);
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
   const handleLogout = () => {
     if (isAdmin) localStorage.removeItem("isAdmin");
     if (isUser) localStorage.removeItem("token");
     if (isDepartment) localStorage.removeItem("departmentToken"); // ✅ Clear Dept token
+    closeMenu();
     navigate("/");
   };
 
@@ -55,20 +66,24 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <Link to="/" className="logo-link">
+        <Link to="/" className="logo-link" onClick={closeMenu}>
           <img src={Logo} alt="E Gram Panchayat" className="logo-img" />
           <span className="project-title">{t("projectTitle")}</span>
         </Link>
       </div>
 
-      <div className="navbar-links">
+      <button className="navbar-toggle" onClick={toggleMenu} aria-label="Toggle navigation">
+        {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+      </button>
+
+      <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
         {/* ✅ Citizen/User Links */}
         {!isAdmin && isUser && (
           <>
-            <Link to="/raise-complaint" className="nav-link">
+            <Link to="/raise-complaint" className="nav-link" onClick={closeMenu}>
               {t("raiseComplaint")}
             </Link>
-            <Link to="/my-complaints" className="nav-link">
+            <Link to="/my-complaints" className="nav-link" onClick={closeMenu}>
               {t("myComplaints")}
             </Link>
           </>
@@ -77,22 +92,22 @@ const Navbar = () => {
         {/* ✅ Admin Links */}
         {isAdmin && (
           <>
-            <Link to="/admin/dashboard" className="nav-link">
+            <Link to="/admin/dashboard" className="nav-link" onClick={closeMenu}>
               {t("dashboard")}
             </Link>
-            <Link to="/admin/complaints" className="nav-link">
+            <Link to="/admin/complaints" className="nav-link" onClick={closeMenu}>
               {t("complaints")}
             </Link>
             
             {/* 🚀 NEW: Departments creation link for Admin */}
-            <Link to="/admin/departments" className="nav-link">
+            <Link to="/admin/departments" className="nav-link" onClick={closeMenu}>
                {t("Departments") || "Departments"}
             </Link>
 
-            <Link to="/admin/statistics" className="nav-link">
+            <Link to="/admin/statistics" className="nav-link" onClick={closeMenu}>
               {t("Statistics")}
             </Link>
-            <Link to="/admin/users" className="nav-link">
+            <Link to="/admin/users" className="nav-link" onClick={closeMenu}>
               {t("users")}
             </Link>
           </>
@@ -101,11 +116,11 @@ const Navbar = () => {
         {/* 🚀 UPDATED: Department Portal Links (Replaced Worker) */}
         {isDepartment && (
           <>
-            <Link to="/department/dashboard" className="nav-link">
+            <Link to="/department/dashboard" className="nav-link" onClick={closeMenu}>
                {/*{t("departmentDashboard") || "Dept Dashboard"}*/}
             </Link>
             
-            <Link to="/department/dashboard" className="nav-link" style={{ position: "relative" }}>
+            <Link to="/department/dashboard" className="nav-link" style={{ position: "relative" }} onClick={closeMenu}>
                {/*{t("assignedComplaints") || "Assigned Tasks"}*/}
               {/* 🔴 Notification Badge */}
               {pendingComplaints > 0 && (
@@ -133,44 +148,21 @@ const Navbar = () => {
         {/* ✅ Auth Links for Guests */}
         {!isAdmin && !isUser && !isDepartment && (
           <>
-            <Link to="/" className="navbar-right">{t("home")}</Link>
-            <Link to="/register" className="navbar-right">{t("register")}</Link>
-            <Link to="/login" className="navbar-right">{t("login")}</Link>
-            <Link to="/admin/login" className="navbar-right">{t("admin")}</Link>
+            <Link to="/" className="navbar-right" onClick={closeMenu}>{t("home")}</Link>
+            <Link to="/register" className="navbar-right" onClick={closeMenu}>{t("register")}</Link>
+            <Link to="/login" className="navbar-right" onClick={closeMenu}>{t("login")}</Link>
+            <Link to="/admin/login" className="navbar-right" onClick={closeMenu}>{t("admin")}</Link>
             
             {/* 🚀 UPDATED: Department Login Link */}
-            <Link to="/department/login" className="navbar-right">
+            <Link to="/department/login" className="navbar-right" onClick={closeMenu}>
                {t("Department") || "Department"}
             </Link>
             
-            <Link to="/public-info" className="nav-link">{t("PublicInfo")}</Link>
+            <Link to="/public-info" className="nav-link" onClick={closeMenu}>{t("PublicInfo")}</Link>
           </>
         )}
 
-        {/* 🌐 Language Selector 
-        <select
-          onChange={handleLanguageChange}
-          defaultValue={localStorage.getItem("lang") || "en"}
-          style={{
-            padding: "6px 12px",
-            borderRadius: "6px",
-            border: "1px solid #2e4d2c",
-            backgroundColor: "#f8f9fa",
-            color: "#2e4d2c",
-            fontWeight: "600",
-            cursor: "pointer",
-            marginLeft: "1rem",
-            transition: "all 0.3s ease",
-            outline: "none",
-          }}
-          onMouseOver={(e) => (e.target.style.backgroundColor = "#e3f2fd")}
-          onMouseOut={(e) => (e.target.style.backgroundColor = "#f8f9fa")}
-        >
-          <option value="kn">ಕನ್ನಡ (Kannada)</option>
-          <option value="en">English</option>
-          <option value="hi">हिंदी (Hindi)</option>
-        </select> */}
-  <AutoTranslateWidget />
+        <AutoTranslateWidget />
         {/* ✅ Logout */}
         {(isAdmin || isUser || isDepartment) && (
           <button onClick={handleLogout} className="nav-logout">

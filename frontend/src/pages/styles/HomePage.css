@@ -46,7 +46,7 @@
   gap: 1rem;
   margin-top: 2rem;
   flex-wrap: wrap;
-  max-width: 400px;
+  max-width: 550px;
   margin-left: auto;
   margin-right: auto;
   padding: 0 1rem;
@@ -95,6 +95,29 @@
 .login-admin-btn:hover,
 .login-admin-btn:active {
   background-color: #2e4d2c;
+  text-decoration: none;
+}
+
+/* Login as Worker Button */
+.login-worker-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 20px;
+  background-color: #1a5f24; /* Worker green */
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.login-worker-btn:hover,
+.login-worker-btn:active {
+  background-color: #144d1c;
   text-decoration: none;
 }
 
@@ -321,19 +344,22 @@ footer {
     border-radius: 10px;
   }
 
-  /* ✅ Mobile login buttons in one row */
+  /* ✅ Mobile login buttons responsive stack */
   .login-section {
-    flex-direction: row;
-    gap: 0.5rem;
-    max-width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
     padding: 0 1rem;
   }
 
-   .login-citizen-btn,
+  .login-citizen-btn,
   .login-admin-btn,
-   .login-worker-btn{
-    flex: 1;
-    font-size: 0.95rem;
+  .login-worker-btn {
     width: 100%;
+    box-sizing: border-box;
+    font-size: 0.95rem;
+    padding: 12px 16px;
   }
 }

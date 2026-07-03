@@ -110,19 +110,69 @@
   text-decoration: underline;
 }
 
-/* 📱 Mobile adjustments */
-@media (max-width: 640px) {
+.navbar-toggle {
+  display: none;
+}
+
+/* 📱 Mobile & Tablet responsive adjustments */
+@media (max-width: 992px) {
   .navbar {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1rem;
+    position: relative;
+    padding: 0.75rem 1.5rem;
+    z-index: 1000;
+  }
+
+  .navbar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    outline: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .navbar-toggle:hover {
+    transform: scale(1.1);
+  }
+
+  .navbar-toggle:active {
+    opacity: 0.7;
   }
 
   .navbar-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: rgba(46, 77, 44, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    align-items: stretch;
+    padding: 1.5rem 2rem;
+    gap: 0.8rem;
+    box-sizing: border-box;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    flex-wrap: nowrap;
+    
+    /* Animation state: collapsed */
+    opacity: 0;
+    transform: translateY(-15px);
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .navbar-links.active {
+    /* Animation state: expanded */
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
   .logo-img {
@@ -134,10 +184,31 @@
     font-size: 1.4rem;
   }
 
+  .nav-link,
+  .navbar-right {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, padding-left 0.2s ease;
+    text-decoration: none !important;
+  }
+
+  .nav-link:hover,
+  .navbar-right:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding-left: 1.5rem;
+    text-decoration: none !important;
+  }
+
   .nav-logout {
-    width: 100%; /* full width button on mobile */
+    width: 100%;
     margin-left: 0;
     margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    box-sizing: border-box;
+    text-align: center;
   }
 }
 

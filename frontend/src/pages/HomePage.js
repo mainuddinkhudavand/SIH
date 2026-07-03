@@ -319,31 +319,11 @@ const HomePage = () => {
             <div className="login-section">
               <a href="/login" className="login-citizen-btn">{t("loginCitizen")}</a>
               <a href="/admin/login" className="login-admin-btn">{t("loginAdmin")}</a>
-              <a href="/worker/login" className="login-worker-btn"
-           style={{
-                  flex: 0.5,
-                  minWidth: "70px",
-                  padding: "12px 14px",
-                  backgroundColor: "#1a5f24", 
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  textAlign: "center",
-                  textDecoration: "none",
-                  transition: "background-color 0.2s ease",
-                 }}
-  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1b5823")} // darker hover
-  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#146732")} // reset
-  onMouseDown={(e) => (e.currentTarget.style.backgroundColor = "#20753d")} // active press
-  onMouseUp={(e) => (e.currentTarget.style.backgroundColor = "#106538")}   // release
->
-  {t("loginWorker", { defaultValue: "Login as Worker" })}
-</a>
-  </div>
-</section>
+              <a href="/worker/login" className="login-worker-btn">
+                {t("loginWorker", { defaultValue: "Login as Worker" })}
+              </a>
+            </div>
+          </section>
 
     {/* Intro Cards Section */}
       <section style={{ padding: "2rem", maxWidth: 1200, margin: "0 auto" }}>
