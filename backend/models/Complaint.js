@@ -59,6 +59,15 @@ const ComplaintSchema = new mongoose.Schema(
       trim: true
     },
 
+    // 🚀 NEW: Escalation & Warning tracking fields
+    assignedAt: { type: Date },
+    isEscalatedToManager: { type: Boolean, default: false },
+    escalatedToManagerAt: { type: Date },
+    isEscalatedToAdmin: { type: Boolean, default: false },
+    escalatedToAdminAt: { type: Date },
+    escalatedManager: { type: mongoose.Schema.Types.ObjectId, ref: "Manager" },
+    managerWarningMessage: { type: String, trim: true },
+
     isAdminConfirmed: { type: Boolean, default: false },
     // 🚀 UPDATED: Added "Assigned" to the status flow
     status: {

@@ -53,6 +53,7 @@ export const getProfile = async (req, res) => {
       kycCompleted: user.kycCompleted || null,
       aadhaarNumber: user.aadhaarNumber || null,
       address: user.address || null,
+      profilePictureUrl: user.profilePictureUrl || null,
     });
   } catch (error) {
     console.error(error);

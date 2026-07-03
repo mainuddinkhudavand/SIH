@@ -30,7 +30,18 @@ const auth = async (req, res, next) => {
       return next();
     }
 
-    // 👤 3. CITIZEN / ADMIN TOKEN CHECK (Existing Logic)
+    // 🤵 3. MANAGER TOKEN CHECK
+    if (payload.role === "manager") {
+      const Manager = (await import("../models/Manager.js")).default;
+      const manager = await Manager.findById(payload.id);
+      if (!manager || manager.isRemoved) {
+        return res.status(401).json({ message: "Manager not found or removed" });
+      }
+      req.user = manager;
+      return next();
+    }
+
+    // 👤 4. CITIZEN / ADMIN TOKEN CHECK (Existing Logic)
     if (payload.id) {
       const user = await User.findById(payload.id);
       if (!user) return res.status(401).json({ message: "User not found" });

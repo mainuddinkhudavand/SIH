@@ -43,10 +43,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   margin-top: 2rem;
-  flex-wrap: wrap;
-  max-width: 550px;
+  flex-wrap: nowrap; /* 🚀 FORCED: Strict single row, no wrapping */
+  max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
   padding: 0 1rem;
@@ -55,13 +55,13 @@
 /* Login as Citizen Button */
 .login-citizen-btn {
   flex: 1;
-  min-width: 140px;
-  padding: 12px 20px;
+  padding: 10px 12px;
   background-color: #D0E9C0; /* deep Panchayat green */
   color: #2e4d2c;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap; /* 🚀 Prevent button text from wrapping */
   font-weight: bold;
   cursor: pointer;
   text-align: center;
@@ -78,13 +78,13 @@
 /* Login as Admin Button */
 .login-admin-btn {
   flex: 1;
-  min-width: 140px;
-  padding: 12px 20px;
+  padding: 10px 12px;
   background-color: #3b5f3a; /* slightly lighter green */
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
   font-weight: bold;
   cursor: pointer;
   text-align: center;
@@ -98,16 +98,39 @@
   text-decoration: none;
 }
 
+/* Login as Department Button */
+.login-department-btn {
+  flex: 1;
+  padding: 10px 12px;
+  background-color: #854d0e; /* Department golden/brown */
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.login-department-btn:hover,
+.login-department-btn:active {
+  background-color: #713f12;
+  text-decoration: none;
+}
+
 /* Login as Worker Button */
 .login-worker-btn {
   flex: 1;
-  min-width: 140px;
-  padding: 12px 20px;
+  padding: 10px 12px;
   background-color: #1a5f24; /* Worker green */
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
   font-weight: bold;
   cursor: pointer;
   text-align: center;
@@ -118,6 +141,29 @@
 .login-worker-btn:hover,
 .login-worker-btn:active {
   background-color: #144d1c;
+  text-decoration: none;
+}
+
+/* Login as Manager Button */
+.login-manager-btn {
+  flex: 1;
+  padding: 10px 12px;
+  background-color: #1a365d; /* Manager blue */
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.login-manager-btn:hover,
+.login-manager-btn:active {
+  background-color: #0f2444;
   text-decoration: none;
 }
 
@@ -356,6 +402,8 @@ footer {
 
   .login-citizen-btn,
   .login-admin-btn,
+  .login-department-btn,
+  .login-manager-btn,
   .login-worker-btn {
     width: 100%;
     box-sizing: border-box;

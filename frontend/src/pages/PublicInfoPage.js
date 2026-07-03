@@ -35,30 +35,36 @@ const PublicInfoPage = () => {
   const schemes = [
     {
       title: "Health Scheme",
-      desc: "Free health checkups for all residents",
+      desc: "Free health checkups for all residents under PM-JAY",
       eligibility: "All citizens above 18",
       deadline: "31 Dec 2025",
       contact: "health-scheme@example.com",
-      img: "https://images.unsplash.com/photo-1722235623200-59966a71af50?w=1000",
+      img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1000",
       icon: "🩺",
+      link: "https://www.pmjay.gov.in/",
+      viewLink: "https://www.myscheme.gov.in/schemes/pmjay"
     },
     {
       title: "Education Scheme",
-      desc: "Scholarships for students",
+      desc: "Scholarships for primary & secondary students",
       eligibility: "Students from grade 6–12",
       deadline: "15 Jan 2026",
       contact: "edu-scheme@example.com",
-      img: "https://images.unsplash.com/photo-1600792170156-7fdc12ed6733?w=1000",
+      img: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1000",
       icon: "🎓",
+      link: "https://www.scholarships.gov.in/",
+      viewLink: "https://www.myscheme.gov.in/search?category=Education"
     },
     {
       title: "Agriculture Scheme",
-      desc: "Subsidies & training for farmers",
+      desc: "Subsidies, quality seeds & training for farmers",
       eligibility: "Registered farmers",
       deadline: "Ongoing",
       contact: "agri-scheme@example.com",
-      img: "https://images.unsplash.com/photo-1567471945805-069e09c11098?w=1000",
+      img: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1000",
       icon: "🌾",
+      link: "https://pmkisan.gov.in/",
+      viewLink: "https://www.myscheme.gov.in/search?category=Agriculture"
     },
   ];
 
@@ -76,7 +82,7 @@ const PublicInfoPage = () => {
       date: "30 Nov",
       organizer: "Youth Club",
       registration: "Join via WhatsApp group",
-      img: "https://media.istockphoto.com/id/175407129/photo/cleaning-path-way-with-a-water-pressure-system.webp",
+      img: "https://images.unsplash.com/photo-1618477462146-050d2767eac4?w=1000",
       icon: "🧹",
     },
   ];
@@ -84,7 +90,7 @@ const PublicInfoPage = () => {
   const panchayatInfo = {
     name: "Gram Panchayat XYZ",
     location: "Gadag, Karnataka",
-    img: "https://media.istockphoto.com/id/1393004231/photo/hospital-gate-and-building.webp",
+    img: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=1000",
     icon: "🏛️",
     description: "Office timings: 10:00 AM - 5:00 PM",
     contact: "080-XXXX-XXXX | panchayat@example.com",
@@ -170,7 +176,41 @@ const PublicInfoPage = () => {
                     <li>{t("publicInfo.deadline")}: {s.deadline}</li>
                     <li>{t("publicInfo.contact")}: {s.contact}</li>
                   </ul>
-                  <button className="primary-btn">{t("publicInfo.applyNow")}</button>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "10px", flexWrap: "wrap" }}>
+                    <a 
+                      href={s.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="primary-btn" 
+                      style={{ display: "inline-block", textAlign: "center", textDecoration: "none", flex: 1, minWidth: "100px", padding: "8px 12px", boxSizing: "border-box" }}
+                    >
+                      {t("publicInfo.applyNow") || "Apply Now"}
+                    </a>
+                    <a 
+                      href={s.viewLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="secondary-btn" 
+                      style={{ 
+                        display: "inline-block", 
+                        textAlign: "center", 
+                        textDecoration: "none", 
+                        flex: 1,
+                        minWidth: "100px",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "2px solid #065f46",
+                        color: "#065f46",
+                        backgroundColor: "#ffffff",
+                        fontWeight: "bold",
+                        fontSize: "0.9rem",
+                        marginTop: "6px",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      View Details
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}

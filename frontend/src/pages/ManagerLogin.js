@@ -1,37 +1,36 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import axios from "axios";
 
-export default function WorkerLogin() {
+export default function ManagerLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { t } = useTranslation();
-  
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
 
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/worker/login`, {
+      const res = await axios.post(`${BACKEND_URL}/api/manager/login`, {
         email,
         password,
       });
 
-      localStorage.setItem("workerToken", res.data.token);
-      localStorage.setItem("workerInfo", JSON.stringify(res.data.worker));
-      navigate("/worker/dashboard");
+      localStorage.setItem("managerToken", res.data.token);
+      localStorage.setItem("managerDetails", JSON.stringify(res.data.manager));
+      navigate("/manager/dashboard");
     } catch (err) {
       setError(
-        err.response?.data?.message || "Invalid email or password. Please try again."
+        err.response?.data?.message || "Login failed. Please check your credentials."
       );
     } finally {
       setLoading(false);
@@ -39,110 +38,123 @@ export default function WorkerLogin() {
   };
 
   const styles = {
-    wrapper: {
+    pageWrapper: {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      minHeight: "80vh",
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      minHeight: "calc(100vh - 80px)",
       backgroundColor: "#f8fafc",
-      padding: "20px"
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      padding: "2rem",
     },
     card: {
       background: "#ffffff",
-      padding: "3rem 2rem",
-      borderRadius: "20px",
-      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+      padding: "3rem 2.5rem",
+      borderRadius: "24px",
+      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)",
       width: "100%",
-      maxWidth: "400px",
+      maxWidth: "420px",
+      border: "1px solid #f1f5f9",
       textAlign: "center",
-      border: "1px solid #f1f5f9"
+    },
+    iconWrap: {
+      background: "#f0fdf4",
+      width: "60px",
+      height: "60px",
+      borderRadius: "50%",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "1.8rem",
+      margin: "0 auto 1.5rem",
+      color: "#1a5f24",
     },
     title: {
-      margin: "0 0 0.5rem 0",
-      fontSize: "1.8rem",
+      fontSize: "1.5rem",
       fontWeight: "900",
-      color: "#0f172a"
+      color: "#0f172a",
+      marginBottom: "0.5rem",
+      margin: 0,
     },
     subtitle: {
-      color: "#64748b",
       fontSize: "0.9rem",
-      marginBottom: "2rem"
+      color: "#64748b",
+      marginBottom: "2rem",
     },
     form: {
       display: "flex",
       flexDirection: "column",
       gap: "1.2rem",
-      textAlign: "left"
-    },
-    label: {
-      fontSize: "0.8rem",
-      fontWeight: "700",
-      color: "#475569",
-      marginBottom: "-0.8rem"
     },
     input: {
       width: "100%",
-      padding: "0.85rem",
-      borderRadius: "10px",
+      padding: "0.85rem 1rem",
+      borderRadius: "12px",
       border: "2px solid #e2e8f0",
       fontSize: "0.95rem",
       boxSizing: "border-box",
-      transition: "border-color 0.2s"
+      transition: "border-color 0.2s",
+      outline: "none",
+      backgroundColor: "#ffffff",
     },
-    btn: {
-      background: "#3b5f3a",
-      color: "#fff",
-      border: "none",
+    button: {
+      width: "100%",
       padding: "0.85rem",
-      borderRadius: "10px",
+      backgroundColor: "#1a5f24",
+      color: "#ffffff",
+      border: "none",
+      borderRadius: "12px",
       fontSize: "1rem",
       fontWeight: "800",
       cursor: "pointer",
       marginTop: "0.5rem",
-      transition: "background 0.2s"
+      transition: "background-color 0.2s",
+      opacity: loading ? 0.7 : 1,
     },
     errorBox: {
-      background: "#fee2e2",
+      backgroundColor: "#fef2f2",
       color: "#b91c1c",
-      padding: "10px",
+      padding: "0.75rem",
       borderRadius: "8px",
       fontSize: "0.85rem",
-      fontWeight: "bold",
-      marginBottom: "1rem"
+      fontWeight: "600",
+      marginBottom: "1.5rem",
+      border: "1px solid #fecaca",
     }
   };
 
   return (
-    <div style={styles.wrapper}>
+    <div style={styles.pageWrapper}>
       <div style={styles.card}>
-        <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>👷‍♂️</div>
-        <h2 style={styles.title}>Field Worker Portal</h2>
-        <p style={styles.subtitle}>Log in to view and complete your assigned tasks.</p>
-
-        {error && <div style={styles.errorBox}>❌ {error}</div>}
+        <div style={styles.iconWrap}>🤵</div>
+        <h2 style={styles.title}>{t("managerLogin") || "Manager Portal"}</h2>
+        <p style={styles.subtitle}>Sign in to inspect escalated grievances</p>
+        
+        {error && <div style={styles.errorBox}>{error}</div>}
 
         <form style={styles.form} onSubmit={handleLogin}>
-          <label style={styles.label}>Email Address</label>
           <input
             type="email"
-            style={styles.input}
-            placeholder="Enter your assigned email"
+            placeholder="Manager Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
             required
+            onFocus={(e) => (e.target.style.borderColor = "#1a5f24")}
+            onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
             autoComplete="username"
           />
-
-          <label style={styles.label}>Password</label>
+          
           <div style={{ position: "relative", width: "100%" }}>
             <input
               type={showPassword ? "text" : "password"}
-              style={{ ...styles.input, paddingRight: "3rem" }}
-              placeholder="Enter your password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              style={{ ...styles.input, paddingRight: "3rem" }}
               required
+              onFocus={(e) => (e.target.style.borderColor = "#1a5f24")}
+              onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
               autoComplete="current-password"
             />
             <button
@@ -165,9 +177,9 @@ export default function WorkerLogin() {
 
           <div style={{ textAlign: "right", marginTop: "-5px", marginBottom: "5px" }}>
             <Link
-              to="/forgot-password?role=worker"
+              to="/forgot-password?role=manager"
               style={{
-                color: "#3b5f3a",
+                color: "#1a5f24",
                 fontSize: "0.85rem",
                 fontWeight: "bold",
                 textDecoration: "underline"
@@ -177,8 +189,8 @@ export default function WorkerLogin() {
             </Link>
           </div>
 
-          <button type="submit" style={styles.btn} disabled={loading}>
-            {loading ? "Logging in..." : "Secure Login"}
+          <button type="submit" style={styles.button} disabled={loading}>
+            {loading ? "Authenticating..." : "Access Dashboard"}
           </button>
         </form>
       </div>

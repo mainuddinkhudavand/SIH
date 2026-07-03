@@ -1,6 +1,7 @@
 import Complaint from "../models/Complaint.js";
 import User from "../models/User.js";
 import Department from "../models/Department.js"; // ✅ IMPORTED NEW MODEL
+import Manager from "../models/Manager.js";
 import { sendEmail } from "../utils/email.js";
 
 // Admin login
@@ -20,6 +21,7 @@ export const getAllComplaints = async (req, res) => {
     const complaints = await Complaint.find()
       .populate("user", "name phone email")
       .populate("department", "name") // ✅ ADDED: Fetch department info too
+      .populate("escalatedManager", "name email district") // 🚀 NEW: Fetch escalated manager info
       .sort({ createdAt: -1 });
     res.json(complaints);
   } catch (err) {
@@ -32,7 +34,8 @@ export const getComplaintById = async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
       .populate("user", "name phone email")
-      .populate("department", "name"); // ✅ ADDED: Fetch department info too
+      .populate("department", "name") // ✅ ADDED: Fetch department info too
+      .populate("escalatedManager", "name email district"); // 🚀 NEW: Fetch escalated manager info
       
     if (!complaint) {
       return res.status(404).json({ message: "Complaint not found" });
@@ -194,7 +197,14 @@ export const assignComplaintToDepartment = async (req, res) => {
       id,
       { 
         department: departmentId, 
-        status: "Assigned" 
+        status: "Assigned",
+        assignedAt: new Date(),
+        isEscalatedToManager: false,
+        escalatedToManagerAt: null,
+        isEscalatedToAdmin: false,
+        escalatedToAdminAt: null,
+        escalatedManager: null,
+        managerWarningMessage: null
       },
       { new: true }
     ).populate("user").populate("department", "name");
@@ -254,6 +264,77 @@ export const confirmComplaintCompletion = async (req, res) => {
     res.status(200).json({ message: "Completion confirmed successfully", complaint });
   } catch (error) {
     console.error("Confirm Completion Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ==========================================
+// 🚀 NEW: MANAGER MANAGEMENT ENDPOINTS
+// ==========================================
+
+// Create a new Manager (Admin only)
+export const createManager = async (req, res) => {
+  try {
+    const { name, email, password, district, latitude, longitude } = req.body;
+
+    const existing = await Manager.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ message: "Manager with this email already exists" });
+    }
+
+    const manager = new Manager({
+      name,
+      email,
+      password,
+      district,
+      latitude: parseFloat(latitude) || 0,
+      longitude: parseFloat(longitude) || 0
+    });
+
+    await manager.save();
+    res.status(201).json({ message: "Manager created successfully", manager });
+  } catch (error) {
+    console.error("Create Manager Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get all active Managers (Admin only)
+export const getAllManagers = async (req, res) => {
+  try {
+    const managers = await Manager.find({ isRemoved: false });
+    res.status(200).json(managers);
+  } catch (error) {
+    console.error("Fetch Managers Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Remove a Manager (Admin only)
+export const removeManager = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const manager = await Manager.findByIdAndUpdate(id, { isRemoved: true }, { new: true });
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found" });
+    }
+
+    // Clear escalation logs that were assigned to this manager
+    await Complaint.updateMany(
+      { escalatedManager: id, status: { $ne: "Completed" } },
+      { 
+        isEscalatedToManager: false, 
+        escalatedToManagerAt: null,
+        isEscalatedToAdmin: false, 
+        escalatedToAdminAt: null,
+        escalatedManager: null
+      }
+    );
+
+    res.status(200).json({ message: "Manager removed successfully and escalated cases cleared", manager });
+  } catch (error) {
+    console.error("Remove Manager Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

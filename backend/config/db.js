@@ -9,7 +9,7 @@ const connectDB = async () => {
     console.log("MongoDB connected");
   } catch (err) {
     console.error("MongoDB connection error:", err);
-    throw err;
+    // Allow server to run even if DB is offline initially
   }
 };
 

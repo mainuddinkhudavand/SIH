@@ -139,3 +139,15 @@
     font-size: 1rem;
   }
 }
+
+/* Prevent text/word overflow in cards */
+.info-item > div {
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.muted {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}

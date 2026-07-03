@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const AddressSchema = new mongoose.Schema({
   state: String,
+  district: String,
   town: String,
   pin: String,
   street: String,
@@ -19,6 +20,9 @@ const UserSchema = new mongoose.Schema(
     aadhaarNumber: String,
     address: AddressSchema,
     kycCompleted: { type: Boolean, default: false },
+    profilePictureUrl: String,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   { timestamps: true }
 );

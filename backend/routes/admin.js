@@ -11,7 +11,11 @@ import {
   createDepartment,
   getAllDepartments,
   assignComplaintToDepartment,
-  confirmComplaintCompletion
+  confirmComplaintCompletion,
+  // 🚀 NEW IMPORTS for Managers:
+  createManager,
+  getAllManagers,
+  removeManager
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -45,5 +49,12 @@ router.get("/users/:id/complaints-count", getUserComplaintCount);
 // ==========================================
 router.get("/departments", getAllDepartments); // Fetch for dropdown
 router.post("/departments", createDepartment); // Create new department
+
+// ==========================================
+// 🚀 MANAGERS
+// ==========================================
+router.get("/managers", getAllManagers); // Fetch all managers
+router.post("/managers", createManager); // Create new manager
+router.delete("/managers/:id", removeManager); // Remove manager
 
 export default router;

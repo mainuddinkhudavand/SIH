@@ -15,6 +15,7 @@ const Navbar = () => {
   const isUser = localStorage.getItem("token");
   // 🚀 REPLACED: isWorker is now isDepartment
   const isDepartment = localStorage.getItem("departmentToken"); 
+  const isManager = localStorage.getItem("managerToken");
 
   const [pendingComplaints, setPendingComplaints] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,6 +54,10 @@ const Navbar = () => {
     if (isAdmin) localStorage.removeItem("isAdmin");
     if (isUser) localStorage.removeItem("token");
     if (isDepartment) localStorage.removeItem("departmentToken"); // ✅ Clear Dept token
+    if (isManager) {
+      localStorage.removeItem("managerToken");
+      localStorage.removeItem("managerDetails");
+    }
     closeMenu();
     navigate("/");
   };
@@ -80,6 +85,9 @@ const Navbar = () => {
         {/* ✅ Citizen/User Links */}
         {!isAdmin && isUser && (
           <>
+            <Link to="/profile" className="nav-link" onClick={closeMenu}>
+              {t("profile") || "Profile"}
+            </Link>
             <Link to="/raise-complaint" className="nav-link" onClick={closeMenu}>
               {t("raiseComplaint")}
             </Link>
@@ -104,11 +112,33 @@ const Navbar = () => {
                {t("Departments") || "Departments"}
             </Link>
 
+            {/* 🚀 NEW: Managers creation link for Admin */}
+            <Link to="/admin/managers" className="nav-link" onClick={closeMenu}>
+               {t("Managers") || "Managers"}
+            </Link>
+
+            {/* 🚀 NEW: Escalated complaints link for Admin */}
+            <Link to="/admin/escalations" className="nav-link" onClick={closeMenu}>
+               {t("escalations") || "Escalations"}
+            </Link>
+
+            <Link style={{ display: "none" }} to="/admin/statistics" className="nav-link" onClick={closeMenu}>
+              {t("Statistics")}
+            </Link>
             <Link to="/admin/statistics" className="nav-link" onClick={closeMenu}>
               {t("Statistics")}
             </Link>
             <Link to="/admin/users" className="nav-link" onClick={closeMenu}>
               {t("users")}
+            </Link>
+          </>
+        )}
+
+        {/* 🚀 NEW: Manager Portal Links */}
+        {isManager && (
+          <>
+            <Link to="/manager/dashboard" className="nav-link" onClick={closeMenu}>
+              {t("managerDashboard") || "Manager Dashboard"}
             </Link>
           </>
         )}
@@ -146,7 +176,7 @@ const Navbar = () => {
         )}
 
         {/* ✅ Auth Links for Guests */}
-        {!isAdmin && !isUser && !isDepartment && (
+        {!isAdmin && !isUser && !isDepartment && !isManager && (
           <>
             <Link to="/" className="navbar-right" onClick={closeMenu}>{t("home")}</Link>
             <Link to="/register" className="navbar-right" onClick={closeMenu}>{t("register")}</Link>
@@ -157,6 +187,11 @@ const Navbar = () => {
             <Link to="/department/login" className="navbar-right" onClick={closeMenu}>
                {t("Department") || "Department"}
             </Link>
+
+            {/* 🚀 NEW: Manager Login Link */}
+            <Link to="/manager/login" className="navbar-right" onClick={closeMenu}>
+               {t("Manager") || "Manager"}
+            </Link>
             
             <Link to="/public-info" className="nav-link" onClick={closeMenu}>{t("PublicInfo")}</Link>
           </>
@@ -164,7 +199,7 @@ const Navbar = () => {
 
         <AutoTranslateWidget />
         {/* ✅ Logout */}
-        {(isAdmin || isUser || isDepartment) && (
+        {(isAdmin || isUser || isDepartment || isManager) && (
           <button onClick={handleLogout} className="nav-logout">
             {t("logout")}
           </button>

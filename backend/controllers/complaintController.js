@@ -1,4 +1,5 @@
 import Complaint from "../models/Complaint.js";
+import User from "../models/User.js"; // 🚀 NEW: Import User model
 
 
 
@@ -14,6 +15,18 @@ export const createComplaint = async (req, res) => {
       return res.status(400).json({ message: "Live photo capture is required." });
     }
 
+    // 🚀 NEW: Fetch citizen profile to get their registered KYC district
+    const user = await User.findById(req.user._id);
+    if (!user || !user.kycCompleted) {
+      return res.status(400).json({ message: "Complete KYC verification to raise complaints." });
+    }
+
+    const parsedAddress = JSON.parse(address);
+    // Overwrite complaint district with the citizen's selected KYC district
+    if (user.address && user.address.district) {
+      parsedAddress.district = user.address.district;
+    }
+
     // 3. Create the complaint
     const newComplaint = new Complaint({
       user: req.user._id, // From your auth middleware
@@ -21,7 +34,7 @@ export const createComplaint = async (req, res) => {
       title,
       description,
       imageUrl, // 🚀 Save the image URL
-      address: JSON.parse(address), // Parse the address string back to an object
+      address: parsedAddress, // Parse the address string back to an object
       location: {
         type: "Point",
         coordinates: [parseFloat(lng), parseFloat(lat)] // MongoDB needs [Longitude, Latitude]

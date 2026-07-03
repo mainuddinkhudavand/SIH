@@ -6,7 +6,10 @@ const workerSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department", required: true },
-  phone: { type: String }
+  phone: { type: String },
+  profilePictureUrl: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date }
 }, { timestamps: true });
 
 // Hash password before saving

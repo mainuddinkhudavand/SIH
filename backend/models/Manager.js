@@ -1,17 +1,16 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs";
 
-const departmentSchema = new mongoose.Schema(
+const managerSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Department name is required"],
-      unique: true,
+      required: [true, "Manager name is required"],
       trim: true,
     },
     email: {
       type: String,
-      required: [true, "Email is required for department login"],
+      required: [true, "Email is required for manager login"],
       unique: true,
       lowercase: true,
       trim: true,
@@ -21,9 +20,22 @@ const departmentSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: 6,
     },
-    description: {
+    district: {
       type: String,
+      required: [true, "District is required"],
       trim: true,
+    },
+    latitude: {
+      type: Number,
+      default: 0,
+    },
+    longitude: {
+      type: Number,
+      default: 0,
+    },
+    isRemoved: {
+      type: Boolean,
+      default: false,
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
@@ -32,7 +44,7 @@ const departmentSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to hash the password before saving
-departmentSchema.pre("save", async function (next) {
+managerSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
@@ -45,9 +57,8 @@ departmentSchema.pre("save", async function (next) {
 });
 
 // Helper method to check the password during login
-departmentSchema.methods.comparePassword = async function (candidatePassword) {
+managerSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// ✅ FIXED: Using ES6 export default
-export default mongoose.model("Department", departmentSchema);
+export default mongoose.model("Manager", managerSchema);

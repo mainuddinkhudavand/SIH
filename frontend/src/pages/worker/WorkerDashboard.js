@@ -1,8 +1,28 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// ✅ Custom markers
+const BlueIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const RedIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export default function WorkerDashboard() {
   const [tasks, setTasks] = useState([]);
@@ -11,6 +31,41 @@ export default function WorkerDashboard() {
   // UI States
   const [activeTaskId, setActiveTaskId] = useState(null); 
   const [workerMessage, setWorkerMessage] = useState("");
+
+  const [routeTaskMap, setRouteTaskMap] = useState({}); 
+  const [fetchingLocId, setFetchingLocId] = useState(null);
+
+  const getRouteToTask = (taskId, destLat, destLng) => {
+    if (routeTaskMap[taskId]) {
+      const updated = { ...routeTaskMap };
+      delete updated[taskId];
+      setRouteTaskMap(updated);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setFetchingLocId(taskId);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setRouteTaskMap(prev => ({
+          ...prev,
+          [taskId]: [latitude, longitude]
+        }));
+        setFetchingLocId(null);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        alert("Failed to get your current location. Please check browser permissions.");
+        setFetchingLocId(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
   
   // Camera States
   const [imageFile, setImageFile] = useState(null);
@@ -163,9 +218,14 @@ export default function WorkerDashboard() {
           <h2 style={{ margin: 0 }}>👷‍♂️ Field Tasks</h2>
           <p style={{ margin: "5px 0 0 0", color: "#94a3b8", fontSize: "0.9rem" }}>Welcome, {workerInfo.name}</p>
         </div>
-        <button onClick={handleLogout} style={{ background: "none", border: "1px solid #475569", color: "white", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" }}>
-          Logout
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button onClick={() => navigate("/worker/profile")} style={{ background: "none", border: "1px solid #ffffff", color: "white", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" }}>
+            👤 My Profile
+          </button>
+          <button onClick={handleLogout} style={{ background: "none", border: "1px solid #cbd5e1", color: "white", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" }}>
+            Logout
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -196,14 +256,68 @@ export default function WorkerDashboard() {
               </div>
             )}
 
-            {/* Map Directions - FIXED GOOGLE MAPS URL */}
+            {/* Map Directions / Inline routing map */}
             {task.location?.coordinates?.length === 2 && (
-              <button 
-                style={{ ...styles.btnBlue, background: "#0f172a", marginTop: "15px" }}
-                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${task.location.coordinates[1]},${task.location.coordinates[0]}`, "_blank")}
-              >
-                🗺️ Get Directions
-              </button>
+              <div style={{ marginTop: "15px" }}>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button 
+                    style={{ ...styles.btnBlue, background: "#0f172a", marginTop: 0, flex: 1 }}
+                    onClick={() => getRouteToTask(task._id, task.location.coordinates[1], task.location.coordinates[0])}
+                  >
+                    {fetchingLocId === task._id ? "⌛ Locating..." : routeTaskMap[task._id] ? "🗺️ Hide Route Map" : "🗺️ Show Route Map"}
+                  </button>
+                  <button 
+                    style={{ ...styles.btnBlue, background: "#1e3a8a", marginTop: 0, flex: 1 }}
+                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${task.location.coordinates[1]},${task.location.coordinates[0]}`, "_blank")}
+                  >
+                    🚗 Navigate (Google Maps)
+                  </button>
+                </div>
+
+                {routeTaskMap[task._id] && (
+                  <div style={{ marginTop: "15px", height: "300px", borderRadius: "16px", overflow: "hidden", border: "2px solid #cbd5e1", position: "relative", zIndex: 1 }}>
+                    <MapContainer 
+                      center={[
+                        (routeTaskMap[task._id][0] + task.location.coordinates[1]) / 2,
+                        (routeTaskMap[task._id][1] + task.location.coordinates[0]) / 2
+                      ]} 
+                      zoom={13} 
+                      style={{ height: "100%", width: "100%" }}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      />
+                      {/* Worker Marker */}
+                      <Marker position={routeTaskMap[task._id]} icon={BlueIcon}>
+                        <Popup>
+                          <strong>👷‍♂️ You (Worker)</strong> <br/>
+                          Your current location
+                        </Popup>
+                      </Marker>
+
+                      {/* Complaint Marker */}
+                      <Marker position={[task.location.coordinates[1], task.location.coordinates[0]]} icon={RedIcon}>
+                        <Popup>
+                          <strong>📍 Complaint Location</strong> <br/>
+                          {task.address?.street}, {task.address?.town}
+                        </Popup>
+                      </Marker>
+
+                      {/* Line connecting the two */}
+                      <Polyline 
+                        positions={[
+                          routeTaskMap[task._id],
+                          [task.location.coordinates[1], task.location.coordinates[0]]
+                        ]}
+                        color="#2563eb"
+                        dashArray="10, 10"
+                        weight={4}
+                      />
+                    </MapContainer>
+                  </div>
+                )}
+              </div>
             )}
 
             <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "20px 0" }} />

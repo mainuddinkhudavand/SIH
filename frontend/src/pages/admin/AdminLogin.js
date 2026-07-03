@@ -1,16 +1,15 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState(null);
-  const [showForgot, setShowForgot] = useState(false); // ✅ modal toggle
-  const [resetEmail, setResetEmail] = useState("");
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   const navigate = useNavigate();
@@ -43,21 +42,6 @@ export default function AdminLogin() {
       }
     } catch (err) {
       setError(t("invalidCredentials"));
-    }
-  };
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${BACKEND_URL}/api/admin/forgot-password`, {
-        email: resetEmail,
-      });
-      setMessage("Password reset link sent to your email.");
-      setMessageType("success");
-      setShowForgot(false);
-    } catch (err) {
-      setMessage("Error sending reset link. Please try again.");
-      setMessageType("error");
     }
   };
 
@@ -101,6 +85,7 @@ export default function AdminLogin() {
           placeholder={t("email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="username"
           required
           style={{
             display: "block",
@@ -109,42 +94,61 @@ export default function AdminLogin() {
             padding: "12px",
             border: "1px solid #ccc",
             borderRadius: "6px",
-            fontSize: "1rem"
+            fontSize: "1rem",
+            boxSizing: "border-box"
           }}
         />
-        <input
-          type="password"
-          placeholder={t("password")}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{
-            display: "block",
-            marginBottom: "0.5rem",
-            width: "100%",
-            padding: "12px",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            fontSize: "1rem"
-          }}
-        />
-
-        {/* ✅ Forgot Password link triggers modal */}
-        <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+        
+        <div style={{ position: "relative", width: "100%", marginBottom: "0.5rem" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder={t("password")}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "12px",
+              paddingRight: "3rem",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              fontSize: "1rem",
+              boxSizing: "border-box"
+            }}
+          />
           <button
             type="button"
-            onClick={() => setShowForgot(true)}
+            onClick={() => setShowPassword(!showPassword)}
             style={{
+              position: "absolute",
+              right: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
               background: "none",
               border: "none",
+              cursor: "pointer",
+              fontSize: "1.2rem"
+            }}
+          >
+            {showPassword ? "🙈" : "👁️"}
+          </button>
+        </div>
+
+        {/* ✅ Forgot Password redirects to centralized page */}
+        <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+          <Link
+            to="/forgot-password?role=admin"
+            style={{
               color: "#2e4d2c",
               fontSize: "0.85rem",
-              cursor: "pointer",
+              fontWeight: "bold",
               textDecoration: "underline"
             }}
           >
             {t("Forgot Password?")}
-          </button>
+          </Link>
         </div>
 
         <button
@@ -165,87 +169,6 @@ export default function AdminLogin() {
           {t("login")}
         </button>
       </form>
-
-      {/* ✅ Inline Forgot Password Modal */}
-      {showForgot && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center"
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#fff",
-              padding: "2rem",
-              borderRadius: "8px",
-              maxWidth: "350px",
-              width: "100%",
-              boxShadow: "0 6px 18px rgba(2,6,23,0.06)"
-            }}
-          >
-            <h3 style={{ marginBottom: "1rem", textAlign: "center" }}>
-              {t("resetPassword")}
-            </h3>
-            <form onSubmit={handleForgotPassword}>
-              <input
-                type="email"
-                placeholder={t("enterEmail")}
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                style={{
-                  display: "block",
-                  marginBottom: "1rem",
-                  width: "100%",
-                  padding: "12px",
-                  border: "1px solid #ccc",
-                  borderRadius: "6px",
-                  fontSize: "1rem"
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  width: "100%",
-                  padding: "12px 20px",
-                  backgroundColor: "#3b5f3a",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  cursor: "pointer"
-                }}
-              >
-                {t("sendResetLink")}
-              </button>
-            </form>
-            <div style={{ textAlign: "center", marginTop: "1rem" }}>
-              <button
-                type="button"
-                onClick={() => setShowForgot(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#2e4d2c",
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
-                  textDecoration: "underline"
-                }}
-              >
-                {t("cancel")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

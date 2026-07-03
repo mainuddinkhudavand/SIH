@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import KYC from './pages/KYC';
 import MyComplaints from './pages/MyComplaints';
 import RaiseComplaint from './pages/RaiseComplaint';
+import ForgotPassword from "./pages/ForgotPassword"; // 🚀 NEW
+import ResetPassword from "./pages/ResetPassword"; // 🚀 NEW
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminComplaints from "./pages/admin/AdminComplaints";
@@ -18,7 +20,8 @@ import AdminStatistics from './pages/admin/AdminStatistics';
 import Chatbot from "./components/Chatbot";
 import { ToastProvider } from "./context/ToastContext"; 
 import ComplaintDetails from "./pages/admin/ComplaintDetails";
-import AdminDepartments from "./pages/admin/AdminDepartments"; // Adjust path as needed
+import AdminDepartments from "./pages/admin/AdminDepartments"; 
+import AdminEscalations from "./pages/admin/AdminEscalations"; // 🚀 NEW
 
 //department imports
 import DepartmentLogin from "./pages/department/DepartmentLogin";
@@ -28,6 +31,13 @@ import WorkerManagement from './pages/department/WorkerManagement';
 // NEW imports for Worker role
 import WorkerLogin from "./pages/worker/WorkerLogin";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
+import WorkerProfile from "./pages/worker/WorkerProfile"; // 🚀 NEW
+
+// 🚀 NEW imports for Manager and Profile
+import ManagerLogin from "./pages/ManagerLogin";
+import ManagerDashboard from "./pages/ManagerDashboard";
+import AdminManagers from "./pages/admin/AdminManagers";
+import Profile from "./pages/Profile";
 
 const Private = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -58,6 +68,9 @@ export default function App() {
             <Route path="/grievance" element={<Private><GrievanceSelection /></Private>} />
             <Route path="/raise-complaint" element={<Private><RaiseComplaint /></Private>} />
             <Route path="/my-complaints" element={<Private><MyComplaints /></Private>} />
+            <Route path="/profile" element={<Private><Profile /></Private>} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
@@ -67,15 +80,22 @@ export default function App() {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/statistics" element={<AdminStatistics />} />
             <Route path="/admin/departments" element={<AdminDepartments />} />
+            <Route path="/admin/managers" element={<AdminManagers />} />
+            <Route path="/admin/escalations" element={<AdminEscalations />} />
 
             {/* Department routes */}
             <Route path="/department/login" element={<DepartmentLogin />} />
             <Route path="/department/dashboard" element={<DepartmentDashboard />} />
             <Route path="/department/workers" element={<WorkerManagement />} />
 
+            {/* Manager routes */}
+            <Route path="/manager/login" element={<ManagerLogin />} />
+            <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+
             {/* Worker Routes */}
             <Route path="/worker/login" element={<WorkerLogin />} />
             <Route path="/worker/dashboard" element={<WorkerPrivate><WorkerDashboard /></WorkerPrivate>} />
+            <Route path="/worker/profile" element={<WorkerPrivate><WorkerProfile /></WorkerPrivate>} />
 
             {/* Chatbot Route */}
             <Route path="/chatbot" element={<Chatbot />} />

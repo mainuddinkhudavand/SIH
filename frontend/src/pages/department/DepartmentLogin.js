@@ -1,16 +1,17 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 
 export default function DepartmentLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { t } = useTranslation(); // Keeps it compatible with your language switcher
+  const { t } = useTranslation();
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
   const handleLogin = async (e) => {
@@ -19,16 +20,12 @@ export default function DepartmentLogin() {
     setError("");
 
     try {
-      // Hits the backend route we created in departmentRoutes.js
       const res = await axios.post(`${BACKEND_URL}/api/department/login`, {
         email,
         password,
       });
 
-      // Save the token to localStorage (Navbar uses this to show the dashboard link)
       localStorage.setItem("departmentToken", res.data.token);
-      
-      // Redirect to the newly authenticated dashboard
       navigate("/department/dashboard"); 
     } catch (err) {
       setError(
@@ -44,7 +41,7 @@ export default function DepartmentLogin() {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      minHeight: "calc(100vh - 80px)", // Accounts for your navbar height
+      minHeight: "calc(100vh - 80px)",
       backgroundColor: "#f8fafc",
       fontFamily: "'Plus Jakarta Sans', sans-serif",
       padding: "2rem",
@@ -143,17 +140,53 @@ export default function DepartmentLogin() {
             required
             onFocus={(e) => (e.target.style.borderColor = "#3b5f3a")}
             onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+            autoComplete="username"
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            required
-            onFocus={(e) => (e.target.style.borderColor = "#3b5f3a")}
-            onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
-          />
+          
+          <div style={{ position: "relative", width: "100%" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ ...styles.input, paddingRight: "3rem" }}
+              required
+              onFocus={(e) => (e.target.style.borderColor = "#3b5f3a")}
+              onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1.2rem"
+              }}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </button>
+          </div>
+
+          <div style={{ textAlign: "right", marginTop: "-5px", marginBottom: "5px" }}>
+            <Link
+              to="/forgot-password?role=department"
+              style={{
+                color: "#3b5f3a",
+                fontSize: "0.85rem",
+                fontWeight: "bold",
+                textDecoration: "underline"
+              }}
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
           <button type="submit" style={styles.button} disabled={loading}>
             {loading ? "Authenticating..." : "Access Dashboard"}
           </button>

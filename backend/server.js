@@ -17,6 +17,8 @@ import adminRoutes from "./routes/admin.js";
 import departmentRoutes from "./routes/departmentRoutes.js";
 import workerRoutes from "./routes/workerRoutes.js"; // worker routes
 import chatRoutes from "./routes/chat.js";
+import managerRoutes from "./routes/managerRoutes.js";
+import { runEscalationCheck } from "./utils/escalation.js";
 
 const app = express();
 connectDB();
@@ -35,6 +37,7 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/department", departmentRoutes);
 app.use("/api/worker", workerRoutes);
+app.use("/api/manager", managerRoutes);
 
 // Chatbot API
 app.use("/api/chat", chatRoutes);
@@ -45,7 +48,12 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  // Run escalation check immediately and then every 1 minute
+  runEscalationCheck();
+  setInterval(runEscalationCheck, 60000);
+});
 
 export default app;
 

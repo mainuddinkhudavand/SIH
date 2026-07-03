@@ -319,9 +319,11 @@ const HomePage = () => {
             <div className="login-section">
               <a href="/login" className="login-citizen-btn">{t("loginCitizen")}</a>
               <a href="/admin/login" className="login-admin-btn">{t("loginAdmin")}</a>
+              <a href="/department/login" className="login-department-btn">{t("loginDepartment") || "Login as Department"}</a>
               <a href="/worker/login" className="login-worker-btn">
                 {t("loginWorker", { defaultValue: "Login as Worker" })}
               </a>
+              <a href="/manager/login" className="login-manager-btn">{t("loginManager") || "Login as Manager"}</a>
             </div>
           </section>
 

@@ -76,6 +76,18 @@ export default function AdminComplaints() {
     }
   };
 
+  const handleRemoveManager = async (managerId) => {
+    if (!window.confirm("Are you sure you want to remove this negligent manager?")) return;
+    try {
+      await axios.delete(`${BACKEND_URL}/api/admin/managers/${managerId}`, authHeaders);
+      alert("Manager removed successfully due to negligence.");
+      fetchComplaints();
+    } catch (err) {
+      console.error("Remove Manager Error:", err);
+      alert("Failed to remove manager.");
+    }
+  };
+
   const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
 
   const styles = {
@@ -128,6 +140,29 @@ export default function AdminComplaints() {
                       <td style={{ ...styles.td, maxWidth: "300px" }}>
                         <div style={{ fontWeight: "800", color: "#0f172a" }}>{c.title}</div>
                         <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "4px" }}>👤 {c.user?.name} | 📅 {new Date(c.createdAt).toLocaleDateString()}</div>
+                        
+                        {c.isEscalatedToManager && !c.isEscalatedToAdmin && (
+                          <div style={{ display: "inline-block", background: "#fef3c7", color: "#d97706", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", marginTop: "6px" }}>
+                            ⚠️ Escalated to Manager
+                          </div>
+                        )}
+
+                        {c.isEscalatedToAdmin && (
+                          <div style={{ background: "#fee2e2", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", border: "1px solid #fecaca", fontSize: "0.8rem", marginTop: "8px" }}>
+                            <div style={{ fontWeight: "800" }}>🚨 ESCALATED TO ADMIN</div>
+                            <div style={{ fontSize: "0.75rem", color: "#7f1d1d", margin: "2px 0 6px" }}>
+                              Manager <b>{c.escalatedManager?.name || "Jurisdiction Manager"}</b> failed to act within 48 hours.
+                            </div>
+                            {c.escalatedManager && (
+                              <button 
+                                style={{ background: "#dc2626", color: "white", border: "none", borderRadius: "6px", padding: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: "bold", width: "100%" }}
+                                onClick={() => handleRemoveManager(c.escalatedManager._id || c.escalatedManager)}
+                              >
+                                Remove Manager
+                              </button>
+                            )}
+                          </div>
+                        )}
                         
                         {c.imageUrl ? (
                           <div style={{ margin: "10px 0" }}>
