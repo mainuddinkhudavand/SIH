@@ -42,8 +42,22 @@ export default function ForgotPassword() {
         </p>
 
         {message && (
-          <div style={{ background: "#dcfce7", color: "#166534", padding: "10px", borderRadius: "10px", border: "1px solid #bbf7d0", fontWeight: "bold", fontSize: "0.9rem", marginBottom: "1.5rem", textAlign: "center" }}>
-            {message}
+          <div style={{ background: "#dcfce7", color: "#166534", padding: "12px", borderRadius: "10px", border: "1px solid #bbf7d0", fontWeight: "bold", fontSize: "0.9rem", marginBottom: "1.5rem", textAlign: "center", wordBreak: "break-word" }}>
+            {message.includes("http://localhost:3000/reset-password") ? (
+              <div>
+                <p style={{ margin: "0 0 10px 0" }}>{message.split("http://localhost:3000/reset-password")[0]}</p>
+                <a 
+                  href={"http://localhost:3000/reset-password" + message.split("http://localhost:3000/reset-password")[1].replace(")", "")} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-block", backgroundColor: "#166534", color: "#ffffff", padding: "8px 12px", borderRadius: "6px", textDecoration: "none", marginTop: "5px" }}
+                >
+                  👉 Click Here to Reset Password
+                </a>
+              </div>
+            ) : (
+              message
+            )}
           </div>
         )}
 

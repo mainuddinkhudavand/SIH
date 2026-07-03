@@ -102,8 +102,8 @@
 .login-department-btn {
   flex: 1;
   padding: 10px 12px;
-  background-color: #854d0e; /* Department golden/brown */
-  color: #fff;
+  background-color: #D0E9C0; /* Same as citizen */
+  color: #2e4d2c;
   border: none;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -117,7 +117,8 @@
 
 .login-department-btn:hover,
 .login-department-btn:active {
-  background-color: #713f12;
+  background-color: #fff;
+  color: #2e4d2c;
   text-decoration: none;
 }
 
@@ -148,8 +149,8 @@
 .login-manager-btn {
   flex: 1;
   padding: 10px 12px;
-  background-color: #1a365d; /* Manager blue */
-  color: #fff;
+  background-color: #D0E9C0; /* Same as citizen */
+  color: #2e4d2c;
   border: none;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -163,7 +164,8 @@
 
 .login-manager-btn:hover,
 .login-manager-btn:active {
-  background-color: #0f2444;
+  background-color: #fff;
+  color: #2e4d2c;
   text-decoration: none;
 }
 
