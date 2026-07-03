@@ -28,7 +28,11 @@ export default function Register() {
       const res = await API.post('/auth/register', form);
       setUserId(res.data.userId);
       setError(""); // clear error if successful
-      alert(t("otpSent"));
+      if (res.data.otp) {
+        alert(`${t("otpSent")} (OTP: ${res.data.otp})`);
+      } else {
+        alert(t("otpSent"));
+      }
     } catch (err) {
       setError(err.response?.data?.message || t("error"));
     }

@@ -46,15 +46,22 @@ router.post("/register", async (req, res) => {
       otpExpires,
     });
 
-    await sendEmail(
-      email,
-      "Your OTP for Municipality",
-      `<p>Your OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`
-    );
+    let emailSent = true;
+    try {
+      await sendEmail(
+        email,
+        "Your OTP for Municipality",
+        `<p>Your OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`
+      );
+    } catch (emailErr) {
+      console.error("SMTP Error: Failed to send OTP email:", emailErr);
+      emailSent = false;
+    }
 
     return res.json({
-      message: "Registered. OTP sent to email",
+      message: emailSent ? "Registered. OTP sent to email" : "Registered. (OTP email failed to send)",
       userId: user._id,
+      otp: emailSent ? undefined : otp
     });
   } catch (err) {
     console.error(err);
