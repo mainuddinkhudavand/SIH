@@ -8,4 +8,16 @@ API.interceptors.request.use(config => {
   return config;
 });
 
+// Handle expired tokens or authorization errors (401) globally
+API.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
 export default API;
