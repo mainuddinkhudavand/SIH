@@ -41,7 +41,7 @@ const PublicInfoPage = () => {
       contact: "health-scheme@example.com",
       img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1000",
       icon: "🩺",
-      link: "https://www.pmjay.gov.in/",
+      link: "https://www.myscheme.gov.in/schemes/pmjay",
       viewLink: "https://www.myscheme.gov.in/schemes/pmjay"
     },
     {
@@ -52,7 +52,7 @@ const PublicInfoPage = () => {
       contact: "edu-scheme@example.com",
       img: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1000",
       icon: "🎓",
-      link: "https://www.scholarships.gov.in/",
+      link: "https://www.myscheme.gov.in/search?category=Education",
       viewLink: "https://www.myscheme.gov.in/search?category=Education"
     },
     {
@@ -63,7 +63,7 @@ const PublicInfoPage = () => {
       contact: "agri-scheme@example.com",
       img: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1000",
       icon: "🌾",
-      link: "https://pmkisan.gov.in/",
+      link: "https://www.myscheme.gov.in/search?category=Agriculture",
       viewLink: "https://www.myscheme.gov.in/search?category=Agriculture"
     },
   ];

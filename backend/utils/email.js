@@ -1,23 +1,29 @@
 import nodemailer from "nodemailer";
 //import statHelpers from "./statHelpers.js";
 
-console.log("SMTP_HOST:", process.env.SMTP_HOST); // debug
-console.log("SMTP_USER:", process.env.SMTP_USER); // debug
+const smtpHost = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
+const smtpPort = Number(process.env.SMTP_PORT || "587");
+const smtpUser = (process.env.SMTP_USER || "pavangoudar503@gmail.com").trim();
+const smtpPass = (process.env.SMTP_PASS || "mtrwpkfcusrwpomt").trim();
+const fromEmail = (process.env.FROM_EMAIL || "Municipality <pavangoudar503@gmail.com>").trim();
+
+console.log("SMTP_HOST:", smtpHost);
+console.log("SMTP_USER:", smtpUser);
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com", // must be smtp.gmail.com // process.env.SMTP_HOST
-  port: Number(587) || 587,
-  secure: false, // Gmail = false with port 587
+  host: smtpHost,
+  port: smtpPort,
+  secure: false,
   auth: {
-    user: "pavangoudar503@gmail.com", //process.env.SMTP_USER
-    pass: "mtrwpkfcusrwpomt", //process.env.SMTP_PASS
+    user: smtpUser,
+    pass: smtpPass,
   },
 });
 
 export const sendEmail = async (to, subject, html) => {
   try {
     const info = await transporter.sendMail({
-      from: "Municipality <pavangoudar503@gmail.com>", //process.env.FROM_EMAIL
+      from: fromEmail,
       to,
       subject,
       html,
