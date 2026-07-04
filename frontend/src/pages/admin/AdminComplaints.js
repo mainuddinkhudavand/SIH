@@ -152,13 +152,13 @@ export default function AdminComplaints() {
                         <div style={{ fontWeight: "800", color: "#0f172a" }}>{c.title}</div>
                         <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "4px" }}>👤 {c.user?.name} | 📅 {new Date(c.createdAt).toLocaleDateString()}</div>
                         
-                        {c.isEscalatedToManager && !c.isEscalatedToAdmin && (
+                        {c.status !== "Completed" && c.isEscalatedToManager && !c.isEscalatedToAdmin && (
                           <div style={{ display: "inline-block", background: "#fef3c7", color: "#d97706", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", marginTop: "6px" }}>
                             ⚠️ Escalated to Manager
                           </div>
                         )}
 
-                        {c.isEscalatedToAdmin && (
+                        {c.status !== "Completed" && c.isEscalatedToAdmin && (
                           <div style={{ background: "#fee2e2", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", border: "1px solid #fecaca", fontSize: "0.8rem", marginTop: "8px" }}>
                             <div style={{ fontWeight: "800" }}>🚨 ESCALATED TO ADMIN</div>
                             <div style={{ fontSize: "0.75rem", color: "#7f1d1d", margin: "2px 0 6px" }}>
