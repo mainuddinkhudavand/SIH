@@ -4,6 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// ✅ Custom red marker icon to fix Leaflet marker visibility issue in React
+const RedIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export default function DepartmentDashboard() {
   const { t } = useTranslation();
@@ -75,7 +86,7 @@ export default function DepartmentDashboard() {
 
   const styles = {
     pageWrapper: { maxWidth: "1400px", margin: "2rem auto", padding: "0 1.5rem", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1e293b" },
-    headerCard: { background: "linear-gradient(135deg, #3b5f3a 0%, #0f172a 100%)", color: "white", padding: "2rem", borderRadius: "20px", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" },
+    headerCard: { background: "linear-gradient(135deg, #3b5f3a 0%, #0f172a 100%)", color: "white", padding: "2rem", borderRadius: "20px", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1.5rem", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" },
     tableContainer: { background: "#ffffff", borderRadius: "20px", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)", overflow: "hidden", border: "1px solid #f1f5f9" },
     table: { width: "100%", borderCollapse: "collapse" },
     th: { background: "#f8fafc", padding: "1.25rem 1.5rem", fontSize: "0.8rem", fontWeight: "800", textTransform: "uppercase", color: "#64748b", borderBottom: "1px solid #e2e8f0", textAlign: "left" },
@@ -132,7 +143,7 @@ export default function DepartmentDashboard() {
             🎉 No active tasks assigned to your department right now!
           </div>
         ) : (
-          <table style={styles.table}>
+          <table className="responsive-table" style={styles.table}>
             <thead>
               <tr>
                 <th style={styles.th}>Issue Details & Citizen Evidence</th>
@@ -144,7 +155,7 @@ export default function DepartmentDashboard() {
             <tbody>
               {complaints.map((c) => (
                 <tr key={c._id}>
-                  <td style={styles.td}>
+                  <td data-label="Issue" style={styles.td}>
                     <strong style={{ color: "#3b5f3a", fontSize: "1.05rem" }}>{c.title}</strong>
                     <div style={{ color: "#64748b", fontSize: "0.85rem", marginTop: "4px" }}>
                       📅 Filed: {new Date(c.createdAt).toLocaleDateString()} <br/>
@@ -169,7 +180,7 @@ export default function DepartmentDashboard() {
                     <p style={{ fontSize: "0.9rem", color: "#334155", marginTop: "10px" }}>{c.description}</p>
                   </td>
 
-                  <td style={styles.td}>
+                  <td data-label="Location" style={styles.td}>
                     <div style={{ background: "#f8fafc", padding: "8px", borderRadius: "8px", fontSize: "0.85rem", marginBottom: "8px" }}>
                       📍 {c.address?.street}, {c.address?.town}
                     </div>
@@ -187,7 +198,7 @@ export default function DepartmentDashboard() {
                           <div style={{ marginTop: "10px", height: "200px", borderRadius: "12px", overflow: "hidden" }}>
                             <MapContainer center={[c.location.coordinates[1], c.location.coordinates[0]]} zoom={15} style={{ height: "100%", width: "100%" }}>
                               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                              <Marker position={[c.location.coordinates[1], c.location.coordinates[0]]}>
+                              <Marker position={[c.location.coordinates[1], c.location.coordinates[0]]} icon={RedIcon}>
                                 <Popup>{c.address?.street}</Popup>
                               </Marker>
                             </MapContainer>
@@ -197,7 +208,7 @@ export default function DepartmentDashboard() {
                     )}
                   </td>
 
-                  <td style={styles.td}>
+                  <td data-label="Worker Proof" style={styles.td}>
                     {c.status === "Completed" && c.resolutionImageUrl ? (
                       <div style={{ background: "#f0fdf4", padding: "10px", borderRadius: "12px", border: "1px solid #bbfcbd" }}>
                         <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#166534" }}>✅ RESOLUTION PHOTO:</span>
@@ -218,7 +229,7 @@ export default function DepartmentDashboard() {
                     )}
                   </td>
 
-                  <td style={styles.td}>
+                  <td data-label="Assignment" style={styles.td}>
                     <div style={styles.badge(c.status)}>{c.status}</div>
 
                     {c.status !== "Completed" && (

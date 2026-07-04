@@ -319,6 +319,7 @@ export default function AdminDashboard() {
                     {/* Complaints table for this month */}
                     <div style={{ overflowX: "auto" }}>
                     <table
+                        className="responsive-table"
                         style={{
                         width: "100%",
                         borderCollapse: "collapse",
@@ -367,10 +368,10 @@ export default function AdminDashboard() {
                                 backgroundColor: "#ffffff",
                                 }}
                             >
-                                <td style={{ padding: "0.6rem" }}>{c.user?.name}</td>
-                                <td style={{ padding: "0.6rem" }}>{c.user?.phone}</td>
-                                <td style={{ padding: "0.6rem" }}>{c.title}</td>
-                                <td style={{ padding: "0.6rem" }}>
+                                <td data-label={t("user")} style={{ padding: "0.6rem" }}>{c.user?.name}</td>
+                                <td data-label={t("phone")} style={{ padding: "0.6rem" }}>{c.user?.phone}</td>
+                                <td data-label={t("title")} style={{ padding: "0.6rem" }}>{c.title}</td>
+                                <td data-label={t("status")} style={{ padding: "0.6rem" }}>
                                 <span
                                     style={{
                                     display: "inline-block",
@@ -408,7 +409,7 @@ export default function AdminDashboard() {
                                     {t(c.status.toLowerCase()) || c.status}
                                 </span>
                                 </td>
-                                <td style={{ padding: "0.6rem" }}>
+                                <td data-label={t("action")} style={{ padding: "0.6rem" }}>
                                 <select
                                     value={c.status}
                                     onChange={(e) => updateStatus(c._id, e.target.value)}

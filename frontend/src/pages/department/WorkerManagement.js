@@ -100,7 +100,7 @@ export default function WorkerManagement() {
 
   const styles = {
     pageWrapper: { maxWidth: "1200px", margin: "2rem auto", padding: "0 1.5rem", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1e293b" },
-    headerCard: { background: "linear-gradient(135deg, #1e293b 0%, #3b5f3a 100%)", color: "white", padding: "2rem", borderRadius: "20px", marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center" },
+    headerCard: { background: "linear-gradient(135deg, #1e293b 0%, #3b5f3a 100%)", color: "white", padding: "2rem", borderRadius: "20px", marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" },
     gridContainer: { display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem", alignItems: "start" },
     card: { background: "#ffffff", borderRadius: "20px", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)", padding: "2rem", border: "1px solid #f1f5f9" },
     formInput: { width: "100%", padding: "0.75rem", borderRadius: "10px", border: "2px solid #e2e8f0", marginBottom: "1rem", fontSize: "0.9rem", boxSizing: "border-box" },
@@ -177,7 +177,7 @@ export default function WorkerManagement() {
         </button>
       </div>
 
-      <div style={styles.gridContainer}>
+      <div className="responsive-grid-container" style={styles.gridContainer}>
         {/* LEFT COLUMN: Create Form */}
         <div style={styles.card}>
           <h3 style={{ marginTop: 0, marginBottom: "1.5rem", fontSize: "1.2rem", color: "#0f172a" }}>➕ Add New Worker</h3>
@@ -209,7 +209,7 @@ export default function WorkerManagement() {
           {loading ? (
             <p style={{ padding: "2rem", textAlign: "center", color: "#64748b" }}>Loading workers...</p>
           ) : (
-            <table style={styles.table}>
+            <table className="responsive-table" style={styles.table}>
               <thead>
                 <tr>
                   <th style={styles.th}>Worker Details</th>
@@ -227,12 +227,12 @@ export default function WorkerManagement() {
                     onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
                     title="Click to view analytics"
                   >
-                    <td style={{ ...styles.td, fontWeight: "bold", color: "#0f172a" }}>👷 {w.name}</td>
-                    <td style={styles.td}>
+                    <td data-label="Worker" style={{ ...styles.td, fontWeight: "bold", color: "#0f172a" }}>👷 {w.name}</td>
+                    <td data-label="Contact" style={styles.td}>
                       <div style={{ color: "#334155" }}>{w.email}</div>
                       <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "4px" }}>📞 {w.phone}</div>
                     </td>
-                    <td style={styles.td}>
+                    <td data-label="Created" style={styles.td}>
                       {new Date(w.createdAt).toLocaleDateString()}
                     </td>
                   </tr>

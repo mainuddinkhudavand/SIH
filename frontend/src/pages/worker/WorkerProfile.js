@@ -444,7 +444,7 @@ export default function WorkerProfile() {
 
           {isEditing ? (
             <form onSubmit={handleSaveDetails}>
-              <div style={styles.infoGrid}>
+              <div className="responsive-grid-container" style={styles.infoGrid}>
                 <div style={styles.infoBlock}>
                   <label style={styles.label}>Full Name</label>
                   <input
@@ -491,7 +491,7 @@ export default function WorkerProfile() {
               </div>
             </form>
           ) : (
-            <div style={styles.infoGrid}>
+            <div className="responsive-grid-container" style={styles.infoGrid}>
               <div style={styles.infoBlock}>
                 <span style={styles.label}>Email Address</span>
                 <span style={styles.value}>{worker.email}</span>
@@ -512,7 +512,7 @@ export default function WorkerProfile() {
             ⭐ Performance Rating
           </h3>
 
-          <div style={styles.statsGrid}>
+          <div className="responsive-grid-container" style={styles.statsGrid}>
             {/* Rating Summary Card */}
             <div style={styles.ratingSummaryCard}>
               <h2 style={styles.ratingNum}>{performance?.averageRating}</h2>

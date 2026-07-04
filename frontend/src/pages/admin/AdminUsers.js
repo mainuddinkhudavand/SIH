@@ -122,7 +122,7 @@ export default function AdminUsers() {
   // --- Styles ---
   const styles = {
     container: { maxWidth: "1300px", margin: "2rem auto", padding: "0 1.5rem", fontFamily: "'Inter', sans-serif", color: "#1e293b" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" },
+    header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" },
     filterCard: { background: "#ffffff", borderRadius: "16px", padding: "1.5rem", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", marginBottom: "2rem" },
     inputGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" },
     input: { padding: "0.7rem", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.9rem", outlineColor: "#3b82f6" },
@@ -178,7 +178,7 @@ export default function AdminUsers() {
 
       {/* Table Area */}
       <div style={{ overflowX: "auto" }}>
-        <table style={styles.table}>
+        <table className="responsive-table" style={styles.table}>
           <thead>
             <tr>
               <th style={styles.th}>User Info</th>
@@ -193,20 +193,20 @@ export default function AdminUsers() {
               const status = getKycStatus(u);
               return (
                 <tr key={u._id} style={styles.tr}>
-                  <td style={{...styles.td, borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px'}}>
+                  <td data-label="User Info" style={{...styles.td, borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px'}}>
                     <div style={{fontWeight: 700}}>{u.name}</div>
                     <div style={{fontSize: '0.8rem', color: '#64748b'}}>{u.email}</div>
                   </td>
-                  <td style={styles.td}>{u.phone || "N/A"}</td>
-                  <td style={styles.td}>
+                  <td data-label="Contact" style={styles.td}>{u.phone || "N/A"}</td>
+                  <td data-label="KYC Status" style={styles.td}>
                     <span style={styles.badge(status)}>{status}</span>
                   </td>
-                  <td style={styles.td}>
+                  <td data-label="Complaints" style={styles.td}>
                     <div style={{background: '#f8fafc', padding: '4px 10px', borderRadius: '6px', display: 'inline-block', fontWeight: '600'}}>
                         {userComplaintCounts[u._id] || 0}
                     </div>
                   </td>
-                  <td style={{...styles.td, borderTopRightRadius: '12px', borderBottomRightRadius: '12px'}}>
+                  <td data-label="Action" style={{...styles.td, borderTopRightRadius: '12px', borderBottomRightRadius: '12px'}}>
                     <button style={{...styles.btnSecondary, padding: '0.5rem 1rem'}} onClick={() => handleUserClick(u)}>View</button>
                   </td>
                 </tr>

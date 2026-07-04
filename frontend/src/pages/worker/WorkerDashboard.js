@@ -201,7 +201,7 @@ export default function WorkerDashboard() {
   // --- Styles ---
   const styles = {
     wrapper: { maxWidth: "800px", margin: "0 auto", padding: "1rem", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1e293b", paddingBottom: "5rem" },
-    header: { background: "#3b5f3a", color: "white", padding: "1.5rem", borderRadius: "16px", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" },
+    header: { background: "#3b5f3a", color: "white", padding: "1.5rem", borderRadius: "16px", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" },
     taskCard: { background: "#ffffff", borderRadius: "16px", padding: "1.5rem", marginBottom: "1.5rem", boxShadow: "0 4px 15px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" },
     badge: (status) => ({ background: status === "Completed" ? "#dcfce7" : "#eff6ff", color: status === "Completed" ? "#166534" : "#3b5f3a", padding: "0.4rem 0.8rem", borderRadius: "8px", fontSize: "0.75rem", fontWeight: "800", display: "inline-block", marginBottom: "10px" }),
     btnBlue: { background: "#3b5f3a", color: "#fff", border: "none", borderRadius: "10px", padding: "0.85rem", cursor: "pointer", fontWeight: "800", width: "100%", fontSize: "1rem", marginTop: "1rem" },
@@ -219,10 +219,10 @@ export default function WorkerDashboard() {
           <p style={{ margin: "5px 0 0 0", color: "#94a3b8", fontSize: "0.9rem" }}>Welcome, {workerInfo.name}</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={() => navigate("/worker/profile")} style={{ background: "none", border: "1px solid #ffffff", color: "white", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" }}>
+          <button onClick={() => navigate("/worker/profile")} style={{ background: "#ffffff", border: "none", color: "#3b5f3a", padding: "8px 12px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>
             👤 My Profile
           </button>
-          <button onClick={handleLogout} style={{ background: "none", border: "1px solid #cbd5e1", color: "white", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" }}>
+          <button onClick={handleLogout} style={{ background: "#ef4444", border: "none", color: "white", padding: "8px 12px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>
             Logout
           </button>
         </div>

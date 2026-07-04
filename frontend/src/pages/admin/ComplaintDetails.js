@@ -3,6 +3,17 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// ✅ Custom red marker icon to fix Leaflet marker visibility issue in React
+const RedIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export default function ComplaintDetails() {
   const { id } = useParams();
@@ -29,12 +40,12 @@ export default function ComplaintDetails() {
       <p><strong>Description:</strong> {complaint.description}</p>
       <p><strong>Status:</strong> {complaint.status}</p>
       <p><strong>User:</strong> {complaint.user?.name} ({complaint.user?.email})</p>
-      <p><strong>Location:</strong> {complaint.location?.address}</p>
+      <p><strong>Location:</strong> {complaint.address ? `${complaint.address.street}, ${complaint.address.town}, ${complaint.address.district || ""}` : "N/A"}</p>
 
-      {complaint.location?.lat && complaint.location?.lng && (
+      {complaint.location?.coordinates && complaint.location.coordinates.length === 2 && (
         <div style={{ marginTop: "1rem" }}>
           <MapContainer
-            center={[complaint.location.lat, complaint.location.lng]}
+            center={[complaint.location.coordinates[1], complaint.location.coordinates[0]]}
             zoom={14}
             style={{ height: "400px", width: "100%" }}
           >
@@ -42,9 +53,9 @@ export default function ComplaintDetails() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
-            <Marker position={[complaint.location.lat, complaint.location.lng]}>
+            <Marker position={[complaint.location.coordinates[1], complaint.location.coordinates[0]]} icon={RedIcon}>
               <Popup>
-                {complaint.location.address || "Complaint Location"}
+                {complaint.address ? `${complaint.address.street}, ${complaint.address.town}` : "Complaint Location"}
               </Popup>
             </Marker>
           </MapContainer>

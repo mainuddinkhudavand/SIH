@@ -45,7 +45,7 @@
   align-items: center;
   gap: 0.5rem;
   margin-top: 2rem;
-  flex-wrap: nowrap; /* 🚀 FORCED: Strict single row, no wrapping */
+  flex-wrap: wrap; /* 🚀 Allow wrap to fit small tablets and responsive sizes */
   max-width: 1100px;
   margin-left: auto;
   margin-right: auto;

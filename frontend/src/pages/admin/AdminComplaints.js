@@ -3,6 +3,17 @@ import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// ✅ Custom red marker icon to fix Leaflet marker visibility issue in React
+const RedIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export default function AdminComplaints() {
   const { t } = useTranslation();
@@ -92,7 +103,7 @@ export default function AdminComplaints() {
 
   const styles = {
     pageWrapper: { maxWidth: "1600px", margin: "2rem auto", padding: "0 1.5rem", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1e293b" },
-    headerSection: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)", padding: "1.5rem 2.5rem", borderRadius: "24px", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)", border: "1px solid #ffffff" },
+    headerSection: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem", background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)", padding: "1.5rem 2.5rem", borderRadius: "24px", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)", border: "1px solid #ffffff" },
     refreshBtn: { background: "#3b5f3a", color: "#ffffff", border: "none", padding: "0.75rem 1.5rem", borderRadius: "12px", fontWeight: "700", cursor: "pointer" },
     tableContainer: { background: "#ffffff", borderRadius: "24px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.04)", overflow: "hidden", border: "1px solid #f1f5f9" },
     table: { width: "100%", borderCollapse: "collapse" },
@@ -123,7 +134,7 @@ export default function AdminComplaints() {
           <div style={{ textAlign: "center", padding: "6rem 2rem", fontWeight: "bold", color: "#64748b" }}>Loading system records...</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={styles.table}>
+            <table className="responsive-table" style={styles.table}>
               <thead>
                 <tr>
                   <th style={styles.th}>Issue Details & Evidence</th>
@@ -137,7 +148,7 @@ export default function AdminComplaints() {
                   complaints.map((c) => (
                     <tr key={c._id}>
                       {/* COLUMN 1: Initial Evidence */}
-                      <td style={{ ...styles.td, maxWidth: "300px" }}>
+                      <td data-label="Issue" style={{ ...styles.td, maxWidth: "300px" }}>
                         <div style={{ fontWeight: "800", color: "#0f172a" }}>{c.title}</div>
                         <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "4px" }}>👤 {c.user?.name} | 📅 {new Date(c.createdAt).toLocaleDateString()}</div>
                         
@@ -176,7 +187,7 @@ export default function AdminComplaints() {
                       </td>
 
                       {/* COLUMN 2: Location */}
-                      <td style={styles.td}>
+                      <td data-label="Location" style={styles.td}>
                         <div style={{ background: "#f1f5f9", padding: "8px 12px", borderRadius: "12px", fontSize: "0.85rem", marginBottom: "8px" }}>
                           📍 {c.address ? `${c.address.street}, ${c.address.town}` : "N/A"}
                         </div>
@@ -189,14 +200,14 @@ export default function AdminComplaints() {
                            <div style={{ marginTop: "10px", height: "150px", borderRadius: "12px", overflow: "hidden" }}>
                               <MapContainer center={[c.location.coordinates[1], c.location.coordinates[0]]} zoom={15} style={{ height: "100%", width: "100%" }}>
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                <Marker position={[c.location.coordinates[1], c.location.coordinates[0]]} />
+                                <Marker position={[c.location.coordinates[1], c.location.coordinates[0]]} icon={RedIcon} />
                               </MapContainer>
                            </div>
                         )}
                       </td>
 
                       {/* 🚀 COLUMN 3: Worker's Resolution Proof */}
-                      <td style={{ ...styles.td, minWidth: "200px" }}>
+                      <td data-label="Resolution" style={{ ...styles.td, minWidth: "200px" }}>
                         {c.status === "Completed" && c.resolutionImageUrl ? (
                           <div style={{ background: "#f0fdf4", padding: "10px", borderRadius: "12px", border: "1px solid #bbfcbd" }}>
                             <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#166534" }}>WORKER PROOF:</span><br/>
@@ -220,7 +231,7 @@ export default function AdminComplaints() {
                       </td>
 
                       {/* 🚀 COLUMN 4: Admin Actions */}
-                      <td style={{ ...styles.td, minWidth: "220px" }}>
+                      <td data-label="Action" style={{ ...styles.td, minWidth: "220px" }}>
                         <div style={styles.badge(c.status)}>{c.status}</div>
 
                         {/* Status Assignment */}

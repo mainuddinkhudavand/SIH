@@ -117,7 +117,7 @@ export default function AdminDepartments() {
     <div style={styles.pageWrapper}>
       <h1 style={styles.header}> Manage Departments</h1>
       
-      <div style={styles.grid}>
+      <div className="responsive-grid-container" style={styles.grid}>
         {/* CREATE DEPARTMENT FORM */}
         <div style={styles.card}>
           <h2 style={{ marginTop: 0, fontSize: "1.2rem", fontWeight: "800" }}>Add New Department</h2>

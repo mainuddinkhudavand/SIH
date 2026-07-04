@@ -202,7 +202,7 @@ export default function AdminEscalations() {
       ) : (
         complaints.map(c => (
           <div key={c._id} style={styles.card}>
-            <div style={styles.grid}>
+            <div className="responsive-grid-container" style={styles.grid}>
               {/* Left Side: Complaint details */}
               <div>
                 <span style={{ ...styles.badge, background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a", display: "inline-block", marginBottom: "10px" }}>
