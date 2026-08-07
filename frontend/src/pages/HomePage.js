@@ -1,7 +1,7 @@
 // src/pages/HomePage.js
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from "react-i18next";
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import "./styles/HomePage.css";
 import "./styles/Notification.css";
 
@@ -121,6 +121,7 @@ const ProjectVideoSection = ({ t }) => (
 const HomePage = () => {
   const { t } = useTranslation(); // ✅ translation hook
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Notification + auth simulation (frontend-only)
   const [showNotification, setShowNotification] = useState(true);
@@ -317,13 +318,13 @@ const HomePage = () => {
             <h1>{t("heroTitle")}</h1>
             <p>{t("heroSubtitle")}</p>
             <div className="login-section">
-              <a href="/login" className="login-citizen-btn">{t("loginCitizen")}</a>
-              <a href="/admin/login" className="login-admin-btn">{t("loginAdmin")}</a>
-              <a href="/department/login" className="login-department-btn">{t("loginDepartment") || "Login as Department"}</a>
-              <a href="/worker/login" className="login-worker-btn">
+              <Link to="/login" className="login-citizen-btn">{t("loginCitizen")}</Link>
+              <Link to="/admin/login" className="login-admin-btn">{t("loginAdmin")}</Link>
+              <Link to="/department/login" className="login-department-btn">{t("loginDepartment") || "Login as Department"}</Link>
+              <Link to="/worker/login" className="login-worker-btn">
                 {t("loginWorker", { defaultValue: "Login as Worker" })}
-              </a>
-              <a href="/manager/login" className="login-manager-btn">{t("loginManager") || "Login as Manager"}</a>
+              </Link>
+              <Link to="/manager/login" className="login-manager-btn">{t("loginManager") || "Login as Manager"}</Link>
             </div>
           </section>
 
@@ -586,7 +587,7 @@ const HomePage = () => {
     <div style={{ marginTop: 12 }}>
       {!isLoggedIn ? (
         <button
-          onClick={() => { window.location.href = '/worker/login'; }}
+          onClick={() => navigate('/worker/login')}
           className="notification-action"
           style={{
             backgroundColor: "#030a05",
