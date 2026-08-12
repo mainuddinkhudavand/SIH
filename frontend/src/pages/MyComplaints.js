@@ -3,6 +3,7 @@ import API from '../services/api';
 import { useTranslation } from "react-i18next";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getMediaUrl } from "../utils/url";
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -150,23 +151,23 @@ export default function MyComplaints() {
                 <div style={{ background: "#f3f4f6", padding: "8px", borderRadius: "10px" }}>
                   <p style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#6b7280", margin: "0 0 5px 0" }}>📸 REPORTED ISSUE</p>
                   <img 
-                    src={`${BACKEND_URL}${c.imageUrl}`} 
+                    src={getMediaUrl(c.imageUrl)} 
                     alt="Citizen Evidence" 
                     style={{ width: "130px", height: "90px", objectFit: "cover", borderRadius: "8px", cursor: "pointer", border: "1px solid #d1d5db" }} 
-                    onClick={() => setSelectedImage(`${BACKEND_URL}${c.imageUrl}`)}
+                    onClick={() => setSelectedImage(getMediaUrl(c.imageUrl))}
                   />
                 </div>
               )}
 
               {/* After Photo (Worker's Proof) */}
-              {c.status === "Completed" && c.resolutionImageUrl && (
+              {(c.resolutionImageUrl || c.status === "Completed") && c.resolutionImageUrl && (
                 <div style={{ background: "#f0fdf4", padding: "8px", borderRadius: "10px", border: "1px solid #bbfcbd" }}>
                   <p style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#16a34a", margin: "0 0 5px 0" }}>✅ COMPLETED WORK</p>
                   <img 
-                    src={`${BACKEND_URL}${c.resolutionImageUrl}`} 
+                    src={getMediaUrl(c.resolutionImageUrl)} 
                     alt="Resolution Evidence" 
                     style={{ width: "130px", height: "90px", objectFit: "cover", borderRadius: "8px", cursor: "pointer", border: "2px solid #16a34a" }} 
-                    onClick={() => setSelectedImage(`${BACKEND_URL}${c.resolutionImageUrl}`)}
+                    onClick={() => setSelectedImage(getMediaUrl(c.resolutionImageUrl))}
                   />
                 </div>
               )}

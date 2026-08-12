@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { getMediaUrl } from "../../utils/url";
 
 // ✅ Custom red marker icon to fix Leaflet marker visibility issue in React
 const RedIcon = new L.Icon({
@@ -166,10 +167,10 @@ export default function DepartmentDashboard() {
                       <div style={{ marginTop: "12px" }}>
                         <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#64748b" }}>📸 CITIZEN EVIDENCE:</span>
                         <img 
-                          src={`${BACKEND_URL}${c.imageUrl}`} 
+                          src={getMediaUrl(c.imageUrl)} 
                           alt="Evidence" 
                           style={styles.evidenceThumb}
-                          onClick={() => setSelectedImage(`${BACKEND_URL}${c.imageUrl}`)}
+                          onClick={() => setSelectedImage(getMediaUrl(c.imageUrl))}
                           title="Click to view full image"
                         />
                       </div>

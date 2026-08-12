@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { getMediaUrl } from "../../utils/url";
 
 // ✅ Custom red marker icon to fix Leaflet marker visibility issue in React
 const RedIcon = new L.Icon({
@@ -180,7 +181,7 @@ export default function AdminComplaints() {
                         {c.imageUrl ? (
                           <div style={{ margin: "10px 0" }}>
                             <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: "800" }}>CITIZEN PHOTO:</span><br/>
-                            <img src={`${BACKEND_URL}${c.imageUrl}`} alt="Captured" style={styles.evidenceThumb} onClick={() => setSelectedImage(`${BACKEND_URL}${c.imageUrl}`)} />
+                            <img src={getMediaUrl(c.imageUrl)} alt="Captured" style={styles.evidenceThumb} onClick={() => setSelectedImage(getMediaUrl(c.imageUrl))} />
                           </div>
                         ) : (
                           <div style={{ marginTop: "10px", fontSize: "0.75rem", color: "#94a3b8", fontStyle: "italic" }}>No photo evidence.</div>
@@ -210,10 +211,10 @@ export default function AdminComplaints() {
 
                       {/* 🚀 COLUMN 3: Worker's Resolution Proof */}
                       <td data-label="Resolution" style={{ ...styles.td, minWidth: "200px" }}>
-                        {c.status === "Completed" && c.resolutionImageUrl ? (
+                        {(c.resolutionImageUrl || c.status === "Completed") ? (
                           <div style={{ background: "#f0fdf4", padding: "10px", borderRadius: "12px", border: "1px solid #bbfcbd" }}>
                             <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#166534" }}>WORKER PROOF:</span><br/>
-                            <img src={`${BACKEND_URL}${c.resolutionImageUrl}`} alt="Resolution" style={styles.evidenceThumb} onClick={() => setSelectedImage(`${BACKEND_URL}${c.resolutionImageUrl}`)} />
+                            <img src={getMediaUrl(c.resolutionImageUrl)} alt="Resolution" style={styles.evidenceThumb} onClick={() => setSelectedImage(getMediaUrl(c.resolutionImageUrl))} />
                             <p style={{ fontSize: "0.8rem", color: "#166534", marginTop: "8px", fontStyle: "italic" }}>"{c.workerMessage}"</p>
                             
                             {/* Department Verification Badge */}

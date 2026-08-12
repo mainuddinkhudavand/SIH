@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { getMediaUrl } from "../utils/url";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -339,7 +340,7 @@ export default function Profile() {
             <div style={styles.avatar}>
               {user.profilePictureUrl ? (
                 <img
-                  src={`${BACKEND_URL}${user.profilePictureUrl}`}
+                  src={getMediaUrl(user.profilePictureUrl)}
                   alt="Profile"
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { getMediaUrl } from "../../utils/url";
 
 export default function WorkerProfile() {
   const [worker, setWorker] = useState(null);
@@ -410,7 +411,7 @@ export default function WorkerProfile() {
             <div style={styles.avatar}>
               {worker.profilePictureUrl ? (
                 <img
-                  src={`${BACKEND_URL}${worker.profilePictureUrl}`}
+                  src={getMediaUrl(worker.profilePictureUrl)}
                   alt="Profile"
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />

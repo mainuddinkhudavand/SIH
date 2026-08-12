@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { getMediaUrl } from "../../utils/url";
 
 // ✅ Custom markers
 const BlueIcon = new L.Icon({
@@ -252,7 +253,7 @@ export default function WorkerDashboard() {
             {task.imageUrl && (
               <div style={{ marginTop: "15px" }}>
                 <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#64748b" }}>REPORTED ISSUE:</span>
-                <img src={`${BACKEND_URL}${task.imageUrl}`} alt="Reported Issue" style={styles.citizenImg} />
+                <img src={getMediaUrl(task.imageUrl)} alt="Reported Issue" style={styles.citizenImg} />
               </div>
             )}
 
