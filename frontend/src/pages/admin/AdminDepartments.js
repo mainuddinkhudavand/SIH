@@ -142,6 +142,7 @@ export default function AdminDepartments() {
               placeholder="Department Name (e.g., Water Board)" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
+              autoComplete="organization"
               required 
             />
             <input 
@@ -150,6 +151,7 @@ export default function AdminDepartments() {
               placeholder="Login Email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
+              autoComplete="username"
               required 
             />
             <input 
@@ -158,6 +160,7 @@ export default function AdminDepartments() {
               placeholder="Initial Password" 
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
+              autoComplete="new-password"
               required 
               minLength={6}
             />

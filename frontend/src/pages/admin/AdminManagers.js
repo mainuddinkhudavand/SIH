@@ -250,6 +250,7 @@ export default function AdminManagers() {
               placeholder="Manager Full Name" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
+              autoComplete="name"
               required 
             />
             <input 
@@ -258,6 +259,7 @@ export default function AdminManagers() {
               placeholder="Login Email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
+              autoComplete="username"
               required 
             />
             <input 
@@ -266,9 +268,9 @@ export default function AdminManagers() {
               placeholder="Initial Password" 
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
+              autoComplete="new-password"
               required 
               minLength={6}
-              autoComplete="new-password"
             />
 
             {/* District Selection Preset */}
