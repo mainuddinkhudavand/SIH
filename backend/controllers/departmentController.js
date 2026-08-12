@@ -36,11 +36,12 @@ export const departmentLogin = async (req, res) => {
 // ✅ Get Complaints assigned to this specific Department
 export const getMyComplaints = async (req, res) => {
   try {
-    // req.departmentId will come from our authentication middleware later
-    const departmentId = req.departmentId; 
+    // req.departmentId or req.user._id from auth middleware
+    const departmentId = req.departmentId || req.user?._id; 
 
     const complaints = await Complaint.find({ department: departmentId })
       .populate("user", "name phone") // Get citizen info
+      .populate("worker", "name phone") // Get assigned worker info
       .sort({ createdAt: -1 }); // Newest first
 
     res.status(200).json({ complaints });

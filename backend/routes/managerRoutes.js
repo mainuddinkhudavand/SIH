@@ -117,39 +117,44 @@ router.put("/complaints/:id/warn-resend", auth, async (req, res) => {
 
     await complaint.save();
 
-    // Send warning email to the department
-    try {
-      await sendEmail(
-        complaint.department.email,
-        `⚠️ ESCALATED WARNING: Complaint Resent by District Manager`,
-        `<p>Dear Department Officers,</p>
-         <p>District Manager <b>${manager.name}</b> has resent complaint titled <b>"${complaint.title}"</b> back to your queue with a warning:</p>
-         <p style="background:#fef2f2; color:#b91c1c; padding:12px; border-radius:6px; border-left:4px solid #ef4444; font-weight:600;">
-           "${complaint.managerWarningMessage}"
-         </p>
-         <p>You have been granted another <b>48 hours</b> to resolve this complaint. Please take action immediately to avoid administrative sanctions.</p>`
-      );
-    } catch (mailErr) {
-      console.error("Email to department failed:", mailErr);
+    // Send warning email to the department safely
+    if (complaint.department && complaint.department.email) {
+      try {
+        await sendEmail(
+          complaint.department.email,
+          `⚠️ ESCALATED WARNING: Complaint Resent by District Manager`,
+          `<p>Dear Department Officers,</p>
+           <p>District Manager <b>${manager.name || "Manager"}</b> has resent complaint titled <b>"${complaint.title}"</b> back to your queue with a warning:</p>
+           <p style="background:#fef2f2; color:#b91c1c; padding:12px; border-radius:6px; border-left:4px solid #ef4444; font-weight:600;">
+             "${complaint.managerWarningMessage}"
+           </p>
+           <p>You have been granted another <b>48 hours</b> to resolve this complaint. Please take action immediately to avoid administrative sanctions.</p>`
+        );
+      } catch (mailErr) {
+        console.error("Email to department failed (non-blocking):", mailErr);
+      }
     }
 
-    // Notify user that their complaint is resent with warning
-    try {
-      await sendEmail(
-        complaint.user.email,
-        "Complaint Status Update: District Manager Warns Department",
-        `<p>Dear ${complaint.user.name},</p>
-         <p>Your complaint titled <b>"${complaint.title}"</b> has been reviewed by District Manager <b>${manager.name}</b>.</p>
-         <p>The manager has officially warned the <b>${complaint.department.name}</b> department and resent the case back to their queue. They have been given another 48 hours to complete it.</p>`
-      );
-    } catch (mailErr) {
-      console.error("Email to citizen failed:", mailErr);
+    // Notify user that their complaint is resent with warning safely
+    if (complaint.user && complaint.user.email) {
+      try {
+        const deptName = complaint.department?.name || "Department";
+        await sendEmail(
+          complaint.user.email,
+          "Complaint Status Update: District Manager Warns Department",
+          `<p>Dear ${complaint.user.name || "Citizen"},</p>
+           <p>Your complaint titled <b>"${complaint.title}"</b> has been reviewed by District Manager <b>${manager.name || "Manager"}</b>.</p>
+           <p>The manager has officially warned the <b>${deptName}</b> department and resent the case back to their queue. They have been given another 48 hours to complete it.</p>`
+        );
+      } catch (mailErr) {
+        console.error("Email to citizen failed (non-blocking):", mailErr);
+      }
     }
 
-    res.status(200).json({ message: "Complaint resent to department with warning successfully", complaint });
+    return res.status(200).json({ message: "Complaint resent to department with warning successfully", complaint });
   } catch (error) {
     console.error("Warn & Resend Error:", error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 

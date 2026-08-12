@@ -65,6 +65,7 @@ export default function AdminComplaints() {
       fetchComplaints();
     } catch (err) {
       console.error("Update Error:", err);
+      alert(err.response?.data?.message || "Failed to update complaint status.");
     }
   };
 
@@ -74,6 +75,7 @@ export default function AdminComplaints() {
       fetchComplaints();
     } catch (err) {
       console.error("Assign Error:", err);
+      alert(err.response?.data?.message || "Failed to assign department.");
     }
   };
 

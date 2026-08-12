@@ -8,10 +8,10 @@ export default function WorkerComplaints() {
   useEffect(() => {
     const fetchComplaints = async () => {
       const token = localStorage.getItem("workerToken");
-      const res = await axios.get(`${BACKEND_URL}/api/worker/complaints`, {
+      const res = await axios.get(`${BACKEND_URL}/api/worker/my-tasks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setComplaints(res.data);
+      setComplaints(res.data.complaints || res.data || []);
     };
     fetchComplaints();
   }, []);

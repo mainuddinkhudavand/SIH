@@ -58,21 +58,24 @@ export const updateComplaintStatus = async (req, res) => {
     complaint.status = status;
     await complaint.save();
 
-    // Notify user via email
-    try {
-      await sendEmail(
-        complaint.user.email,
-        "Complaint Status Updated",
-        `<p>Dear ${complaint.user.name},</p>
-         <p>Your complaint titled <b>${complaint.title}</b> is now <b>${status}</b>.</p>`
-      );
-    } catch (mailErr) {
-      console.error("Email send failed:", mailErr);
+    // Notify user via email safely
+    if (complaint.user && complaint.user.email) {
+      try {
+        await sendEmail(
+          complaint.user.email,
+          "Complaint Status Updated",
+          `<p>Dear ${complaint.user.name || "Citizen"},</p>
+           <p>Your complaint titled <b>${complaint.title}</b> status is now set to <b>${status}</b>.</p>`
+        );
+      } catch (mailErr) {
+        console.error("Email send failed (non-blocking):", mailErr);
+      }
     }
 
-    res.json({ message: "Complaint updated successfully", complaint });
+    return res.json({ message: "Complaint updated successfully", complaint });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Update complaint status error:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
@@ -211,22 +214,25 @@ export const assignComplaintToDepartment = async (req, res) => {
 
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-    // Send an email letting the user know their issue was assigned to a specific department
-    try {
-      await sendEmail(
-        complaint.user.email,
-        "Complaint Assigned to Department",
-        `<p>Dear ${complaint.user.name},</p>
-         <p>Your complaint titled <b>${complaint.title}</b> has been assigned to the <b>${complaint.department.name}</b> and is currently being processed.</p>`
-      );
-    } catch (mailErr) {
-      console.error("Email send failed:", mailErr);
+    // Send an email safely
+    if (complaint.user && complaint.user.email) {
+      try {
+        const deptName = complaint.department?.name || "Department";
+        await sendEmail(
+          complaint.user.email,
+          "Complaint Assigned to Department",
+          `<p>Dear ${complaint.user.name || "Citizen"},</p>
+           <p>Your complaint titled <b>${complaint.title}</b> has been assigned to <b>${deptName}</b> and is currently being processed.</p>`
+        );
+      } catch (mailErr) {
+        console.error("Email send failed (non-blocking):", mailErr);
+      }
     }
 
-    res.status(200).json({ message: "Complaint assigned successfully", complaint });
+    return res.status(200).json({ message: "Complaint assigned successfully", complaint });
   } catch (error) {
     console.error("Assign Complaint Error:", error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -248,23 +254,25 @@ export const confirmComplaintCompletion = async (req, res) => {
     
     await complaint.save();
 
-    // Send a final resolution email to the citizen
-    try {
-      await sendEmail(
-        complaint.user.email,
-        "Grievance Officially Resolved 🎉",
-        `<p>Dear ${complaint.user.name},</p>
-         <p>Good news! Your complaint titled <b>${complaint.title}</b> has been successfully resolved by the assigned department and confirmed by the administration.</p>
-         <p>Thank you for helping us keep our community great!</p>`
-      );
-    } catch (mailErr) {
-      console.error("Email send failed:", mailErr);
+    // Send a final resolution email safely
+    if (complaint.user && complaint.user.email) {
+      try {
+        await sendEmail(
+          complaint.user.email,
+          "Grievance Officially Resolved 🎉",
+          `<p>Dear ${complaint.user.name || "Citizen"},</p>
+           <p>Good news! Your complaint titled <b>${complaint.title}</b> has been successfully resolved by the assigned department and confirmed by the administration.</p>
+           <p>Thank you for helping us keep our community great!</p>`
+        );
+      } catch (mailErr) {
+        console.error("Email send failed (non-blocking):", mailErr);
+      }
     }
 
-    res.status(200).json({ message: "Completion confirmed successfully", complaint });
+    return res.status(200).json({ message: "Completion confirmed successfully", complaint });
   } catch (error) {
     console.error("Confirm Completion Error:", error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
