@@ -7,6 +7,12 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
+import fs from "fs";
+
+// Ensure uploads folder exists
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads", { recursive: true });
+}
 
 // Routes
 import authRoutes from "./routes/auth.js";
@@ -47,6 +53,15 @@ app.get("/", (req, res) => {
   res.json({ message: "E-Gram Panchayat API is running..." });
 });
 
+// Global Error Handler Middleware (Catches Multer & Upload Errors)
+app.use((err, req, res, next) => {
+  console.error("Express Error Handler caught:", err);
+  if (err.name === "MulterError" || err.message?.includes("image")) {
+    return res.status(400).json({ message: err.message || "File upload error" });
+  }
+  return res.status(500).json({ message: err.message || "Internal Server Error" });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -56,4 +71,5 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
 

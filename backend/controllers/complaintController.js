@@ -21,11 +21,20 @@ export const createComplaint = async (req, res) => {
       return res.status(400).json({ message: "Complete KYC verification to raise complaints." });
     }
 
-    const parsedAddress = JSON.parse(address);
+    let parsedAddress = {};
+    if (typeof address === 'string') {
+      try { parsedAddress = JSON.parse(address); } catch (e) { parsedAddress = {}; }
+    } else if (typeof address === 'object' && address !== null) {
+      parsedAddress = address;
+    }
+
     // Overwrite complaint district with the citizen's selected KYC district
     if (user.address && user.address.district) {
       parsedAddress.district = user.address.district;
     }
+
+    const lngNum = Number(lng);
+    const latNum = Number(lat);
 
     // 3. Create the complaint
     const newComplaint = new Complaint({
@@ -37,7 +46,10 @@ export const createComplaint = async (req, res) => {
       address: parsedAddress, // Parse the address string back to an object
       location: {
         type: "Point",
-        coordinates: [parseFloat(lng), parseFloat(lat)] // MongoDB needs [Longitude, Latitude]
+        coordinates: [
+          isNaN(lngNum) ? 0 : Math.max(-180, Math.min(180, lngNum)),
+          isNaN(latNum) ? 0 : Math.max(-90, Math.min(90, latNum))
+        ]
       }
     });
 

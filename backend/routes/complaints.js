@@ -25,23 +25,57 @@ router.post("/", auth, upload.single("image"), async (req, res) => {
     // Prepare image path for DB
     const imageUrl = `/uploads/${req.file.filename}`;
 
-    // ✅ Parse address and location from JSON strings (since FormData sends strings)
-    const parsedAddress = typeof address === 'string' ? JSON.parse(address) : address;
-    const parsedLocation = typeof location === 'string' ? JSON.parse(location) : location;
+    // ✅ Parse address safely
+    let parsedAddress = {};
+    if (typeof address === 'string') {
+      try {
+        parsedAddress = JSON.parse(address);
+      } catch (e) {
+        parsedAddress = {};
+      }
+    } else if (typeof address === 'object' && address !== null) {
+      parsedAddress = address;
+    }
 
-    // ✅ Normalize location safely
+    // ✅ Parse location safely
+    let parsedLocation = null;
+    if (typeof location === 'string') {
+      try {
+        parsedLocation = JSON.parse(location);
+      } catch (e) {
+        parsedLocation = null;
+      }
+    } else if (typeof location === 'object' && location !== null) {
+      parsedLocation = location;
+    }
+
+    // ✅ Normalize location safely with numeric coordinates
     let geoLocation = { type: "Point", coordinates: [0, 0] };
     if (parsedLocation) {
-      // Handle array format [lng, lat] or object format {lat, lon}
+      let rawLng = 0;
+      let rawLat = 0;
       if (parsedLocation.type === "Point" && Array.isArray(parsedLocation.coordinates)) {
-        geoLocation = parsedLocation;
+        rawLng = parsedLocation.coordinates[0];
+        rawLat = parsedLocation.coordinates[1];
       } else if (parsedLocation.lat !== undefined && (parsedLocation.lon !== undefined || parsedLocation.lng !== undefined)) {
-        geoLocation = { 
-          type: "Point", 
-          coordinates: [parsedLocation.lon || parsedLocation.lng, parsedLocation.lat] 
-        };
+        rawLng = parsedLocation.lon !== undefined ? parsedLocation.lon : parsedLocation.lng;
+        rawLat = parsedLocation.lat;
       }
+      const lngNum = Number(rawLng);
+      const latNum = Number(rawLat);
+      geoLocation = {
+        type: "Point",
+        coordinates: [
+          isNaN(lngNum) ? 0 : Math.max(-180, Math.min(180, lngNum)),
+          isNaN(latNum) ? 0 : Math.max(-90, Math.min(90, latNum))
+        ]
+      };
     }
+
+    // Prefer user's KYC district if present
+    const districtName = (req.user.address && req.user.address.district)
+      ? req.user.address.district
+      : (parsedAddress?.district || "");
 
     const complaint = await Complaint.create({
       user: req.user._id,
@@ -52,7 +86,7 @@ router.post("/", auth, upload.single("image"), async (req, res) => {
       address: {
         street: parsedAddress?.street || "",
         town: parsedAddress?.town || "",
-        district: parsedAddress?.district || "",
+        district: districtName,
         state: parsedAddress?.state || "",
         pin: parsedAddress?.pin || ""
       },
