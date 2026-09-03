@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import { useTranslation } from "react-i18next";
 
 export default function AdminUsers() {
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,28 +16,27 @@ export default function AdminUsers() {
     name: "",
     email: "",
     phone: "",
-    kycStatus: "all", // all, pending, accepted, rejected, completed
+    kycStatus: "all",
     minComplaints: "",
     maxComplaints: "",
   };
 
   const [filters, setFilters] = useState(initialFilters);
 
-  // --- API Functions ---
+  // --- Fetch Registered Users ---
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/api/admin/users`);
-      setUsers(res.data);
-      setFilteredUsers(res.data);
+      const res = await API.get("/admin/users");
+      const list = Array.isArray(res.data) ? res.data : (res.data?.users || res.data?.data || []);
+      setUsers(list);
+      setFilteredUsers(list);
 
       const countsMap = {};
       await Promise.all(
-        res.data.map(async (u) => {
+        list.map(async (u) => {
           try {
-            const countRes = await axios.get(
-              `${BACKEND_URL}/api/admin/users/${u._id}/complaints-count`
-            );
+            const countRes = await API.get(`/admin/users/${u._id}/complaints-count`);
             countsMap[u._id] = countRes.data.count ?? 0;
           } catch {
             countsMap[u._id] = 0;
@@ -47,7 +45,9 @@ export default function AdminUsers() {
       );
       setUserComplaintCounts(countsMap);
     } catch (err) {
-      console.error("Fetch Error:", err);
+      console.error("Fetch Registered Users Error:", err);
+      setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setLoading(false);
     }
@@ -56,9 +56,7 @@ export default function AdminUsers() {
   const fetchSingleComplaintCount = async (userId) => {
     setComplaintCount(null);
     try {
-      const res = await axios.get(
-        `${BACKEND_URL}/api/admin/users/${userId}/complaints-count`
-      );
+      const res = await API.get(`/admin/users/${userId}/complaints-count`);
       setComplaintCount(res.data.count);
     } catch (err) {
       setComplaintCount(0);
@@ -69,18 +67,8 @@ export default function AdminUsers() {
     fetchUsers();
   }, [fetchUsers]);
 
-  // --- KYC Status Logic (Fixed Priority) ---
   const getKycStatus = (u) => {
-    // 1. Check for explicit rejection first
-   {/* if (u.kycRejected === true) return "rejected";
-    
-    // 2. Check for explicit acceptance
-    if (u.kycAccepted === true) return "accepted"; */}
-
-    // 3. If it's completed but not explicitly accepted/rejected yet
     if (u.kycCompleted === true) return "completed";
-
-    // 4. Default state
     return "pending";
   };
 
@@ -91,8 +79,6 @@ export default function AdminUsers() {
       const matchesName = (u.name || "").toLowerCase().includes(filters.name.toLowerCase());
       const matchesEmail = (u.email || "").toLowerCase().includes(filters.email.toLowerCase());
       const matchesPhone = (u.phone || "").toLowerCase().includes(filters.phone.toLowerCase());
-      
-      // Fixed: Matches the calculated status against the dropdown value
       const matchesKyc = filters.kycStatus === "all" || currentStatus === filters.kycStatus;
 
       const count = userComplaintCounts[u._id] || 0;
@@ -121,22 +107,20 @@ export default function AdminUsers() {
 
   // --- Styles ---
   const styles = {
-    container: { maxWidth: "1300px", margin: "2rem auto", padding: "0 1.5rem", fontFamily: "'Inter', sans-serif", color: "#1e293b" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" },
-    filterCard: { background: "#ffffff", borderRadius: "16px", padding: "1.5rem", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", marginBottom: "2rem" },
+    container: { maxWidth: "1300px", margin: "1rem auto", padding: "0 1rem", fontFamily: "'Inter', sans-serif", color: "#1e293b" },
+    header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "1.5rem" },
+    filterCard: { background: "#ffffff", borderRadius: "16px", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.03)", border: "1px solid #d8f3dc", marginBottom: "1.5rem" },
     inputGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" },
-    input: { padding: "0.7rem", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.9rem", outlineColor: "#3b82f6" },
-    btnPrimary: { background: "#3b5f3a", color: "#fff", border: "none", padding: "0.7rem 1.4rem", borderRadius: "8px", fontWeight: "600", cursor: "pointer" },
-    btnSecondary: { background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", padding: "0.7rem 1.4rem", borderRadius: "8px", fontWeight: "600", cursor: "pointer" },
-    table: { width: "100%", borderCollapse: "separate", borderSpacing: "0 12px" },
-    th: { padding: "0.75rem 1rem", textAlign: "left", color: "#64748b", fontWeight: "600", fontSize: "0.85rem" },
+    input: { padding: "0.7rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem", outlineColor: "#2d6a4f" },
+    btnPrimary: { background: "linear-gradient(135deg, #2d6a4f, #1b4332)", color: "#fff", border: "none", padding: "0.7rem 1.4rem", borderRadius: "8px", fontWeight: "700", cursor: "pointer" },
+    btnSecondary: { background: "#f4f9f4", color: "#2d6a4f", border: "1px solid #d8f3dc", padding: "0.7rem 1.4rem", borderRadius: "8px", fontWeight: "700", cursor: "pointer" },
+    table: { width: "100%", borderCollapse: "separate", borderSpacing: "0 10px" },
+    th: { padding: "0.75rem 1rem", textAlign: "left", color: "#1b4332", fontWeight: "700", fontSize: "0.85rem" },
     tr: { backgroundColor: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" },
     td: { padding: "1.2rem 1rem" },
     badge: (status) => {
       const config = {
         pending: { bg: "#fef9c3", text: "#854d0e" },
-        accepted: { bg: "#e0f2fe", text: "#0369a1" },
-        rejected: { bg: "#fee2e2", text: "#991b1b" },
         completed: { bg: "#dcfce7", text: "#166534" },
       };
       const s = config[status] || config.pending;
@@ -147,28 +131,24 @@ export default function AdminUsers() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={{ fontWeight: 800 }}>{t("User Management")}</h1>
+        <h2 style={{ fontWeight: 800, color: "#1b4332", margin: 0 }}>👥 Registered Citizens Directory ({filteredUsers.length})</h2>
         <button style={styles.btnPrimary} onClick={fetchUsers}>🔄 {t("Refresh List")}</button>
       </div>
 
       {/* Filters Area */}
       <div style={styles.filterCard}>
         <div style={styles.inputGrid}>
-          <input style={styles.input} placeholder="Name" value={filters.name} onChange={(e) => setFilters({...filters, name: e.target.value})} />
-          <input style={styles.input} placeholder="Email" value={filters.email} onChange={(e) => setFilters({...filters, email: e.target.value})} />
+          <input style={styles.input} placeholder="Filter Name..." value={filters.name} onChange={(e) => setFilters({...filters, name: e.target.value})} />
+          <input style={styles.input} placeholder="Filter Email..." value={filters.email} onChange={(e) => setFilters({...filters, email: e.target.value})} />
           <select 
             style={styles.input} 
             value={filters.kycStatus} 
             onChange={(e) => setFilters({ ...filters, kycStatus: e.target.value })}
           >
-            <option value="all">All Statuses</option>
-            <option value="pending">⏳ Pending</option>
-           {/* <option value="accepted">🔵 Accepted</option>
-            <option value="rejected">❌ Rejected</option> */}
-            <option value="completed">✅ Completed</option>
+            <option value="all">All KYC Statuses</option>
+            <option value="pending">⏳ Pending KYC</option>
+            <option value="completed">✅ KYC Completed</option>
           </select>
-         {/* <input style={styles.input} type="number" placeholder="Min Complaints" value={filters.minComplaints} onChange={(e) => setFilters({...filters, minComplaints: e.target.value})} />
-          <input style={styles.input} type="number" placeholder="Max Complaints" value={filters.maxComplaints} onChange={(e) => setFilters({...filters, maxComplaints: e.target.value})} /> */}
         </div>
         <div style={{ marginTop: "1.2rem", display: "flex", gap: "10px" }}>
           <button style={styles.btnPrimary} onClick={applyFilters}>{t("Apply Filters")}</button>
@@ -177,62 +157,69 @@ export default function AdminUsers() {
       </div>
 
       {/* Table Area */}
-      <div style={{ overflowX: "auto" }}>
-        <table className="responsive-table" style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>User Info</th>
-              <th style={styles.th}>Contact</th>
-              <th style={styles.th}>KYC Status</th>
-              <th style={styles.th}>Complaints</th>
-              <th style={styles.th}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((u) => {
-              const status = getKycStatus(u);
-              return (
-                <tr key={u._id} style={styles.tr}>
-                  <td data-label="User Info" style={{...styles.td, borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px'}}>
-                    <div style={{fontWeight: 700}}>{u.name}</div>
-                    <div style={{fontSize: '0.8rem', color: '#64748b'}}>{u.email}</div>
-                  </td>
-                  <td data-label="Contact" style={styles.td}>{u.phone || "N/A"}</td>
-                  <td data-label="KYC Status" style={styles.td}>
-                    <span style={styles.badge(status)}>{status}</span>
-                  </td>
-                  <td data-label="Complaints" style={styles.td}>
-                    <div style={{background: '#f8fafc', padding: '4px 10px', borderRadius: '6px', display: 'inline-block', fontWeight: '600'}}>
-                        {userComplaintCounts[u._id] || 0}
-                    </div>
-                  </td>
-                  <td data-label="Action" style={{...styles.td, borderTopRightRadius: '12px', borderBottomRightRadius: '12px'}}>
-                    <button style={{...styles.btnSecondary, padding: '0.5rem 1rem'}} onClick={() => handleUserClick(u)}>View</button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>Loading registered citizens...</div>
+      ) : filteredUsers.length === 0 ? (
+        <div style={{ background: "#ffffff", padding: "2rem", borderRadius: "12px", textAlign: "center", color: "#64748b", border: "1px solid #d8f3dc" }}>
+          No registered citizens found matching filters.
+        </div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table className="responsive-table" style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Citizen Info</th>
+                <th style={styles.th}>Contact Number</th>
+                <th style={styles.th}>KYC Status</th>
+                <th style={styles.th}>Complaints</th>
+                <th style={styles.th}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((u) => {
+                const status = getKycStatus(u);
+                return (
+                  <tr key={u._id} style={styles.tr}>
+                    <td data-label="User Info" style={{...styles.td, borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px'}}>
+                      <div style={{fontWeight: 700, color: "#1b4332"}}>{u.name || "Registered Resident"}</div>
+                      <div style={{fontSize: '0.8rem', color: '#64748b'}}>{u.email}</div>
+                    </td>
+                    <td data-label="Contact" style={styles.td}>{u.phone || "N/A"}</td>
+                    <td data-label="KYC Status" style={styles.td}>
+                      <span style={styles.badge(status)}>{status}</span>
+                    </td>
+                    <td data-label="Complaints" style={styles.td}>
+                      <div style={{background: '#ecfdf5', padding: '4px 10px', borderRadius: '6px', display: 'inline-block', fontWeight: '700', color: "#065f46"}}>
+                          {userComplaintCounts[u._id] || 0}
+                      </div>
+                    </td>
+                    <td data-label="Action" style={{...styles.td, borderTopRightRadius: '12px', borderBottomRightRadius: '12px'}}>
+                      <button style={{...styles.btnSecondary, padding: '0.5rem 1rem'}} onClick={() => handleUserClick(u)}>View Profile</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedUser && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" }} onClick={closeModal}>
           <div style={{ background: "#fff", width: "450px", borderRadius: "20px", padding: "2rem", boxShadow: "0 20px 50px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ margin: "0 0 1rem 0", color: "#1e293b" }}>{selectedUser.name}</h2>
+            <h2 style={{ margin: "0 0 1rem 0", color: "#1b4332" }}>{selectedUser.name}</h2>
             <div style={{ color: "#475569", lineHeight: "1.8" }}>
               <p><strong>Email:</strong> {selectedUser.email}</p>
               <p><strong>Phone:</strong> {selectedUser.phone || 'N/A'}</p>
-              <p><strong>Status:</strong> <span style={styles.badge(getKycStatus(selectedUser))}>{getKycStatus(selectedUser)}</span></p>
+              <p><strong>KYC Status:</strong> <span style={styles.badge(getKycStatus(selectedUser))}>{getKycStatus(selectedUser)}</span></p>
+              <p><strong>Aadhaar Number:</strong> {selectedUser.aadhaarNumber || 'Not Uploaded'}</p>
               <p><strong>Total Complaints:</strong> {complaintCount ?? "..."}</p>
             </div>
             <button style={{ ...styles.btnPrimary, width: "100%", marginTop: "1.5rem" }} onClick={closeModal}>Close</button>
           </div>
         </div>
       )}
-
-      {loading && <div style={{textAlign: 'center', padding: '2rem'}}>Loading Data...</div>}
     </div>
   );
 }

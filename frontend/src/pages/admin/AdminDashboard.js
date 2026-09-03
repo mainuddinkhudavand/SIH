@@ -1,7 +1,8 @@
-// frontend/src/pages/admin/AdminDashboard.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
+import HeatmapView from "../../components/admin/HeatmapView";
+
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -96,6 +97,9 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <>
+          {/* 🚀 WINNING EDGE: Interactive Public Utility Spatial GIS Heatmap */}
+          <HeatmapView />
+
           <div
             style={{
               display: "flex",
@@ -106,6 +110,7 @@ export default function AdminDashboard() {
               marginBottom: "1.25rem",
             }}
           >
+
             {/* Dynamic Heading based on Year */}
             <h2
               style={{

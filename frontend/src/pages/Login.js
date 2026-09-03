@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import API from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
-import "./styles/Register.css"; // reuse same CSS file
+import "./styles/Register.css";
 import { useTranslation } from "react-i18next";
 
 export default function Login() {
@@ -27,10 +27,13 @@ export default function Login() {
 
     try {
       const res = await API.post('/auth/login', { identifier, password });
-      localStorage.setItem('token', res.data.token);
-      setMessage("Login successful! Redirecting...");
+      const token = res.data.token || res.data?.data?.token;
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+      setMessage("Login successful! Redirecting to Citizen Portal...");
       setMessageType("success");
-      setTimeout(() => nav('/kyc'), 1000);
+      setTimeout(() => nav('/citizen'), 1000);
     } catch (err) {
       setError(err.response?.data?.message || t("loginError"));
     }
@@ -96,7 +99,6 @@ export default function Login() {
           </button>
         </div>
 
-        {/* ✅ Forgot Password link redirects to central page */}
         <div style={{ textAlign: "right", marginBottom: "1rem" }}>
           <Link
             to="/forgot-password?role=citizen"

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "./styles/Register.css"; // import CSS
+import "./styles/Register.css";
 import API from '../services/api';
 import { useTranslation } from "react-i18next";
 
@@ -9,16 +9,14 @@ export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [userId, setUserId] = useState(null);
   const [otp, setOtp] = useState('');
-  const [error, setError] = useState(''); // ✅ frontend error state
+  const [error, setError] = useState('');
   const { t } = useTranslation();
 
-  // ✅ Password validation (only 6+ characters)
   const validatePassword = (password) => password.length >= 6;
 
   const handleSubmit = async e => {
     e.preventDefault();
 
-    // ✅ Frontend validation before API call
     if (!validatePassword(form.password)) {
       setError("Password must be at least 6 characters long.");
       return;
@@ -27,11 +25,12 @@ export default function Register() {
     try {
       const res = await API.post('/auth/register', form);
       setUserId(res.data.userId);
-      setError(""); // clear error if successful
+      setError("");
       if (res.data.otp) {
-        alert(`${t("otpSent")} (OTP: ${res.data.otp})`);
-      } else {
-        alert(t("otpSent"));
+        setOtp(res.data.otp);
+      }
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
       }
     } catch (err) {
       setError(err.response?.data?.message || t("error"));
@@ -40,9 +39,12 @@ export default function Register() {
 
   const verifyOtp = async () => {
     try {
-      await API.post('/auth/verify-otp', { userId, otp });
-      alert(t("otpVerified"));
-      navigate('/login');
+      const res = await API.post('/auth/verify-otp', { userId, otp });
+      if (res.data?.token) {
+        localStorage.setItem("token", res.data.token);
+      }
+      alert("OTP Verified! Please complete your KYC verification to access the Citizen Portal.");
+      navigate('/kyc'); // 🌟 Direct to KYC after registration
     } catch (err) {
       setError(err.response?.data?.message || t("otpError"));
     }
@@ -84,7 +86,6 @@ export default function Register() {
           required
         />
 
-        {/* ✅ Show error message */}
         {error && <p style={{ color: "red" }}>{error}</p>}
 
         <button className="register-button" type="submit">

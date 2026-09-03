@@ -12,15 +12,16 @@ node_modules/
 frontend/build/
 backend/build/
 
+# Local data & uploads
+backend/uploads/
+backend/data/
+
 # Operating system files
 .DS_Store
 Thumbs.db
 
-# Logs and lockfiles (optional, but good practice)
+# Logs and lockfiles
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .eslintcache
-
-# Local user uploads
-backend/uploads/
