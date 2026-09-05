@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaBars, FaTimes, FaNetworkWired, FaBuilding, FaLandmark, FaFileInvoiceDollar, FaHome, FaUser } from "react-icons/fa";
+import { FaBars, FaTimes, FaBuilding, FaLandmark, FaFileInvoiceDollar, FaHome, FaUser } from "react-icons/fa";
 import "./navbar.css";
 import Logo from "./e-gram-logo.jpeg";
 import AutoTranslateWidget from "./AutoTranslateWidget";
@@ -45,8 +45,8 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-left">
         <Link to="/" className="logo-link" onClick={closeMenu}>
-          <img src={Logo} alt="GovConnect Interoperability Platform" className="logo-img" />
-          <span className="project-title">GovConnect Platform</span>
+          <img src={Logo} alt="E-Gram Panchayat Digital Governance" className="logo-img" />
+          <span className="project-title">E-Gram Panchayat Portal</span>
         </Link>
       </div>
 
@@ -78,11 +78,6 @@ const Navbar = () => {
         {/* 5. Talati Office */}
         <Link to="/officer/talati" className="nav-link" onClick={closeMenu}>
           <FaHome style={{ marginRight: "4px" }} /> Talati
-        </Link>
-
-        {/* 6. GovConnect Core */}
-        <Link to="/govconnect" className="nav-link" onClick={closeMenu} style={{ color: "#38bdf8", fontWeight: "800" }}>
-          <FaNetworkWired style={{ marginRight: "4px" }} /> GovConnect
         </Link>
 
         {!isCitizenSession && !isAdminSession && (

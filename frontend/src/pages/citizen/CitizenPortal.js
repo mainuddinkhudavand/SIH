@@ -235,12 +235,6 @@ export default function CitizenPortal() {
 
             <div style={{ display: "flex", gap: "10px" }}>
               <button
-                onClick={() => navigate("/govconnect")}
-                style={{ background: "#0284c7", color: "white", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
-              >
-                <FaNetworkWired /> GovConnect Platform
-              </button>
-              <button
                 onClick={handleCitizenLogout}
                 style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" }}
               >

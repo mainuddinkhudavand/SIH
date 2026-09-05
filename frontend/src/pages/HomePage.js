@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import "./styles/HomePage.css";
-import { FaUser, FaNetworkWired, FaBuilding, FaLandmark, FaFileInvoiceDollar, FaHome, FaCertificate, FaArrowRight } from "react-icons/fa";
+import { FaUser, FaBuilding, FaLandmark, FaFileInvoiceDollar, FaHome, FaArrowRight } from "react-icons/fa";
 
 const buttonPillarStyle = (bg, border) => ({
   background: bg,
@@ -60,9 +60,6 @@ const HomePage = () => {
             </Link>
             <Link to="/officer/talati" style={buttonPillarStyle("linear-gradient(135deg, #581c87, #7c3aed)", "#c084fc")}>
               <FaHome /> 🏡 Talati Office
-            </Link>
-            <Link to="/govconnect" style={buttonPillarStyle("linear-gradient(135deg, #0284c7, #0369a1)", "#38bdf8")}>
-              <FaNetworkWired /> 🟡 GovConnect Core
             </Link>
           </div>
         </div>

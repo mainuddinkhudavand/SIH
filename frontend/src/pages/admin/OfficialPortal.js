@@ -188,9 +188,6 @@ export default function OfficialPortal() {
             </div>
 
             <div style={{ display: "flex", gap: "10px" }}>
-              <Link to="/govconnect" style={{ background: "#0284c7", color: "white", padding: "8px 16px", borderRadius: "8px", fontWeight: "700", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
-                <FaNetworkWired /> GovConnect Platform
-              </Link>
               <button
                 onClick={handleOfficialLogout}
                 style={{ background: "#dc2626", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" }}

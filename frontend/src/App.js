@@ -11,9 +11,8 @@ import Chatbot from "./components/Chatbot";
 import { ToastProvider } from "./context/ToastContext"; 
 import Profile from "./pages/Profile";
 
-// 🏛️ Primary Citizen & Middleware Portals
+// 🏛️ Primary Citizen & Official Portals
 import CitizenPortal from "./pages/citizen/CitizenPortal";
-import GovConnectPlatform from "./pages/govconnect/GovConnectPlatform";
 import OfficialPortal from "./pages/admin/OfficialPortal";
 
 // 🏢 4 Separate Dedicated Office Portals
@@ -49,9 +48,6 @@ export default function App() {
           <Route path="/officer/tehsildar" element={<TehsildarOfficePortal />} />
           <Route path="/officer/revenue" element={<RevenueOfficePortal />} />
           <Route path="/officer/talati" element={<TalatiOfficePortal />} />
-
-          {/* 🌟 4. GOVCONNECT MIDDLEWARE PLATFORM */}
-          <Route path="/govconnect" element={<GovConnectPlatform />} />
 
           {/* Utility Routes */}
           <Route path="/kyc" element={<Private><KYC /></Private>} />
