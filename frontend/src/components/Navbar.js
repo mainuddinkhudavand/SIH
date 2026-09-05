@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaBars, FaTimes, FaNetworkWired, FaLandmark, FaUserShield, FaUser } from "react-icons/fa";
+import { FaBars, FaTimes, FaNetworkWired, FaBuilding, FaLandmark, FaFileInvoiceDollar, FaHome, FaUser } from "react-icons/fa";
 import "./navbar.css";
 import Logo from "./e-gram-logo.jpeg";
 import AutoTranslateWidget from "./AutoTranslateWidget";
@@ -46,7 +46,7 @@ const Navbar = () => {
       <div className="navbar-left">
         <Link to="/" className="logo-link" onClick={closeMenu}>
           <img src={Logo} alt="GovConnect Interoperability Platform" className="logo-img" />
-          <span className="project-title">GovConnect E-Gram Platform</span>
+          <span className="project-title">GovConnect Platform</span>
         </Link>
       </div>
 
@@ -57,17 +57,32 @@ const Navbar = () => {
       <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
         {/* 1. Citizen Portal */}
         <Link to="/citizen" className="nav-link" onClick={closeMenu} style={{ fontWeight: "800" }}>
-          <FaUser style={{ marginRight: "4px" }} /> Citizen Services
+          <FaUser style={{ marginRight: "4px" }} /> Citizen Portal
         </Link>
 
-        {/* 2. 4-Office Workspaces & Official Admin */}
-        <Link to="/official" className="nav-link" onClick={closeMenu} style={{ fontWeight: "800" }}>
-          <FaLandmark style={{ marginRight: "4px" }} /> 4-Office Workspaces
+        {/* 2. Municipality Office */}
+        <Link to="/officer/municipality" className="nav-link" onClick={closeMenu}>
+          <FaBuilding style={{ marginRight: "4px" }} /> Municipality
         </Link>
 
-        {/* 3. GovConnect Platform */}
+        {/* 3. Tehsildar Office */}
+        <Link to="/officer/tehsildar" className="nav-link" onClick={closeMenu}>
+          <FaLandmark style={{ marginRight: "4px" }} /> Tehsildar
+        </Link>
+
+        {/* 4. Revenue Office */}
+        <Link to="/officer/revenue" className="nav-link" onClick={closeMenu}>
+          <FaFileInvoiceDollar style={{ marginRight: "4px" }} /> Revenue
+        </Link>
+
+        {/* 5. Talati Office */}
+        <Link to="/officer/talati" className="nav-link" onClick={closeMenu}>
+          <FaHome style={{ marginRight: "4px" }} /> Talati
+        </Link>
+
+        {/* 6. GovConnect Core */}
         <Link to="/govconnect" className="nav-link" onClick={closeMenu} style={{ color: "#38bdf8", fontWeight: "800" }}>
-          <FaNetworkWired style={{ marginRight: "4px" }} /> GovConnect Core
+          <FaNetworkWired style={{ marginRight: "4px" }} /> GovConnect
         </Link>
 
         {!isCitizenSession && !isAdminSession && (

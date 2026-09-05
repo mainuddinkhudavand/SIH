@@ -11,10 +11,16 @@ import Chatbot from "./components/Chatbot";
 import { ToastProvider } from "./context/ToastContext"; 
 import Profile from "./pages/Profile";
 
-// 🏛️ Primary Federated Portals
+// 🏛️ Primary Citizen & Middleware Portals
 import CitizenPortal from "./pages/citizen/CitizenPortal";
 import GovConnectPlatform from "./pages/govconnect/GovConnectPlatform";
 import OfficialPortal from "./pages/admin/OfficialPortal";
+
+// 🏢 4 Separate Dedicated Office Portals
+import MunicipalityOfficePortal from "./pages/offices/MunicipalityOfficePortal";
+import TehsildarOfficePortal from "./pages/offices/TehsildarOfficePortal";
+import RevenueOfficePortal from "./pages/offices/RevenueOfficePortal";
+import TalatiOfficePortal from "./pages/offices/TalatiOfficePortal";
 
 const Private = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -32,13 +38,19 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
-          {/* 🌟 1. CITIZEN PORTAL (Services, Dynamic Forms, Tracker, Dues Payment, Certificates) */}
+          {/* 🌟 1. CITIZEN PORTAL */}
           <Route path="/citizen/*" element={<CitizenPortal />} />
 
-          {/* 🌟 2. 4-OFFICE WORKSPACES & OFFICIAL PORTAL (Municipality, Tehsildar, Revenue, Talati) */}
+          {/* 🌟 2. UNIFIED 4-OFFICE WORKSPACES & OFFICIAL PORTAL */}
           <Route path="/official/*" element={<OfficialPortal />} />
 
-          {/* 🌟 3. GOVCONNECT MIDDLEWARE PLATFORM */}
+          {/* 🌟 3. SEPARATE STANDALONE OFFICE PORTALS */}
+          <Route path="/officer/municipality" element={<MunicipalityOfficePortal />} />
+          <Route path="/officer/tehsildar" element={<TehsildarOfficePortal />} />
+          <Route path="/officer/revenue" element={<RevenueOfficePortal />} />
+          <Route path="/officer/talati" element={<TalatiOfficePortal />} />
+
+          {/* 🌟 4. GOVCONNECT MIDDLEWARE PLATFORM */}
           <Route path="/govconnect" element={<GovConnectPlatform />} />
 
           {/* Utility Routes */}
