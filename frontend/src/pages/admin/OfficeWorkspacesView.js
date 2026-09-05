@@ -7,399 +7,459 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaExclamationTriangle,
-  FaCalendarAlt,
   FaSearch,
-  FaUserCheck,
-  FaPrint,
-  FaStamp
+  FaColumns,
+  FaReceipt,
+  FaCertificate,
+  FaExternalLinkAlt
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import API from "../../services/api";
+import {
+  getOfficeApplicationsFromStore,
+  updateApplicationInStore,
+  subscribeToAppStore
+} from "../../services/applicationStore";
 
 export default function OfficeWorkspacesView() {
   const [activeOffice, setActiveOffice] = useState("Municipality"); // "Municipality", "Tehsildar", "Revenue", "Talati"
+  const [filterStatusTab, setFilterStatusTab] = useState("pending"); // "pending", "approved", "rejected", "split", "all"
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [discrepancyNote, setDiscrepancyNote] = useState({});
   const [statusMsg, setStatusMsg] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetchOfficeQueue(activeOffice);
+    loadOfficeQueue(activeOffice);
+
+    const unsubscribe = subscribeToAppStore(() => {
+      loadOfficeQueue(activeOffice);
+    });
+
+    return () => unsubscribe();
   }, [activeOffice]);
 
-  const fetchOfficeQueue = async (officeName) => {
+  const loadOfficeQueue = async (officeName) => {
     setLoading(true);
     try {
+      const localApps = getOfficeApplicationsFromStore(officeName);
+      setQueue(localApps);
+
       const res = await API.get(`/applications/office-queue/${officeName}`);
       if (res.data?.applications && res.data.applications.length > 0) {
         setQueue(res.data.applications);
-      } else {
-        // Realistic Demo Applications Queue for interactive testing of each office
-        setQueue(getDemoQueueForOffice(officeName));
       }
     } catch (err) {
-      setQueue(getDemoQueueForOffice(officeName));
+      console.warn(`Using master store for ${officeName} workspace view:`, err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getDemoQueueForOffice = (officeName) => {
-    if (officeName === "Municipality") {
-      return [
-        {
-          _id: "muni-demo-1",
-          applicationId: "APP-401928",
-          title: "Streetlight Installation & Repair Request",
-          serviceType: "Civic Utilities",
-          primaryOffice: "Municipality",
-          currentOffice: "Municipality",
-          applicantDetails: { fullName: "Ramesh Patil", aadhaarId: "9876-5432-1001", wardCode: "WARD-02", address: "Plot 18, Ward 2" },
-          status: "Under Verification",
-          officeChain: ["Municipality"],
-          currentStageIndex: 0,
-          stageVerifications: [{ officeName: "Municipality", stageName: "Step 1: Municipal Verification", status: "pending" }]
-        },
-        {
-          _id: "muni-demo-2",
-          applicationId: "APP-509124",
-          title: "Building Plan Sanction & Construction Approval",
-          serviceType: "Civic Utilities",
-          primaryOffice: "Municipality",
-          currentOffice: "Municipality",
-          applicantDetails: { fullName: "Anita Sharma", aadhaarId: "9876-5432-1003", surveyNumber: "SRV-104", address: "Plot 42, Sector 1" },
-          status: "Municipal Review Pending",
-          officeChain: ["Talati", "Municipality"],
-          currentStageIndex: 1,
-          stageVerifications: [
-            { officeName: "Talati", stageName: "Step 1: Talati Land-Use Check", status: "cleared", officerRemarks: "Land boundary & 7/12 confirmed." },
-            { officeName: "Municipality", stageName: "Step 2: Municipal Zoning Approval", status: "pending" }
-          ]
-        }
-      ];
-    } else if (officeName === "Tehsildar") {
-      return [
-        {
-          _id: "tehsil-demo-1",
-          applicationId: "CERT-847291",
-          title: "Income Certificate Application",
-          serviceType: "Certificates",
-          primaryOffice: "Tehsildar",
-          currentOffice: "Tehsildar",
-          applicantDetails: { fullName: "Pavan Kumar", aadhaarId: "9876-5432-1000", annualIncome: "₹85,000", address: "Village Ward 2" },
-          status: "Tehsildar Verification Pending",
-          officeChain: ["Talati", "Revenue", "Tehsildar"],
-          currentStageIndex: 2,
-          stageVerifications: [
-            { officeName: "Talati", stageName: "Step 1: Talati Income Check", status: "cleared", officerRemarks: "Confirmed village income records." },
-            { officeName: "Revenue", stageName: "Step 2: Revenue Dues Check", status: "cleared", officerRemarks: "Dues ₹1,850 paid via UPI. Receipt: PAY-RC-9012" },
-            { officeName: "Tehsildar", stageName: "Step 3: Tehsildar Final Issuance", status: "pending" }
-          ]
-        },
-        {
-          _id: "tehsil-demo-2",
-          applicationId: "CERT-902183",
-          title: "Caste Certificate Request (OBC)",
-          serviceType: "Certificates",
-          primaryOffice: "Tehsildar",
-          currentOffice: "Tehsildar",
-          applicantDetails: { fullName: "Suresh Deshmukh", aadhaarId: "9876-5432-1002", casteCategory: "OBC (Kunbi)", address: "Gram Panchayat Sector" },
-          status: "Tehsildar Verification Pending",
-          officeChain: ["Talati", "Tehsildar"],
-          currentStageIndex: 1,
-          stageVerifications: [
-            { officeName: "Talati", stageName: "Step 1: Talati Record Check", status: "cleared", officerRemarks: "Ancestral village residence confirmed." },
-            { officeName: "Tehsildar", stageName: "Step 2: Tehsil Legal Verification", status: "pending" }
-          ]
-        }
-      ];
-    } else if (officeName === "Revenue") {
-      return [
-        {
-          _id: "rev-demo-1",
-          applicationId: "APP-601924",
-          title: "Property / Land Mutation (Ownership Transfer)",
-          serviceType: "Land Records",
-          primaryOffice: "Revenue",
-          currentOffice: "Revenue",
-          applicantDetails: { fullName: "Suresh Deshmukh", aadhaarId: "9876-5432-1002", surveyNumber: "SRV-103", address: "Survey 103 Parcel" },
-          status: "Revenue Dues Pending",
-          officeChain: ["Talati", "Revenue", "Municipality"],
-          currentStageIndex: 1,
-          pendingDues: { officeName: "Revenue Office", dueType: "Unpaid Land Revenue Cess", amount: 1850, isPaid: false },
-          stageVerifications: [
-            { officeName: "Talati", stageName: "Step 1: Talati Entry", status: "cleared", officerRemarks: "Mutation entry registered in 7/12." },
-            { officeName: "Revenue", stageName: "Step 2: Revenue Dues & Clearances", status: "dues_pending", officerRemarks: "Unpaid land revenue ₹1,850 flagged." },
-            { officeName: "Municipality", stageName: "Step 3: Property Tax Linkage", status: "pending" }
-          ]
-        }
-      ];
-    } else {
-      // Talati Office Demo
-      return [
-        {
-          _id: "talati-demo-1",
-          applicationId: "CERT-712091",
-          title: "7/12 Extract (Land Ownership Record)",
-          serviceType: "Land Records",
-          primaryOffice: "Talati",
-          currentOffice: "Talati",
-          applicantDetails: { fullName: "Pavan Kumar", aadhaarId: "9876-5432-1000", surveyNumber: "SRV-101", address: "Gut No 101" },
-          status: "Under Verification",
-          officeChain: ["Talati"],
-          currentStageIndex: 0,
-          stageVerifications: [{ officeName: "Talati", stageName: "Step 1: Talati Digital Signature", status: "pending" }]
-        },
-        {
-          _id: "talati-demo-2",
-          applicationId: "CERT-309481",
-          title: "Crop Loss Field Verification & Relief Certificate",
-          serviceType: "Village Services",
-          primaryOffice: "Talati",
-          currentOffice: "Talati",
-          applicantDetails: { fullName: "Anita Sharma", aadhaarId: "9876-5432-1003", surveyNumber: "SRV-104", address: "Wheat Farm Parcel" },
-          status: "Field Visit Scheduled",
-          officeChain: ["Talati", "Tehsildar"],
-          currentStageIndex: 0,
-          stageVerifications: [
-            { officeName: "Talati", stageName: "Step 1: On-Field Inspection", status: "pending", officerRemarks: "Field visit scheduled for crop damage assessment." },
-            { officeName: "Tehsildar", stageName: "Step 2: Relief Disbursement", status: "pending" }
-          ]
-        }
-      ];
     }
   };
 
   const handleVerifyAction = async (appId, action) => {
     const note = discrepancyNote[appId] || "";
     setStatusMsg(null);
+    const newStatus = action === "approve" ? "Approved" : action === "discrepancy" ? "Discrepancy Found" : "Rejected";
 
-    try {
-      const res = await API.put(`/applications/${appId}/verify-stage`, {
-        action,
-        officerRemarks: note || `Verified by ${activeOffice} Officer-In-Charge`,
-        verifiedBy: `${activeOffice} Senior Officer`
-      });
+    updateApplicationInStore(appId, {
+      action,
+      status: newStatus,
+      currentOffice: action === "approve" ? "Completed" : activeOffice,
+      rejectionReason: action !== "approve" ? note || "Discrepancy/rejection noted by officer." : undefined,
+      officerRemarks: note || `Officer Action (${activeOffice}): ${action.toUpperCase()}`,
+      verifiedBy: `${activeOffice} Senior Officer`
+    });
 
-      if (res.data?.success) {
-        setStatusMsg({ type: "success", text: `Action '${action}' completed for application!` });
-        fetchOfficeQueue(activeOffice);
-      }
-    } catch (err) {
-      // Local fallback state update
-      setQueue((prev) =>
-        prev.map((item) => {
-          if (item._id === appId) {
-            if (action === "approve") {
-              return { ...item, status: "Approved", currentOffice: "Completed" };
-            } else if (action === "discrepancy") {
-              return { ...item, status: "Discrepancy Found" };
-            } else {
-              return { ...item, status: "Rejected" };
-            }
-          }
-          return item;
-        })
-      );
-      setStatusMsg({ type: "success", text: `Action '${action}' recorded successfully!` });
-    }
+    setStatusMsg({ type: "success", text: `Application ${appId} status updated to '${newStatus}' across all portals!` });
   };
 
   const offices = [
-    { id: "Municipality", label: "Municipality Office", icon: <FaBuilding />, color: "#0284c7" },
-    { id: "Tehsildar", label: "Tehsildar Office", icon: <FaLandmark />, color: "#166534" },
-    { id: "Revenue", label: "Revenue Office", icon: <FaFileInvoiceDollar />, color: "#b45309" },
-    { id: "Talati", label: "Talati Office", icon: <FaHome />, color: "#7c3aed" }
+    { id: "Municipality", label: "Municipality Office", portalUrl: "/officer/municipality", icon: <FaBuilding />, color: "#0284c7" },
+    { id: "Tehsildar", label: "Tehsildar Office", portalUrl: "/officer/tehsildar", icon: <FaLandmark />, color: "#4338ca" },
+    { id: "Revenue", label: "Revenue Office", portalUrl: "/officer/revenue", icon: <FaFileInvoiceDollar />, color: "#047857" },
+    { id: "Talati", label: "Talati Office", portalUrl: "/officer/talati", icon: <FaHome />, color: "#b45309" }
   ];
 
+  const filteredSearch = queue.filter((item) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (item.applicationId || "").toLowerCase().includes(term) ||
+      (item.title || "").toLowerCase().includes(term) ||
+      (item.applicantDetails?.fullName || "").toLowerCase().includes(term) ||
+      (item.status || "").toLowerCase().includes(term)
+    );
+  });
+
+  const pendingList = filteredSearch.filter((a) => {
+    const s = (a.status || "").toLowerCase();
+    return !s.includes("approved") && !s.includes("reject") && !s.includes("discrepancy") && a.currentOffice !== "Completed";
+  });
+
+  const approvedList = filteredSearch.filter((a) => {
+    const s = (a.status || "").toLowerCase();
+    return s.includes("approved") || s.includes("issued") || a.currentOffice === "Completed";
+  });
+
+  const rejectedList = filteredSearch.filter((a) => {
+    const s = (a.status || "").toLowerCase();
+    return s.includes("reject") || s.includes("discrepancy");
+  });
+
+  const displayedQueue =
+    filterStatusTab === "approved"
+      ? approvedList
+      : filterStatusTab === "rejected"
+      ? rejectedList
+      : filterStatusTab === "pending"
+      ? pendingList
+      : filteredSearch;
+
+  const currentOfficeObj = offices.find((o) => o.id === activeOffice) || offices[0];
+
   return (
-    <div style={{ background: "#ffffff", padding: "28px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-      {/* Header */}
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 12px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "800", display: "inline-block", marginBottom: "6px" }}>
-          SECTIONS 2–5 — 4-OFFICE INTERNAL DIGITIZATION WORKSPACES
+    <div style={{ background: "#f8fafc", minHeight: "92vh", padding: "24px" }}>
+      <div style={{ maxWidth: "1350px", margin: "0 auto" }}>
+        
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #334155 100%)", color: "white", padding: "28px", borderRadius: "16px", marginBottom: "24px", boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.3)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+            <div>
+              <span style={{ background: "#38bdf8", color: "#0f172a", padding: "4px 12px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>
+                OFFICIAL ADMINISTRATIVE WORKSPACES DASHBOARD
+              </span>
+              <h1 style={{ margin: "8px 0 4px 0", fontSize: "2rem", fontWeight: "900", color: "#ffffff" }}>
+                🏛️ Combined 4 Offices Official View
+              </h1>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.95rem" }}>
+                Multi-office workflow verification for Municipality, Tehsildar, Revenue, and Talati portals with real-time status updates.
+              </p>
+            </div>
+
+            <Link
+              to={currentOfficeObj.portalUrl}
+              style={{ background: currentOfficeObj.color, color: "white", padding: "12px 20px", borderRadius: "10px", textDecoration: "none", fontWeight: "800", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              Open Standalone {currentOfficeObj.id} Portal <FaExternalLinkAlt />
+            </Link>
+          </div>
         </div>
-        <h2 style={{ margin: 0, fontSize: "1.75rem", fontWeight: "800", color: "#0f172a" }}>
-          Government Departmental Workspaces &amp; Verification Queues
-        </h2>
-        <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "0.95rem" }}>
-          Switch between Municipality, Tehsildar, Revenue, and Talati office dashboards. Review document submissions, cross-check multi-office clearance flags, and digitally sign approvals.
-        </p>
+
+        {statusMsg && (
+          <div style={{ padding: "14px 18px", borderRadius: "10px", marginBottom: "20px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", fontWeight: "800", display: "flex", alignItems: "center", gap: "10px" }}>
+            <FaCheckCircle style={{ fontSize: "1.2rem" }} /> {statusMsg.text}
+          </div>
+        )}
+
+        {/* Office Selection Tabs (Sections 2, 3, 4, 5) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "14px", marginBottom: "24px" }}>
+          {offices.map((off) => {
+            const isSelected = activeOffice === off.id;
+            return (
+              <button
+                key={off.id}
+                onClick={() => {
+                  setActiveOffice(off.id);
+                  setFilterStatusTab("pending");
+                }}
+                style={{
+                  background: isSelected ? off.color : "#ffffff",
+                  color: isSelected ? "#ffffff" : "#334155",
+                  border: isSelected ? "2px solid transparent" : "2px solid #cbd5e1",
+                  borderRadius: "14px",
+                  padding: "18px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontWeight: "800",
+                  boxShadow: isSelected ? "0 8px 20px -4px rgba(0,0,0,0.15)" : "none",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "1.2rem", marginBottom: "6px" }}>
+                  {off.icon} {off.id} Office
+                </div>
+                <div style={{ fontSize: "0.8rem", opacity: isSelected ? 0.9 : 0.7 }}>
+                  Workspace Queue &amp; Verifications
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Office Work Queue Area */}
+        <div style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", border: "1px solid #cbd5e1" }}>
+          
+          {/* Controls Bar */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "14px" }}>
+            
+            <div style={{ position: "relative", minWidth: "280px" }}>
+              <FaSearch style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+              <input
+                type="text"
+                placeholder={`Search in ${activeOffice} Queue...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px 10px 38px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }}
+              />
+            </div>
+
+            {/* Separated Status Tabs */}
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setFilterStatusTab("pending")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "2px solid",
+                  borderColor: filterStatusTab === "pending" ? currentOfficeObj.color : "#cbd5e1",
+                  background: filterStatusTab === "pending" ? "#f1f5f9" : "#ffffff",
+                  color: filterStatusTab === "pending" ? currentOfficeObj.color : "#475569",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  fontSize: "0.85rem"
+                }}
+              >
+                ⏳ Pending ({pendingList.length})
+              </button>
+
+              <button
+                onClick={() => setFilterStatusTab("approved")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "2px solid",
+                  borderColor: filterStatusTab === "approved" ? "#16a34a" : "#cbd5e1",
+                  background: filterStatusTab === "approved" ? "#dcfce7" : "#ffffff",
+                  color: filterStatusTab === "approved" ? "#15803d" : "#475569",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  fontSize: "0.85rem"
+                }}
+              >
+                ✅ Approved Services ({approvedList.length})
+              </button>
+
+              <button
+                onClick={() => setFilterStatusTab("rejected")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "2px solid",
+                  borderColor: filterStatusTab === "rejected" ? "#dc2626" : "#cbd5e1",
+                  background: filterStatusTab === "rejected" ? "#fee2e2" : "#ffffff",
+                  color: filterStatusTab === "rejected" ? "#991b1b" : "#475569",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  fontSize: "0.85rem"
+                }}
+              >
+                ❌ Rejected Services ({rejectedList.length})
+              </button>
+
+              <button
+                onClick={() => setFilterStatusTab("split")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "2px solid",
+                  borderColor: filterStatusTab === "split" ? "#7c3aed" : "#cbd5e1",
+                  background: filterStatusTab === "split" ? "#f3e8ff" : "#ffffff",
+                  color: filterStatusTab === "split" ? "#6d28d9" : "#475569",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+              >
+                <FaColumns /> Split View (Approved vs Rejected)
+              </button>
+
+              <button
+                onClick={() => setFilterStatusTab("all")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "2px solid",
+                  borderColor: filterStatusTab === "all" ? "#475569" : "#cbd5e1",
+                  background: filterStatusTab === "all" ? "#f1f5f9" : "#ffffff",
+                  color: filterStatusTab === "all" ? "#0f172a" : "#475569",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  fontSize: "0.85rem"
+                }}
+              >
+                🌐 All ({filteredSearch.length})
+              </button>
+            </div>
+          </div>
+
+          {/* SPLIT VIEW MODE: Side-by-side Approved vs Rejected */}
+          {filterStatusTab === "split" ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "24px", marginTop: "20px" }}>
+              <div style={{ background: "#f0fdf4", borderRadius: "14px", padding: "18px", border: "1px solid #bbf7d0" }}>
+                <h4 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", fontWeight: "900", color: "#15803d", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FaCheckCircle /> Approved {activeOffice} Services ({approvedList.length})
+                </h4>
+                {approvedList.length === 0 ? (
+                  <div style={{ padding: "20px", color: "#64748b", textAlign: "center" }}>No approved services found in {activeOffice}.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: "14px" }}>
+                    {approvedList.map((app) => (
+                      <WorkspaceCard key={app._id || app.applicationId} app={app} discrepancyNote={discrepancyNote} setDiscrepancyNote={setDiscrepancyNote} handleVerifyAction={handleVerifyAction} activeOffice={activeOffice} isApprovedCard />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ background: "#fef2f2", borderRadius: "14px", padding: "18px", border: "1px solid #fecaca" }}>
+                <h4 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", fontWeight: "900", color: "#991b1b", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FaTimesCircle /> Rejected {activeOffice} Services ({rejectedList.length})
+                </h4>
+                {rejectedList.length === 0 ? (
+                  <div style={{ padding: "20px", color: "#64748b", textAlign: "center" }}>No rejected services found in {activeOffice}.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: "14px" }}>
+                    {rejectedList.map((app) => (
+                      <WorkspaceCard key={app._id || app.applicationId} app={app} discrepancyNote={discrepancyNote} setDiscrepancyNote={setDiscrepancyNote} handleVerifyAction={handleVerifyAction} activeOffice={activeOffice} isRejectedCard />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* STANDARD LISTING */
+            loading ? (
+              <div style={{ padding: "30px", color: "#64748b" }}>Loading {activeOffice} queue...</div>
+            ) : displayedQueue.length === 0 ? (
+              <div style={{ padding: "32px", textAlign: "center", color: "#64748b", background: "#f8fafc", borderRadius: "12px", border: "1px dashed #cbd5e1" }}>
+                No applications in '{filterStatusTab.toUpperCase()}' queue for {activeOffice}.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "18px" }}>
+                {displayedQueue.map((app) => (
+                  <WorkspaceCard key={app._id || app.applicationId} app={app} discrepancyNote={discrepancyNote} setDiscrepancyNote={setDiscrepancyNote} handleVerifyAction={handleVerifyAction} activeOffice={activeOffice} />
+                ))}
+              </div>
+            )
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkspaceCard({ app, discrepancyNote, setDiscrepancyNote, handleVerifyAction, activeOffice, isApprovedCard, isRejectedCard }) {
+  const isApproved = (app.status || "").toLowerCase().includes("approved") || app.currentOffice === "Completed";
+  const isRejected = (app.status || "").toLowerCase().includes("reject") || (app.status || "").toLowerCase().includes("discrepancy");
+  const isPaidDues = app.pendingDues && app.pendingDues.isPaid;
+
+  const cardBorder = isApproved ? "#86efac" : isRejected ? "#fca5a5" : "#cbd5e1";
+  const cardBg = isApprovedCard ? "#ffffff" : isRejectedCard ? "#ffffff" : isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#ffffff";
+
+  return (
+    <div style={{ background: cardBg, borderRadius: "14px", border: `2px solid ${cardBorder}`, padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
+        <div>
+          <span style={{ background: "#e2e8f0", color: "#1e293b", padding: "4px 10px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "800", marginRight: "8px" }}>
+            {app.applicationId}
+          </span>
+          <span style={{ background: "#f1f5f9", color: "#475569", padding: "4px 10px", borderRadius: "6px", fontSize: "0.78rem", fontWeight: "700" }}>
+            {app.serviceType || "Gov Service"}
+          </span>
+          <h4 style={{ margin: "8px 0 4px 0", fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>
+            {app.title}
+          </h4>
+        </div>
+
+        <div>
+          {isApproved && (
+            <span style={{ background: "#dcfce7", color: "#15803d", padding: "6px 14px", borderRadius: "20px", fontWeight: "900", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <FaCheckCircle /> APPROVED &amp; ISSUED
+            </span>
+          )}
+          {isRejected && (
+            <span style={{ background: "#fee2e2", color: "#991b1b", padding: "6px 14px", borderRadius: "20px", fontWeight: "900", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <FaTimesCircle /> {app.status || "REJECTED"}
+            </span>
+          )}
+          {!isApproved && !isRejected && (
+            <span style={{ background: "#fef9c3", color: "#854d0e", padding: "6px 14px", borderRadius: "20px", fontWeight: "900", fontSize: "0.85rem" }}>
+              ⏳ {app.status}
+            </span>
+          )}
+        </div>
       </div>
 
-      {statusMsg && (
-        <div style={{ padding: "14px 18px", borderRadius: "10px", marginBottom: "20px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", fontWeight: "800" }}>
-          <FaCheckCircle style={{ marginRight: "8px" }} /> {statusMsg.text}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
+        <div><strong>Applicant:</strong> {app.applicantDetails?.fullName || "Citizen"}</div>
+        <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
+        <div><strong>Aadhaar ID:</strong> {app.applicantDetails?.aadhaarId || "N/A"}</div>
+        <div><strong>Current Stage:</strong> {app.currentOffice || activeOffice}</div>
+      </div>
+
+      {isPaidDues && (
+        <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "12px", borderRadius: "10px", marginBottom: "14px", fontSize: "0.85rem", color: "#065f46" }}>
+          <div style={{ fontWeight: "800", display: "flex", alignItems: "center", gap: "6px" }}>
+            <FaReceipt /> Dues Paid Online: ₹{app.pendingDues.amount} ({app.pendingDues.paymentMethod})
+          </div>
+          <div style={{ fontSize: "0.78rem", marginTop: "4px", color: "#047857" }}>
+            Receipt No: <strong>{app.pendingDues.paymentReceiptNo}</strong> | Bank/A/c: {app.pendingDues.bankName || app.pendingDues.upiId || "SBI"} ({app.pendingDues.accountNumber || "UPI"})
+          </div>
         </div>
       )}
 
-      {/* 4 Office Tabs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginBottom: "24px" }}>
-        {offices.map((off) => (
-          <button
-            key={off.id}
-            onClick={() => setActiveOffice(off.id)}
-            style={{
-              padding: "14px",
-              borderRadius: "12px",
-              border: `2px solid ${activeOffice === off.id ? off.color : "#cbd5e1"}`,
-              background: activeOffice === off.id ? `${off.color}15` : "#ffffff",
-              color: activeOffice === off.id ? off.color : "#334155",
-              fontWeight: "800",
-              fontSize: "0.95rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              transition: "all 0.2s"
-            }}
-          >
-            {off.icon} {off.label}
-          </button>
-        ))}
-      </div>
+      {isRejected && app.rejectionReason && (
+        <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", padding: "12px", borderRadius: "10px", marginBottom: "14px", fontSize: "0.85rem", color: "#9f1239" }}>
+          <FaExclamationTriangle style={{ marginRight: "6px" }} />
+          <strong>Rejection / Discrepancy Reason:</strong> {app.rejectionReason}
+        </div>
+      )}
 
-      {/* Office Queue List */}
-      <div>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "1.2rem", fontWeight: "800", color: "#1e293b" }}>
-          Active Queue for {activeOffice} Office ({queue.length} Pending):
-        </h3>
+      {isApproved && app.issuedCertificate && (
+        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px", borderRadius: "10px", marginBottom: "14px", fontSize: "0.82rem", color: "#166534" }}>
+          <FaCertificate style={{ marginRight: "6px" }} />
+          <strong>Issued Certificate Ref:</strong> {app.issuedCertificate.certificateId} | {app.issuedCertificate.digitalSignature}
+        </div>
+      )}
 
-        {loading ? (
-          <div style={{ padding: "30px", color: "#64748b" }}>Fetching office applications queue...</div>
-        ) : queue.length === 0 ? (
-          <div style={{ padding: "30px", background: "#f8fafc", borderRadius: "10px", textAlign: "center", color: "#64748b" }}>
-            No applications currently queued for {activeOffice} office.
+      {!isApproved && !isRejected && (
+        <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid #e2e8f0" }}>
+          <input
+            type="text"
+            placeholder={`Add ${activeOffice} Officer Remarks / Rejection details...`}
+            value={discrepancyNote[app._id || app.applicationId] || ""}
+            onChange={(e) => setDiscrepancyNote({ ...discrepancyNote, [app._id || app.applicationId]: e.target.value })}
+            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", marginBottom: "12px" }}
+          />
+
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button
+              onClick={() => handleVerifyAction(app._id || app.applicationId, "approve")}
+              style={{ background: "#16a34a", color: "white", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <FaCheckCircle /> Approve &amp; Clear Stage
+            </button>
+
+            <button
+              onClick={() => handleVerifyAction(app._id || app.applicationId, "discrepancy")}
+              style={{ background: "#d97706", color: "white", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <FaExclamationTriangle /> Flag Discrepancy
+            </button>
+
+            <button
+              onClick={() => handleVerifyAction(app._id || app.applicationId, "reject")}
+              style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <FaTimesCircle /> Reject Application
+            </button>
           </div>
-        ) : (
-          <div style={{ display: "grid", gap: "18px" }}>
-            {queue.map((app) => (
-              <div
-                key={app._id}
-                style={{
-                  background: "#f8fafc",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  border: "1px solid #cbd5e1",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "14px"
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-                  <div>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px" }}>
-                      <span style={{ background: "#e2e8f0", color: "#1e293b", padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800" }}>
-                        ID: {app.applicationId}
-                      </span>
-                      <span style={{ background: app.routingType === "multi-office" ? "#dbeafe" : "#f1f5f9", color: app.routingType === "multi-office" ? "#1e40af" : "#475569", padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800" }}>
-                        {app.routingType?.toUpperCase() || "SINGLE-OFFICE"}
-                      </span>
-                    </div>
-                    <h4 style={{ margin: "4px 0", fontSize: "1.2rem", fontWeight: "800", color: "#0f172a" }}>
-                      {app.title}
-                    </h4>
-                    <div style={{ fontSize: "0.85rem", color: "#475569" }}>
-                      Applicant: <strong>{app.applicantDetails?.fullName}</strong> (Aadhaar: {app.applicantDetails?.aadhaarId}) | Address: {app.applicantDetails?.address}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span style={{ padding: "6px 14px", borderRadius: "16px", background: "#fef3c7", color: "#92400e", fontWeight: "800", fontSize: "0.85rem", border: "1px solid #fde68a" }}>
-                      Status: {app.status}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Dues Ledger & Payment Info Display */}
-                {app.pendingDues && app.pendingDues.amount > 0 && (
-                  <div style={{ background: app.pendingDues.isPaid ? "#f0fdf4" : "#fffbeb", padding: "12px 16px", borderRadius: "10px", border: `1px solid ${app.pendingDues.isPaid ? "#bbf7d0" : "#fde68a"}`, fontSize: "0.85rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: app.pendingDues.isPaid ? "6px" : "0", flexWrap: "wrap", gap: "8px" }}>
-                      <span><strong>Dues Ledger:</strong> {app.pendingDues.dueType} — Amount: <strong>₹{app.pendingDues.amount}</strong></span>
-                      <span style={{ fontWeight: "800", color: app.pendingDues.isPaid ? "#15803d" : "#b45309" }}>
-                        {app.pendingDues.isPaid ? "✅ DUES CLEARED VIA BANK PAYMENT" : "⚠️ DUES PENDING PAYMENT BY CITIZEN"}
-                      </span>
-                    </div>
-                    {app.pendingDues.isPaid && (
-                      <div style={{ fontSize: "0.8rem", color: "#334155", background: "#ffffff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dcfce7", display: "flex", gap: "16px", flexWrap: "wrap", marginTop: "4px" }}>
-                        <div><strong>Bank:</strong> {app.pendingDues.bankName || "State Bank of India"}</div>
-                        <div><strong>Acc/Card:</strong> {app.pendingDues.accountNumber || "XXXX-4892"}</div>
-                        <div><strong>Holder:</strong> {app.pendingDues.accountHolderName || app.applicantDetails?.fullName}</div>
-                        <div><strong>Receipt:</strong> {app.pendingDues.paymentReceiptNo}</div>
-                        <div><strong>Mode:</strong> {app.pendingDues.paymentMethod || "NetBanking"}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Verification Chain Status Flags (Sections 2.4, 3.2, 4.3, 5.3) */}
-                <div style={{ background: "#ffffff", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                  <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#334155", marginBottom: "8px" }}>
-                    Cross-Office Verification Flags:
-                  </div>
-                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                    {app.officeChain?.map((off, idx) => {
-                      const ver = app.stageVerifications?.[idx];
-                      const isCleared = ver?.status === "cleared";
-                      const isDues = ver?.status === "dues_pending";
-
-                      return (
-                        <div
-                          key={off}
-                          style={{
-                            padding: "6px 12px",
-                            borderRadius: "8px",
-                            fontSize: "0.78rem",
-                            fontWeight: "800",
-                            background: isCleared ? "#dcfce7" : isDues ? "#fef3c7" : "#f1f5f9",
-                            color: isCleared ? "#15803d" : isDues ? "#b45309" : "#475569",
-                            border: "1px solid"
-                          }}
-                        >
-                          {off}: {isCleared ? "CLEARED" : isDues ? "DUES PENDING" : "PENDING"}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Officer Action Bar */}
-                <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
-                  <input
-                    type="text"
-                    placeholder="Enter officer remarks / specific discrepancy note..."
-                    value={discrepancyNote[app._id] || ""}
-                    onChange={(e) => setDiscrepancyNote({ ...discrepancyNote, [app._id]: e.target.value })}
-                    style={{ flex: 1, minWidth: "220px", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
-                  />
-
-                  <button
-                    onClick={() => handleVerifyAction(app._id, "approve")}
-                    style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#15803d", color: "white", fontWeight: "800", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
-                  >
-                    <FaCheckCircle /> Approve &amp; Sign Stage
-                  </button>
-
-                  <button
-                    onClick={() => handleVerifyAction(app._id, "discrepancy")}
-                    style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#d97706", color: "white", fontWeight: "800", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
-                  >
-                    <FaExclamationTriangle /> Flag Discrepancy
-                  </button>
-
-                  <button
-                    onClick={() => handleVerifyAction(app._id, "reject")}
-                    style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#dc2626", color: "white", fontWeight: "800", fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
-                  >
-                    <FaTimesCircle /> Reject
-                  </button>
-                </div>
-
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

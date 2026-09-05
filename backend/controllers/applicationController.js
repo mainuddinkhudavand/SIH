@@ -237,7 +237,13 @@ export const verifyOfficeStage = async (req, res) => {
     const { id } = req.params;
     const { action, officerRemarks, verifiedBy } = req.body; // action: "approve", "discrepancy", "reject"
 
-    const application = await Application.findById(id);
+    const application = await Application.findOne({
+      $or: [
+        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+        { applicationId: id }
+      ]
+    });
+
     if (!application) {
       return res.status(404).json({ success: false, message: "Application not found" });
     }
@@ -246,10 +252,12 @@ export const verifyOfficeStage = async (req, res) => {
     const stageIdx = application.currentStageIndex;
 
     if (action === "approve") {
-      application.stageVerifications[stageIdx].status = "cleared";
-      application.stageVerifications[stageIdx].officerRemarks = officerRemarks || `Verified & Approved by ${currentOffice} Officer.`;
-      application.stageVerifications[stageIdx].verifiedBy = verifiedBy || `${currentOffice} Officer`;
-      application.stageVerifications[stageIdx].verifiedAt = new Date();
+      if (application.stageVerifications[stageIdx]) {
+        application.stageVerifications[stageIdx].status = "cleared";
+        application.stageVerifications[stageIdx].officerRemarks = officerRemarks || `Verified & Approved by ${currentOffice} Officer.`;
+        application.stageVerifications[stageIdx].verifiedBy = verifiedBy || `${currentOffice} Officer`;
+        application.stageVerifications[stageIdx].verifiedAt = new Date();
+      }
 
       const nextIdx = stageIdx + 1;
       if (nextIdx < application.officeChain.length) {
@@ -279,8 +287,10 @@ export const verifyOfficeStage = async (req, res) => {
         timestamp: new Date()
       });
     } else if (action === "discrepancy") {
-      application.stageVerifications[stageIdx].status = "discrepancy";
-      application.stageVerifications[stageIdx].officerRemarks = officerRemarks || "Discrepancy found in records.";
+      if (application.stageVerifications[stageIdx]) {
+        application.stageVerifications[stageIdx].status = "discrepancy";
+        application.stageVerifications[stageIdx].officerRemarks = officerRemarks || "Discrepancy found in records.";
+      }
       application.status = "Discrepancy Found";
       application.rejectionReason = officerRemarks || "Document discrepancy noted by officer.";
 
@@ -292,7 +302,9 @@ export const verifyOfficeStage = async (req, res) => {
         timestamp: new Date()
       });
     } else if (action === "reject") {
-      application.stageVerifications[stageIdx].status = "rejected";
+      if (application.stageVerifications[stageIdx]) {
+        application.stageVerifications[stageIdx].status = "rejected";
+      }
       application.status = "Rejected";
       application.rejectionReason = officerRemarks || "Application rejected during office review.";
 
@@ -304,6 +316,10 @@ export const verifyOfficeStage = async (req, res) => {
         timestamp: new Date()
       });
     }
+
+    application.markModified("stageVerifications");
+    application.markModified("timeline");
+    application.markModified("pendingDues");
 
     await application.save();
 

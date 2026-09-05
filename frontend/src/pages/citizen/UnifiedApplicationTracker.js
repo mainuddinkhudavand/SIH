@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaSearch,
   FaCheckCircle,
@@ -10,9 +10,18 @@ import {
   FaPrint,
   FaBuilding,
   FaStamp,
-  FaArrowRight
+  FaArrowRight,
+  FaMobileAlt,
+  FaUniversity,
+  FaReceipt,
+  FaLock
 } from "react-icons/fa";
 import API from "../../services/api";
+import {
+  getApplicationByIdFromStore,
+  payDuesInStore,
+  subscribeToAppStore
+} from "../../services/applicationStore";
 
 export default function UnifiedApplicationTracker() {
   const [searchId, setSearchId] = useState("CERT-847291");
@@ -20,7 +29,7 @@ export default function UnifiedApplicationTracker() {
   const [application, setApplication] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Payment Modal State (Step 1.8)
+  // Payment Modal State
   const [showPayModal, setShowPayModal] = useState(false);
   const [payMethod, setPayMethod] = useState("UPI");
   
@@ -42,63 +51,64 @@ export default function UnifiedApplicationTracker() {
   const [cardCvv, setCardCvv] = useState("842");
 
   const [processingPay, setProcessingPay] = useState(false);
-
-  // Download Certificate Modal State (Step 1.10)
   const [showCertModal, setShowCertModal] = useState(false);
 
-  const handleSearch = async (e) => {
-    e?.preventDefault();
-    if (!searchId.trim()) return;
+  useEffect(() => {
+    // Initial lookup on mount
+    fetchApplication(searchId);
 
+    // Subscribe to live application store updates across all 4 office portals
+    const unsubscribe = subscribeToAppStore((detail) => {
+      if (application) {
+        const currentId = (application.applicationId || application._id || "").toString().toLowerCase();
+        const updatedId = (detail.appId || detail.updatedApp?.applicationId || detail.updatedApp?._id || "").toString().toLowerCase();
+        if (currentId === updatedId) {
+          if (detail.updatedApp) {
+            setApplication(detail.updatedApp);
+          } else {
+            fetchApplication(application.applicationId || application._id);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [application?.applicationId]);
+
+  const fetchApplication = async (idToSearch) => {
+    if (!idToSearch) return;
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      const res = await API.get(`/applications/track/${searchId.trim()}`);
-      if (res.data) {
+      // 1. Check local master applicationStore first for real-time status sync
+      const localMatch = getApplicationByIdFromStore(idToSearch);
+      if (localMatch) {
+        setApplication(localMatch);
+      }
+
+      // 2. Query backend database
+      const res = await API.get(`/applications/track/${idToSearch.trim()}`);
+      if (res.data && res.data._id) {
         setApplication(res.data);
       }
     } catch (err) {
-      // Fallback demo object if tracking ID not found in database yet
-      setApplication({
-        _id: "demo-app-1",
-        applicationId: searchId.toUpperCase(),
-        title: "Income Certificate Application",
-        serviceType: "Certificates",
-        status: "Revenue Dues Pending",
-        routingType: "multi-office",
-        officeChain: ["Talati", "Revenue", "Tehsildar"],
-        currentOffice: "Revenue",
-        currentStageIndex: 1,
-        applicantDetails: {
-          fullName: "Pavan Kumar",
-          phone: "+91 98765 43210",
-          aadhaarId: "9876-5432-1000",
-          surveyNumber: "SRV-103",
-          propertyId: "PROP-MH-402",
-          annualIncome: "₹85,000"
-        },
-        stageVerifications: [
-          { officeName: "Talati", stageName: "Step 1: Talati Verification", status: "cleared", officerRemarks: "Verified village income & crop records.", verifiedBy: "Talati Officer Patil", verifiedAt: "2026-09-04T10:15:00Z" },
-          { officeName: "Revenue", stageName: "Step 2: Revenue Clearance", status: "dues_pending", officerRemarks: "Unpaid land revenue dues found: ₹1,850.", verifiedBy: "Revenue Ledger Engine", verifiedAt: null },
-          { officeName: "Tehsildar", stageName: "Step 3: Tehsildar Final Issuance", status: "pending", officerRemarks: "Awaiting preceding clearances.", verifiedBy: null, verifiedAt: null }
-        ],
-        pendingDues: {
-          officeName: "Revenue Office",
-          dueType: "Unpaid Land Revenue Cess FY 2025-26",
-          amount: 1850,
-          surveyOrPropertyId: "SRV-103",
-          isPaid: false
-        },
-        timeline: [
-          { stage: "Step 0.1: Service Selected", status: "Submitted", updatedBy: "Citizen", note: "Application CERT-847291 submitted online.", timestamp: "2026-09-04T09:00:00Z" },
-          { stage: "Talati Verification", status: "Cleared", updatedBy: "Talati Officer", note: "Village land records confirmed.", timestamp: "2026-09-04T10:15:00Z" },
-          { stage: "Revenue Dues Flagged", status: "Pending Payment", updatedBy: "Revenue Ledger", note: "Dues ₹1,850 flagged for Survey SRV-103.", timestamp: "2026-09-04T10:16:00Z" }
-        ]
-      });
+      // If not found online or offline, keep local match or show error
+      const localMatch = getApplicationByIdFromStore(idToSearch);
+      if (localMatch) {
+        setApplication(localMatch);
+      } else {
+        setErrorMsg(`Application ID '${idToSearch}' not found in registry.`);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e) => {
+    e?.preventDefault();
+    if (!searchId.trim()) return;
+    fetchApplication(searchId.trim());
   };
 
   const handleProcessDuesPayment = async () => {
@@ -112,7 +122,8 @@ export default function UnifiedApplicationTracker() {
         bankName: `UPI Provider: ${upiApp}`,
         accountNumber: upiId ? `VPA: ${upiId}` : "9876543210@ybl",
         accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
-        ifscCode: `UPI PIN Authorized`
+        ifscCode: "UPI Authorized",
+        upiId: upiId || "9876543210@ybl"
       };
     } else if (payMethod === "Card") {
       const maskedCard = cardNumber ? `Card XXXX-${cardNumber.replace(/\D/g, "").slice(-4)}` : "Card XXXX-9012";
@@ -121,7 +132,8 @@ export default function UnifiedApplicationTracker() {
         bankName: cardType,
         accountNumber: maskedCard,
         accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
-        ifscCode: `Expiry: ${cardExpiry || "08/29"}`
+        ifscCode: `Expiry: ${cardExpiry || "08/29"}`,
+        cardType
       };
     } else {
       paymentPayload = {
@@ -133,589 +145,429 @@ export default function UnifiedApplicationTracker() {
       };
     }
 
-    const receiptNo = `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
-
     try {
-      const res = await API.post(`/applications/${application._id || "demo-app-1"}/pay-dues`, paymentPayload);
-
-      if (res.data?.success && res.data?.application) {
-        setApplication(res.data.application);
-      } else {
-        // Fallback state update
-        const nextOffice = application.officeChain?.[(application.currentStageIndex || 0) + 1] || "Tehsildar";
-        const updatedVerifications = (application.stageVerifications || []).map((s) => {
-          if (s.status === "dues_pending" || s.officeName === application.currentOffice) {
-            return {
-              ...s,
-              status: "cleared",
-              officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${paymentPayload.paymentMethod}. Receipt: ${receiptNo}`,
-              verifiedBy: "Online Payment Engine",
-              verifiedAt: new Date().toISOString()
-            };
-          }
-          return s;
-        });
-
-        setApplication({
-          ...application,
-          status: `${nextOffice} Verification Pending`,
-          currentOffice: nextOffice,
-          currentStageIndex: (application.currentStageIndex || 0) + 1,
-          pendingDues: {
-            ...application.pendingDues,
-            isPaid: true,
-            paymentMethod: paymentPayload.paymentMethod,
-            bankName: paymentPayload.bankName,
-            accountNumber: paymentPayload.accountNumber,
-            accountHolderName: paymentPayload.accountHolderName,
-            ifscCode: paymentPayload.ifscCode,
-            paymentReceiptNo: receiptNo,
-            paidAt: new Date().toISOString()
-          },
-          stageVerifications: updatedVerifications
-        });
+      // Save payment into central store & dispatch live sync to all 4 offices
+      const updated = payDuesInStore(application._id || application.applicationId, paymentPayload);
+      if (updated) {
+        setApplication(updated);
       }
     } catch (err) {
-      const nextOffice = application.officeChain?.[(application.currentStageIndex || 0) + 1] || "Tehsildar";
-      const updatedVerifications = (application.stageVerifications || []).map((s) => {
-        if (s.status === "dues_pending" || s.officeName === application.currentOffice) {
-          return {
-            ...s,
-            status: "cleared",
-            officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${paymentPayload.paymentMethod}. Receipt: ${receiptNo}`,
-            verifiedBy: "Online Payment Engine",
-            verifiedAt: new Date().toISOString()
-          };
-        }
-        return s;
-      });
-
-      setApplication({
-        ...application,
-        status: `${nextOffice} Verification Pending`,
-        currentOffice: nextOffice,
-        currentStageIndex: (application.currentStageIndex || 0) + 1,
-        pendingDues: {
-          ...application.pendingDues,
-          isPaid: true,
-          paymentMethod: paymentPayload.paymentMethod,
-          bankName: paymentPayload.bankName,
-          accountNumber: paymentPayload.accountNumber,
-          accountHolderName: paymentPayload.accountHolderName,
-          ifscCode: paymentPayload.ifscCode,
-          paymentReceiptNo: receiptNo,
-          paidAt: new Date().toISOString()
-        },
-        stageVerifications: updatedVerifications
-      });
+      console.warn("Dues payment processing notice:", err.message);
     } finally {
       setProcessingPay(false);
       setShowPayModal(false);
     }
   };
 
+  const isApproved = application && ((application.status || "").toLowerCase().includes("approved") || application.currentOffice === "Completed");
+  const isRejected = application && ((application.status || "").toLowerCase().includes("reject") || (application.status || "").toLowerCase().includes("discrepancy"));
+  const hasDues = application && application.pendingDues && !application.pendingDues.isPaid;
+
   return (
-    <div style={{ background: "#ffffff", padding: "28px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-      {/* Search Header */}
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ background: "#e0f2fe", color: "#0369a1", padding: "4px 12px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "800", display: "inline-block", marginBottom: "6px" }}>
-          SECTION 1.6 — UNIFIED MULTI-OFFICE APPLICATION TRACKER
-        </div>
-        <h2 style={{ margin: 0, fontSize: "1.75rem", fontWeight: "800", color: "#0f172a" }}>
-          Track Application Status &amp; Clear Pending Dues
-        </h2>
-        <p style={{ margin: "4px 0 16px 0", color: "#64748b", fontSize: "0.95rem" }}>
-          Enter your unique Application ID (CERT-XXXXXX or APP-XXXXXX) to view live stage progression across connected government offices.
-        </p>
-
-        <form onSubmit={handleSearch} style={{ display: "flex", gap: "10px", maxWidth: "560px" }}>
-          <input
-            type="text"
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            placeholder="e.g. CERT-847291 or APP-102948"
-            required
-            style={{ flex: 1, padding: "12px 16px", borderRadius: "10px", border: "2px solid #cbd5e1", fontSize: "1rem", fontWeight: "700" }}
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ padding: "12px 24px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)", color: "white", fontWeight: "800", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-          >
-            <FaSearch /> {loading ? "Searching..." : "Track Status"}
-          </button>
-        </form>
-      </div>
-
-      {application && (
-        <div style={{ borderTop: "2px dashed #e2e8f0", paddingTop: "24px" }}>
-          
-          {/* Main Status Header Card */}
-          <div style={{ background: "#f8fafc", padding: "20px", borderRadius: "14px", border: "1px solid #cbd5e1", marginBottom: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-              <div>
-                <span style={{ fontSize: "0.8rem", fontWeight: "800", color: "#0369a1" }}>
-                  APPLICATION ID: {application.applicationId}
-                </span>
-                <h3 style={{ margin: "2px 0 4px 0", fontSize: "1.4rem", fontWeight: "800", color: "#0f172a" }}>
-                  {application.title}
-                </h3>
-                <div style={{ fontSize: "0.85rem", color: "#475569" }}>
-                  Applicant: <strong>{application.applicantDetails?.fullName}</strong> | Aadhaar: {application.applicantDetails?.aadhaarId}
-                </div>
-              </div>
-
-              <div>
-                <div
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: "20px",
-                    fontWeight: "800",
-                    fontSize: "0.9rem",
-                    display: "inline-block",
-                    background:
-                      application.status === "Approved"
-                        ? "#dcfce7"
-                        : application.status?.includes("Dues")
-                        ? "#fef3c7"
-                        : "#dbeafe",
-                    color:
-                      application.status === "Approved"
-                        ? "#166534"
-                        : application.status?.includes("Dues")
-                        ? "#92400e"
-                        : "#1e40af",
-                    border: "1px solid"
-                  }}
-                >
-                  Current Status: {application.status}
-                </div>
-              </div>
+    <div style={{ background: "#f8fafc", minHeight: "92vh", padding: "24px" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", color: "white", padding: "28px", borderRadius: "16px", marginBottom: "24px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+            <div>
+              <span style={{ background: "#38bdf8", color: "#0f172a", padding: "4px 12px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>
+                CITIZEN SELF-SERVICE PORTAL
+              </span>
+              <h1 style={{ margin: "8px 0 4px 0", fontSize: "2rem", fontWeight: "900" }}>
+                🔍 Track Application Status &amp; Pay Dues
+              </h1>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.95rem" }}>
+                Unified Real-time Tracking across Municipality, Tehsildar, Revenue, and Talati Offices.
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* Dues Notification Banner & Pay Button (Section 1.7) */}
-          {application.pendingDues && application.pendingDues.amount > 0 && !application.pendingDues.isPaid && (
-            <div style={{ background: "#fffbeb", border: "2px solid #f59e0b", padding: "20px", borderRadius: "14px", marginBottom: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-                <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
-                  <div style={{ background: "#fef3c7", color: "#d97706", padding: "14px", borderRadius: "50%", fontSize: "1.5rem" }}>
-                    <FaExclamationTriangle />
-                  </div>
+        {/* Search Bar */}
+        <div style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", border: "1px solid #cbd5e1", marginBottom: "24px" }}>
+          <form onSubmit={handleSearch} style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: "260px", position: "relative" }}>
+              <FaSearch style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+              <input
+                type="text"
+                placeholder="Enter Application ID (e.g. CERT-847291, APP-401928, APP-884920, CERT-908123)..."
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                style={{ width: "100%", padding: "12px 14px 12px 42px", borderRadius: "10px", border: "2px solid #cbd5e1", fontSize: "0.95rem", outline: "none", fontWeight: "700" }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ background: "#0284c7", color: "white", border: "none", padding: "12px 24px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "0.95rem" }}
+            >
+              {loading ? "Searching..." : "Track Status"}
+            </button>
+          </form>
+
+          {/* Preset Quick Search Chips */}
+          <div style={{ display: "flex", gap: "8px", marginTop: "14px", flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "700" }}>Quick Test IDs:</span>
+            {["CERT-847291", "APP-401928", "APP-884920", "CERT-908123", "APP-302910", "APP-718290"].map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setSearchId(id);
+                  fetchApplication(id);
+                }}
+                style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "4px 10px", fontSize: "0.78rem", fontWeight: "800", color: "#334155", cursor: "pointer" }}
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {errorMsg && (
+          <div style={{ background: "#fef2f2", color: "#991b1b", padding: "16px", borderRadius: "12px", border: "1px solid #fecaca", marginBottom: "24px", fontWeight: "800" }}>
+            <FaExclamationTriangle style={{ marginRight: "8px" }} /> {errorMsg}
+          </div>
+        )}
+
+        {/* Application Status Details */}
+        {application && (
+          <div style={{ background: "#ffffff", borderRadius: "16px", padding: "28px", border: "1px solid #cbd5e1", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
+            
+            {/* Top Bar */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "20px" }}>
+              <div>
+                <span style={{ background: "#e0f2fe", color: "#0369a1", padding: "4px 12px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "900", marginRight: "8px" }}>
+                  {application.applicationId}
+                </span>
+                <span style={{ background: "#f1f5f9", color: "#475569", padding: "4px 12px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "800" }}>
+                  {application.serviceType || "Government Service"}
+                </span>
+                <h2 style={{ margin: "10px 0 4px 0", fontSize: "1.5rem", fontWeight: "900", color: "#0f172a" }}>
+                  {application.title}
+                </h2>
+              </div>
+
+              <div>
+                {isApproved && (
+                  <span style={{ background: "#dcfce7", color: "#15803d", padding: "8px 18px", borderRadius: "20px", fontWeight: "900", fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <FaCheckCircle /> APPROVED &amp; CERTIFICATE ISSUED
+                  </span>
+                )}
+                {isRejected && (
+                  <span style={{ background: "#fee2e2", color: "#991b1b", padding: "8px 18px", borderRadius: "20px", fontWeight: "900", fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <FaExclamationTriangle /> {application.status || "REJECTED"}
+                  </span>
+                )}
+                {!isApproved && !isRejected && (
+                  <span style={{ background: "#fef9c3", color: "#854d0e", padding: "8px 18px", borderRadius: "20px", fontWeight: "900", fontSize: "0.95rem" }}>
+                    ⏳ {application.status}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Applicant Meta Details */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", background: "#f8fafc", padding: "16px", borderRadius: "12px", fontSize: "0.9rem", marginBottom: "24px" }}>
+              <div><strong>Applicant Name:</strong> {application.applicantDetails?.fullName || "Citizen"}</div>
+              <div><strong>Contact Phone:</strong> {application.applicantDetails?.phone || "N/A"}</div>
+              <div><strong>Aadhaar ID:</strong> {application.applicantDetails?.aadhaarId || "N/A"}</div>
+              <div><strong>Current Office:</strong> {application.currentOffice || "Completed"}</div>
+            </div>
+
+            {/* Dues Payment Action Card */}
+            {hasDues && (
+              <div style={{ background: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)", border: "2px solid #fde047", borderRadius: "14px", padding: "20px", marginBottom: "24px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
                   <div>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#b45309", textTransform: "uppercase" }}>
-                      DUES NOTIFICATION ALERT (SECTION 1.7)
+                    <span style={{ background: "#ca8a04", color: "white", padding: "3px 10px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "900" }}>
+                      DUES ACTION REQUIRED
                     </span>
-                    <h4 style={{ margin: "2px 0", fontSize: "1.15rem", fontWeight: "800", color: "#78350f" }}>
-                      Pending Amount: ₹{application.pendingDues.amount} ({application.pendingDues.officeName})
-                    </h4>
-                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#92400e" }}>
-                      Reason: {application.pendingDues.dueType} (Target ID: {application.pendingDues.surveyOrPropertyId})
+                    <h3 style={{ margin: "6px 0 4px 0", fontSize: "1.2rem", fontWeight: "900", color: "#713f12" }}>
+                      Pending Revenue/Civic Dues: ₹{application.pendingDues.amount}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#854d0e" }}>
+                      Reason: {application.pendingDues.reason || "Land Revenue / Municipal Dues Arrears"}. Pay online via UPI, NetBanking, or Card to clear stage instantly across all offices.
                     </p>
                   </div>
+
+                  <button
+                    onClick={() => setShowPayModal(true)}
+                    style={{ background: "#ca8a04", color: "white", border: "none", padding: "12px 22px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "8px" }}
+                  >
+                    <FaCreditCard /> Enter Payment &amp; Pay ₹{application.pendingDues.amount}
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => setShowPayModal(true)}
-                  style={{ padding: "12px 24px", borderRadius: "10px", border: "none", background: "#d97706", color: "white", fontWeight: "800", fontSize: "0.95rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <FaCreditCard /> Pay ₹{application.pendingDues.amount} Now
-                </button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Dues Cleared & Paid Receipt Banner (Section 1.8) */}
-          {application.pendingDues && application.pendingDues.isPaid && (
-            <div style={{ background: "#f0fdf4", border: "2px solid #22c55e", padding: "20px", borderRadius: "14px", marginBottom: "24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#166534", fontWeight: "800", fontSize: "1.1rem", marginBottom: "10px" }}>
-                <FaCheckCircle color="#16a34a" size={22} /> DUES CLEARED &amp; PAYMENT VERIFIED ACROSS ALL OFFICES
+            {/* Receipt Box after Payment */}
+            {application.pendingDues?.isPaid && (
+              <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "16px", borderRadius: "12px", marginBottom: "24px", color: "#065f46" }}>
+                <div style={{ fontWeight: "900", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FaReceipt /> Dues Clearance Payment Completed &amp; Verified
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "10px", fontSize: "0.85rem" }}>
+                  <div><strong>Receipt No:</strong> {application.pendingDues.paymentReceiptNo}</div>
+                  <div><strong>Amount Paid:</strong> ₹{application.pendingDues.amount}</div>
+                  <div><strong>Payment Mode:</strong> {application.pendingDues.paymentMethod}</div>
+                  <div><strong>Bank/Account/VPA:</strong> {application.pendingDues.bankName || application.pendingDues.upiId} ({application.pendingDues.accountNumber || "UPI"})</div>
+                </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", background: "white", padding: "16px", borderRadius: "10px", border: "1px solid #bbf7d0", fontSize: "0.85rem", color: "#334155" }}>
-                <div><span style={{ color: "#64748b" }}>Payment Receipt:</span> <br/><strong style={{ color: "#15803d" }}>{application.pendingDues.paymentReceiptNo || "PAY-RC-2026-849201"}</strong></div>
-                <div><span style={{ color: "#64748b" }}>Bank Name:</span> <br/><strong>{application.pendingDues.bankName || "State Bank of India"}</strong></div>
-                <div><span style={{ color: "#64748b" }}>Account / Card:</span> <br/><strong>{application.pendingDues.accountNumber || "XXXX-4892"}</strong></div>
-                <div><span style={{ color: "#64748b" }}>Account Holder:</span> <br/><strong>{application.pendingDues.accountHolderName || application.applicantDetails?.fullName}</strong></div>
-                <div><span style={{ color: "#64748b" }}>Mode / IFSC:</span> <br/><strong>{application.pendingDues.paymentMethod || "NetBanking"} ({application.pendingDues.ifscCode || "SBIN0001420"})</strong></div>
-                <div><span style={{ color: "#64748b" }}>Paid Amount:</span> <br/><strong style={{ color: "#b45309" }}>₹{application.pendingDues.amount}</strong></div>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Sequential Office Verification Chain Progress Bar (Section 0.3) */}
-          <div style={{ marginBottom: "28px" }}>
-            <h4 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", fontWeight: "800", color: "#1e293b" }}>
-              Sequential Multi-Office Verification Chain:
-            </h4>
+            {/* Verification Chain Progress */}
+            <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#0f172a", marginBottom: "14px" }}>
+              🏛️ Multi-Office Stage Verifications:
+            </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${application.officeChain?.length || 1}, 1fr)`, gap: "14px" }}>
-              {application.officeChain?.map((off, idx) => {
-                const stage = application.stageVerifications?.[idx];
-                const isCurrent = application.currentOffice === off;
-                const isPassed = idx < application.currentStageIndex || application.status === "Approved";
-                const isDuesPending = stage?.status === "dues_pending" || (isCurrent && application.pendingDues?.amount > 0 && !application.pendingDues?.isPaid);
+            <div style={{ display: "grid", gap: "12px", marginBottom: "24px" }}>
+              {(application.stageVerifications || []).map((stg, idx) => {
+                const isCleared = stg.status === "cleared";
+                const isPending = stg.status === "pending";
+                const isDues = stg.status === "dues_pending";
+                const isRej = stg.status === "rejected" || stg.status === "discrepancy";
 
                 return (
                   <div
-                    key={off}
+                    key={idx}
                     style={{
-                      background: isPassed ? "#f0fdf4" : isCurrent ? (isDuesPending ? "#fffbeb" : "#eff6ff") : "#f8fafc",
-                      border: `2px solid ${isPassed ? "#22c55e" : isCurrent ? (isDuesPending ? "#f59e0b" : "#3b82f6") : "#cbd5e1"}`,
+                      background: isCleared ? "#f0fdf4" : isRej ? "#fef2f2" : isDues ? "#fefce8" : "#ffffff",
+                      border: `1px solid ${isCleared ? "#bbf7d0" : isRej ? "#fecaca" : isDues ? "#fde047" : "#cbd5e1"}`,
                       borderRadius: "12px",
                       padding: "16px"
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                      <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#475569" }}>
-                        STEP {idx + 1}
-                      </span>
-                      {isPassed ? (
-                        <FaCheckCircle color="#16a34a" size={18} />
-                      ) : isDuesPending ? (
-                        <FaExclamationTriangle color="#d97706" size={18} />
-                      ) : (
-                        <FaClock color="#3b82f6" size={18} />
-                      )}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                      <div style={{ fontWeight: "800", color: "#0f172a", fontSize: "0.95rem" }}>
+                        {stg.stageName || `Stage ${idx + 1}`} ({stg.officeName} Office)
+                      </div>
+
+                      <div>
+                        {isCleared && <span style={{ background: "#dcfce7", color: "#15803d", padding: "4px 10px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>✓ CLEARED</span>}
+                        {isDues && <span style={{ background: "#fef08a", color: "#854d0e", padding: "4px 10px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>PAYMENT REQUIRED</span>}
+                        {isRej && <span style={{ background: "#fee2e2", color: "#991b1b", padding: "4px 10px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>REJECTED / DISCREPANCY</span>}
+                        {isPending && <span style={{ background: "#f1f5f9", color: "#475569", padding: "4px 10px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "800" }}>IN PROGRESS</span>}
+                      </div>
                     </div>
 
-                    <h5 style={{ margin: "0 0 4px 0", fontSize: "1rem", fontWeight: "800", color: "#0f172a" }}>
-                      {off} Office
-                    </h5>
-
-                    <div style={{ fontSize: "0.8rem", color: isPassed ? "#15803d" : isDuesPending ? "#b45309" : "#1d4ed8", fontWeight: "700" }}>
-                      {isPassed ? "Verified & Cleared" : isDuesPending ? "Dues Payment Pending" : isCurrent ? "Processing In Queue" : "Awaiting Turn"}
-                    </div>
-
-                    {stage?.officerRemarks && (
-                      <p style={{ margin: "8px 0 0 0", fontSize: "0.75rem", color: "#64748b", borderTop: "1px solid #e2e8f0", paddingTop: "6px" }}>
-                        {stage.officerRemarks}
-                      </p>
+                    {stg.officerRemarks && (
+                      <div style={{ fontSize: "0.85rem", color: "#475569", marginTop: "6px" }}>
+                        <strong>Officer Notes:</strong> {stg.officerRemarks}
+                      </div>
                     )}
                   </div>
                 );
               })}
             </div>
-          </div>
 
-          {/* Approved Certificate Action (Section 1.9 & 1.10) */}
-          {application.status === "Approved" && (
-            <div style={{ background: "#f0fdf4", border: "2px solid #22c55e", padding: "20px", borderRadius: "14px", textAlign: "center" }}>
-              <FaCheckCircle size={40} color="#16a34a" style={{ marginBottom: "8px" }} />
-              <h3 style={{ margin: "0 0 4px 0", color: "#166534", fontSize: "1.3rem", fontWeight: "800" }}>
-                All Clear! Certificate Digitally Approved &amp; Issued
-              </h3>
-              <p style={{ margin: "0 0 16px 0", color: "#15803d", fontSize: "0.9rem" }}>
-                Every required office has marked 'Cleared'. Your official document is ready with digital signature and QR verification code.
-              </p>
-              <button
-                onClick={() => setShowCertModal(true)}
-                style={{ padding: "12px 24px", borderRadius: "10px", border: "none", background: "#15803d", color: "white", fontWeight: "800", fontSize: "0.95rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "8px" }}
-              >
-                <FaDownload /> Download Digitally Signed PDF Certificate
-              </button>
-            </div>
-          )}
+            {/* Issued Certificate Download Action */}
+            {isApproved && (
+              <div style={{ background: "#f0fdf4", border: "2px solid #86efac", borderRadius: "14px", padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 4px 0", color: "#166534", fontSize: "1.15rem", fontWeight: "900" }}>
+                      🎓 Certificate Ready for Download
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#15803d" }}>
+                      Digitally signed and QR verified document ref: <strong>{application.issuedCertificate?.certificateId || "CERT-OFFICIAL"}</strong>
+                    </p>
+                  </div>
 
-        </div>
-      )}
-
-      {/* Payment Gateway Modal (Step 1.8) */}
-      {showPayModal && application && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-          <div style={{ background: "#ffffff", padding: "32px", borderRadius: "16px", width: "100%", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
-            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "1.3rem", fontWeight: "800" }}>
-              Integrated Payment Gateway (Step 1.8)
-            </h3>
-            <p style={{ margin: "0 0 16px 0", color: "#64748b", fontSize: "0.85rem" }}>
-              Pay pending dues to <strong>{application.pendingDues?.officeName}</strong>. Payment receipt will be shared and dues flag cleared across all offices.
-            </p>
-
-            <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "10px", border: "1px solid #cbd5e1", marginBottom: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ color: "#64748b", fontSize: "0.85rem" }}>Due Reason:</span>
-                <span style={{ fontWeight: "700", fontSize: "0.85rem" }}>{application.pendingDues?.dueType}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", fontWeight: "800", color: "#b45309" }}>
-                <span>Total Amount:</span>
-                <span>₹{application.pendingDues?.amount}</span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>Select Payment Mode</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-                {["UPI", "NetBanking", "Card"].map((m) => (
                   <button
-                    key={m}
+                    onClick={() => setShowCertModal(true)}
+                    style={{ background: "#16a34a", color: "white", border: "none", padding: "12px 22px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "8px" }}
+                  >
+                    <FaDownload /> Download Digitally Signed Certificate
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* PAYMENT MODAL WITH DETAILED BANK / UPI / CARD INPUTS */}
+        {showPayModal && application && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+            <div style={{ background: "#ffffff", borderRadius: "20px", maxWidth: "560px", width: "100%", padding: "28px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+                <h3 style={{ margin: 0, fontSize: "1.3rem", fontWeight: "900", color: "#0f172a" }}>
+                  💳 Dues Payment Gateway
+                </h3>
+                <button onClick={() => setShowPayModal(false)} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#64748b" }}>✕</button>
+              </div>
+
+              <div style={{ background: "#f8fafc", padding: "14px", borderRadius: "10px", marginBottom: "20px", fontSize: "0.9rem" }}>
+                <div><strong>Application:</strong> {application.title} ({application.applicationId})</div>
+                <div style={{ color: "#ca8a04", fontWeight: "900", marginTop: "4px" }}>
+                  Total Dues Payable: ₹{application.pendingDues?.amount}
+                </div>
+              </div>
+
+              {/* Payment Mode Selector Tabs */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "20px" }}>
+                {["UPI", "NetBanking", "Card"].map((mode) => (
+                  <button
+                    key={mode}
                     type="button"
-                    onClick={() => setPayMethod(m)}
+                    onClick={() => setPayMethod(mode)}
                     style={{
-                      padding: "8px",
+                      padding: "10px",
                       borderRadius: "8px",
                       border: "2px solid",
-                      borderColor: payMethod === m ? "#15803d" : "#cbd5e1",
-                      background: payMethod === m ? "#f0fdf4" : "white",
-                      color: payMethod === m ? "#166534" : "#475569",
-                      fontWeight: "700",
+                      borderColor: payMethod === mode ? "#0284c7" : "#cbd5e1",
+                      background: payMethod === mode ? "#e0f2fe" : "#ffffff",
+                      color: payMethod === mode ? "#0369a1" : "#475569",
+                      fontWeight: "800",
                       cursor: "pointer",
                       fontSize: "0.85rem"
                     }}
                   >
-                    {m === "UPI" ? "📱 UPI (PhonePe/GPay)" : m === "NetBanking" ? "🏦 NetBanking" : "💳 Credit/Debit Card"}
+                    {mode === "UPI" && "📱 UPI"}
+                    {mode === "NetBanking" && "🏛️ NetBanking"}
+                    {mode === "Card" && "💳 Debit/Credit Card"}
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Mode 1: UPI Payment (PhonePe, Google Pay, Paytm, BHIM) */}
-            {payMethod === "UPI" && (
-              <div>
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Select UPI Application</label>
-                  <select
-                    value={upiApp}
-                    onChange={(e) => setUpiApp(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "700", color: "#0f172a" }}
-                  >
-                    <option value="PhonePe">💜 PhonePe (Fast Checkout)</option>
-                    <option value="Google Pay (GPay)">💙 Google Pay / GPay</option>
-                    <option value="Paytm UPI">💙 Paytm UPI</option>
-                    <option value="BHIM UPI">🇮🇳 BHIM National UPI</option>
-                    <option value="Amazon Pay">🧡 Amazon Pay UPI</option>
-                    <option value="WhatsApp Pay">💚 WhatsApp Pay</option>
-                  </select>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+              {/* Mode Specific Input Forms */}
+              {payMethod === "UPI" && (
+                <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>UPI ID / VPA Handle</label>
-                    <input
-                      type="text"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      placeholder="e.g. 9876543210@ybl"
-                      required
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                    />
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Select UPI App:</label>
+                    <select value={upiApp} onChange={(e) => setUpiApp(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontWeight: "700" }}>
+                      <option value="PhonePe">PhonePe UPI</option>
+                      <option value="Google Pay">Google Pay (GPay)</option>
+                      <option value="Paytm UPI">Paytm UPI</option>
+                      <option value="BHIM UPI">BHIM Government UPI</option>
+                      <option value="Amazon Pay UPI">Amazon Pay UPI</option>
+                    </select>
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>UPI Security PIN</label>
-                    <input
-                      type="password"
-                      value={upiPin}
-                      maxLength={6}
-                      onChange={(e) => setUpiPin(e.target.value)}
-                      placeholder="4 or 6-digit PIN"
-                      required
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Payer Name (Linked to UPI)</label>
-                  <input
-                    type="text"
-                    value={accountHolderName}
-                    onChange={(e) => setAccountHolderName(e.target.value)}
-                    placeholder="e.g. Pavan Kumar"
-                    required
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Mode 2: NetBanking Payment */}
-            {payMethod === "NetBanking" && (
-              <div>
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Select Bank</label>
-                  <select
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", color: "#0f172a" }}
-                  >
-                    <option value="State Bank of India">State Bank of India (SBI)</option>
-                    <option value="HDFC Bank">HDFC Bank</option>
-                    <option value="ICICI Bank">ICICI Bank</option>
-                    <option value="Bank of Baroda">Bank of Baroda</option>
-                    <option value="Axis Bank">Axis Bank</option>
-                    <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
-                    <option value="Canara Bank">Canara Bank</option>
-                  </select>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account Number</label>
-                    <input
-                      type="text"
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="e.g. 501002938471"
-                      required
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                    />
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>VPA / UPI ID:</label>
+                    <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="e.g. 9876543210@ybl or username@okicici" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>IFSC Code</label>
-                    <input
-                      type="text"
-                      value={ifscCode}
-                      onChange={(e) => setIfscCode(e.target.value)}
-                      placeholder="e.g. SBIN0001420"
-                      required
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                    />
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>UPI Security PIN (4 or 6 Digits):</label>
+                    <input type="password" value={upiPin} onChange={(e) => setUpiPin(e.target.value)} maxLength={6} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
                   </div>
                 </div>
+              )}
 
-                <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account Holder Name</label>
-                  <input
-                    type="text"
-                    value={accountHolderName}
-                    onChange={(e) => setAccountHolderName(e.target.value)}
-                    placeholder="e.g. Pavan Kumar"
-                    required
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Mode 3: Card Payment (Debit / Credit) */}
-            {payMethod === "Card" && (
-              <div>
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Card Network / Type</label>
-                  <select
-                    value={cardType}
-                    onChange={(e) => setCardType(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "700", color: "#0f172a" }}
-                  >
-                    <option value="RuPay Card">🇮🇳 RuPay Debit / Credit Card (Govt Pre-Approved)</option>
-                    <option value="Visa Card">💳 Visa Debit / Credit Card</option>
-                    <option value="MasterCard">💳 MasterCard</option>
-                    <option value="Maestro Card">💳 Maestro / Cirrus Card</option>
-                  </select>
-                </div>
-
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>16-Digit Card Number</label>
-                  <input
-                    type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    placeholder="e.g. 4532 8910 4821 9012"
-                    required
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                  />
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+              {payMethod === "NetBanking" && (
+                <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Expiry (MM/YY)</label>
-                    <input
-                      type="text"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
-                      placeholder="e.g. 08/29"
-                      required
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                    />
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Select Bank Name:</label>
+                    <select value={bankName} onChange={(e) => setBankName(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontWeight: "700" }}>
+                      <option value="State Bank of India">State Bank of India (SBI)</option>
+                      <option value="HDFC Bank">HDFC Bank</option>
+                      <option value="ICICI Bank">ICICI Bank</option>
+                      <option value="Bank of Baroda">Bank of Baroda</option>
+                      <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
+                      <option value="Axis Bank">Axis Bank</option>
+                    </select>
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>CVV / Security Code</label>
-                    <input
-                      type="password"
-                      value={cardCvv}
-                      maxLength={4}
-                      onChange={(e) => setCardCvv(e.target.value)}
-                      placeholder="3 or 4-digit CVV"
-                      required
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                    />
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Bank Account Number:</label>
+                    <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Account Holder Name:</label>
+                      <input type="text" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Bank IFSC Code:</label>
+                      <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Cardholder Name</label>
-                  <input
-                    type="text"
-                    value={accountHolderName}
-                    onChange={(e) => setAccountHolderName(e.target.value)}
-                    placeholder="e.g. Pavan Kumar"
-                    required
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
-                  />
+              {payMethod === "Card" && (
+                <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Card Network:</label>
+                    <select value={cardType} onChange={(e) => setCardType(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontWeight: "700" }}>
+                      <option value="RuPay Card">RuPay Debit Card (Zero Fee)</option>
+                      <option value="Visa Card">Visa Debit/Credit Card</option>
+                      <option value="Mastercard">Mastercard Debit/Credit Card</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>16-Digit Card Number:</label>
+                    <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} maxLength={19} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Expiry (MM/YY):</label>
+                      <input type="text" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>CVV (3 Digits):</label>
+                      <input type="password" value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} maxLength={4} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button onClick={() => setShowPayModal(false)} style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleProcessDuesPayment} disabled={processingPay} style={{ padding: "10px 22px", borderRadius: "8px", border: "none", background: "#15803d", color: "white", fontWeight: "800", cursor: "pointer" }}>
-                {processingPay ? "Authorizing Bank Transfer..." : `Pay ₹${application.pendingDues?.amount} & Clear Flag`}
+              <button
+                onClick={handleProcessDuesPayment}
+                disabled={processingPay}
+                style={{ width: "100%", background: "#16a34a", color: "white", border: "none", padding: "14px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "1rem" }}
+              >
+                {processingPay ? "Processing Secure Payment..." : `Authorize & Pay ₹${application.pendingDues?.amount}`}
               </button>
+
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Digital Certificate Download Modal (Step 1.10) */}
-      {showCertModal && application && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-          <div style={{ background: "#ffffff", padding: "36px", borderRadius: "16px", width: "100%", maxWidth: "620px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.2)", border: "4px double #15803d" }}>
-            
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
-              <FaStamp size={36} color="#15803d" />
-              <h2 style={{ margin: "6px 0 2px 0", color: "#166534", fontSize: "1.5rem", fontWeight: "900" }}>
-                GOVERNMENT OF MAHARASHTRA
-              </h2>
-              <span style={{ fontSize: "0.85rem", fontWeight: "800", color: "#475569" }}>
-                DIGITAL E-GRAM PANCHAYAT GOVERNANCE PLATFORM
-              </span>
-              <h3 style={{ margin: "14px 0 0 0", color: "#0f172a", fontSize: "1.25rem", textDecoration: "underline" }}>
-                {application.title?.toUpperCase()}
-              </h3>
-            </div>
-
-            <div style={{ background: "#f8fafc", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", marginBottom: "20px", fontSize: "0.88rem", lineHeight: "1.6" }}>
-              <div>Certificate ID: <strong>CERT-{application.applicationId}</strong></div>
-              <div>This is to certify that resident <strong>{application.applicantDetails?.fullName}</strong> (Aadhaar: {application.applicantDetails?.aadhaarId}) of address {application.applicantDetails?.address} has fulfilled all verified requirements across the following government offices:</div>
-              <div style={{ marginTop: "8px", color: "#15803d", fontWeight: "700" }}>
-                Verified Offices: {application.officeChain?.join(", ")}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-              <div style={{ textAlign: "center" }}>
-                <FaQrcode size={64} color="#0f172a" />
-                <div style={{ fontSize: "0.7rem", fontWeight: "800", color: "#64748b" }}>Scan to Verify Authenticity</div>
+        {/* ISSUED CERTIFICATE DOWNLOAD MODAL */}
+        {showCertModal && application && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+            <div style={{ background: "#ffffff", borderRadius: "20px", maxWidth: "600px", width: "100%", padding: "30px", border: "4px solid #16a34a" }}>
+              <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                <div style={{ background: "#dcfce7", color: "#15803d", width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px auto", fontSize: "1.8rem" }}>
+                  🎓
+                </div>
+                <h3 style={{ margin: 0, fontSize: "1.4rem", fontWeight: "900", color: "#14532d" }}>
+                  GOVERNMENT OF MAHARASHTRA / INDIA
+                </h3>
+                <div style={{ fontSize: "0.85rem", color: "#15803d", fontWeight: "800", marginTop: "2px" }}>
+                  OFFICIAL DIGITALLY SIGNED CERTIFICATE
+                </div>
               </div>
 
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#166534" }}>DIGITALLY SIGNED</div>
-                <div style={{ fontSize: "0.75rem", color: "#64748b" }}>Key: SIG-EGRAM-2026-X901</div>
-                <div style={{ fontSize: "0.75rem", color: "#64748b" }}>Tehsildar &amp; Executive Registrar</div>
+              <div style={{ background: "#f8fafc", padding: "18px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "0.9rem", display: "grid", gap: "8px", marginBottom: "20px" }}>
+                <div><strong>Certificate Ref:</strong> {application.issuedCertificate?.certificateId || "CERT-OFFICIAL-2026"}</div>
+                <div><strong>Application Title:</strong> {application.title}</div>
+                <div><strong>Beneficiary / Citizen:</strong> {application.applicantDetails?.fullName || "Pavan Kumar"}</div>
+                <div><strong>Digital Seal Signature:</strong> {application.issuedCertificate?.digitalSignature || "SIG-DIGI-OFFICIAL-EGRAM"}</div>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => alert("Downloading Official PDF Certificate...")}
+                  style={{ flex: 1, background: "#16a34a", color: "white", border: "none", padding: "12px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "0.95rem" }}
+                >
+                  📥 Download PDF
+                </button>
+                <button
+                  onClick={() => setShowCertModal(false)}
+                  style={{ background: "#64748b", color: "white", border: "none", padding: "12px 20px", borderRadius: "10px", fontWeight: "800", cursor: "pointer", fontSize: "0.95rem" }}
+                >
+                  Close
+                </button>
               </div>
             </div>
-
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-              <button onClick={() => window.print()} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-                <FaPrint /> Print Certificate
-              </button>
-              <button onClick={() => setShowCertModal(false)} style={{ padding: "10px 24px", borderRadius: "8px", border: "none", background: "#15803d", color: "white", fontWeight: "800", cursor: "pointer" }}>
-                Close
-              </button>
-            </div>
-
           </div>
-        </div>
-      )}
+        )}
 
+      </div>
     </div>
   );
 }
