@@ -4,12 +4,9 @@ import { useNavigate } from "react-router-dom";
 import CitizenDashboardView from "./CitizenDashboardView";
 import AvailableServicesView from "./AvailableServicesView";
 import ApplicationsModule from "./ApplicationsModule";
-import CertificatesModule from "./CertificatesModule";
 import UnifiedApplicationTracker from "./UnifiedApplicationTracker";
-import CitizenNoticeFeed from "./CitizenNoticeFeed";
-import ConsentManager from "./ConsentManager";
 import Profile from "../Profile";
-import { FaChartPie, FaThList, FaFileAlt, FaSearch, FaBullhorn, FaShieldAlt, FaUser, FaLock, FaUserCircle, FaExclamationCircle, FaIdCard, FaArrowRight, FaNetworkWired, FaBolt } from "react-icons/fa";
+import { FaChartPie, FaThList, FaFileAlt, FaSearch, FaUser, FaLock, FaUserCircle, FaExclamationCircle, FaBolt } from "react-icons/fa";
 
 export default function CitizenPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -57,7 +54,6 @@ export default function CitizenPortal() {
       setIsAuthenticated(false);
       setCheckingKyc(false);
     } else {
-      // Standard unauthenticated state requiring explicit login
       setIsAuthenticated(false);
       setIsOfficialSession(false);
       setCheckingKyc(false);
@@ -139,7 +135,7 @@ export default function CitizenPortal() {
               <FaUserCircle />
             </div>
             <h2 style={{ margin: "0 0 6px 0", color: "#1b4332", fontSize: "1.6rem", fontWeight: "800" }}>Citizen Portal Login</h2>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>Single Sign-On access for unified public services.</p>
+            <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>Access unified public services and certificate applications.</p>
           </div>
 
           {errorMsg && (
@@ -219,17 +215,14 @@ export default function CitizenPortal() {
             <div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <span style={{ background: "#52b788", color: "#081c15", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: "800" }}>
-                  PORTAL 1 — CITIZEN PORTAL
-                </span>
-                <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "4px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "700" }}>
-                  GovConnect SSO Active
+                  CITIZEN PUBLIC SERVICES PORTAL
                 </span>
               </div>
               <h1 style={{ margin: "8px 0 4px 0", fontSize: "2rem", fontWeight: "800", color: "#e0ffe0" }}>
                 Citizen Public Services Gateway
               </h1>
               <p style={{ margin: 0, color: "#d8f3dc", fontSize: "0.95rem" }}>
-                Apply for Water, Property, Health, Grievance, and Certificate services. Department routing is managed seamlessly by GovConnect.
+                Apply online for government certificates, civic utility requests, and land record extracts with automated multi-office routing.
               </p>
             </div>
 
@@ -250,8 +243,6 @@ export default function CitizenPortal() {
               { id: "available_services", label: "Available Services", icon: <FaThList /> },
               { id: "my_applications", label: "My Applications", icon: <FaFileAlt /> },
               { id: "tracker", label: "Application Tracking", icon: <FaSearch /> },
-              { id: "notifications", label: "Notifications", icon: <FaBullhorn /> },
-              { id: "consent", label: "Consent Management", icon: <FaShieldAlt /> },
               { id: "profile", label: "My Profile", icon: <FaUser /> }
             ].map((tab) => (
               <button
@@ -286,8 +277,6 @@ export default function CitizenPortal() {
         {activeTab === "available_services" && <AvailableServicesView onApplicationSubmitted={() => setActiveTab("my_applications")} />}
         {activeTab === "my_applications" && <ApplicationsModule />}
         {activeTab === "tracker" && <UnifiedApplicationTracker />}
-        {activeTab === "notifications" && <CitizenNoticeFeed />}
-        {activeTab === "consent" && <ConsentManager />}
         {activeTab === "profile" && <Profile />}
       </div>
     </div>
