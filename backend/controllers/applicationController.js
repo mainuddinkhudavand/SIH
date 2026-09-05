@@ -1,89 +1,91 @@
 import Application from "../models/Application.js";
 import AuditLog from "../models/AuditLog.js";
+import { SERVICE_OFFICE_MAP, runOfficeRoutingCheck, MASTER_DATASETS } from "../utils/routingEngine.js";
 import { triggerNotificationEvent } from "../utils/notificationEngine.js";
 
-// Technical Pipeline Demonstration: POST /api/applications/water
-// Flow: API Gateway -> Authentication -> Service Router -> Workflow Engine -> Municipality Connector -> Municipality API
-export const createWaterApplication = async (req, res) => {
+// 📋 Get List of All Categorized E-Governance Services
+export const getServicesList = async (req, res) => {
   try {
-    const { fullName, phone, address, details } = req.body;
-    const userId = req.user?._id || req.user?.id;
-
-    const applicationId = `GC-WATER-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const application = new Application({
-      applicationId,
-      user: userId,
-      portal: "municipal",
-      serviceType: "New Water Meter Connection",
-      title: "New Water Connection Request",
-      applicantDetails: {
-        fullName: fullName || req.user?.name || "Pavan",
-        phone: phone || req.user?.phone || "+91 98765 43210",
-        address: address || "Plot #14, Sector 4, Civic Zone"
-      },
-      status: "Submitted",
-      timeline: [
-        { stage: "Frontend Submit", status: "Submitted", updatedBy: "Citizen", note: "App submitted via Citizen Portal.", timestamp: new Date() },
-        { stage: "API Gateway", status: "Routed", updatedBy: "GovConnect Gateway", note: "Validated auth & rate limits.", timestamp: new Date() },
-        { stage: "Workflow Engine", status: "Queued", updatedBy: "GovConnect Engine", note: "Assigned workflow pipeline GC-WATER-WF-1", timestamp: new Date() },
-        { stage: "Municipality Connector", status: "Delivered", updatedBy: "Municipal Connector", note: "Dispatched payload to Municipality Portal API.", timestamp: new Date() }
-      ]
-    });
-
-    await application.save();
-
-    // Audit Log Pipeline Trace
-    await AuditLog.create({
-      action: "WATER_APPLICATION_PIPELINE_EXECUTED",
-      performedBy: userId || "Citizen",
-      entity: "Application",
-      details: `POST /api/applications/water -> API Gateway -> Workflow Engine -> Municipality Connector -> Municipality API (${applicationId})`,
-      ipAddress: req.ip || "127.0.0.1"
-    });
-
-    return res.status(201).json({
+    return res.json({
       success: true,
-      message: "Water Connection Application dispatched to Municipality Portal via GovConnect Pipeline",
-      pipelineTrace: [
-        "Frontend",
-        "API Gateway (gateway.js)",
-        "Authentication (auth.js)",
-        "Service Router (/api/applications/water)",
-        "Workflow Engine (createWaterApplication)",
-        "Municipality Connector",
-        "Municipality API"
-      ],
-      application
+      services: Object.values(SERVICE_OFFICE_MAP)
     });
   } catch (error) {
-    console.error("Error creating water application pipeline:", error);
-    return res.status(500).json({ success: false, message: "Server error in water application pipeline", error: error.message });
+    return res.status(500).json({ success: false, message: "Error fetching services list" });
   }
 };
 
-// Citizen: Submit Application
+// 📝 Citizen Submit Application (Triggers Section 0 Routing)
 export const createApplication = async (req, res) => {
   try {
-    const { serviceType, title, applicantDetails, documents } = req.body;
-    const userId = req.user._id;
+    const { serviceId, applicantDetails, documents } = req.body;
+    const userId = req.user?._id || req.user?.id;
 
-    const applicationId = `APP-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const serviceConfig = SERVICE_OFFICE_MAP[serviceId] || {
+      serviceId: serviceId || "custom-service",
+      title: "Government Civic Application",
+      category: "General Services",
+      serviceType: "single-office",
+      primaryOffice: "Municipality",
+      officeChain: ["Municipality"],
+      prefix: "APP"
+    };
+
+    const isCertificate = serviceConfig.prefix === "CERT" || serviceConfig.category === "Certificates";
+    const prefix = isCertificate ? "CERT" : "APP";
+    const randomCode = Math.floor(100000 + Math.random() * 900000);
+    const applicationId = `${prefix}-${randomCode}`;
+
+    // Execute Section 0 Routing Engine Logic
+    const routingResult = runOfficeRoutingCheck(serviceId, applicantDetails);
 
     const application = new Application({
       applicationId,
       user: userId,
-      serviceType,
-      title,
-      applicantDetails,
-      documents: documents || [],
-      status: "Submitted",
+      serviceId,
+      serviceType: serviceConfig.category,
+      title: serviceConfig.title,
+      routingType: routingResult.routingType,
+      officeChain: routingResult.officeChain,
+      primaryOffice: routingResult.primaryOffice,
+      currentOffice: routingResult.currentOffice,
+      currentStageIndex: routingResult.currentStageIndex,
+      applicantDetails: {
+        fullName: applicantDetails.fullName || req.user?.name || "Citizen Resident",
+        phone: applicantDetails.phone || req.user?.phone || "+91 9876543210",
+        email: applicantDetails.email || req.user?.email || "citizen@egram.gov.in",
+        address: applicantDetails.address || "Village Ward #2, Gram Panchayat Zone",
+        aadhaarId: applicantDetails.aadhaarId || "9876-5432-1000",
+        surveyNumber: applicantDetails.surveyNumber || "",
+        propertyId: applicantDetails.propertyId || "",
+        wardCode: applicantDetails.wardCode || "",
+        annualIncome: applicantDetails.annualIncome || "",
+        casteCategory: applicantDetails.casteCategory || "",
+        deceasedName: applicantDetails.deceasedName || "",
+        businessName: applicantDetails.businessName || "",
+        reason: applicantDetails.reason || ""
+      },
+      documents: documents || [
+        { docType: "Aadhaar Identity Proof", fileUrl: "/uploads/sample_aadhaar.pdf" },
+        { docType: "Address / Domicile Proof", fileUrl: "/uploads/sample_proof.pdf" }
+      ],
+      stageVerifications: routingResult.stageVerifications,
+      pendingDues: routingResult.pendingDues,
+      status: routingResult.status,
+      assignedOfficer: `${routingResult.currentOffice} Officer-In-Charge`,
       timeline: [
         {
-          stage: "Application Submitted",
+          stage: "Step 0.1: Service Selected",
           status: "Submitted",
           updatedBy: "Citizen",
-          note: "Application successfully submitted for official review.",
+          note: `Selected service: ${serviceConfig.title}. Application ID ${applicationId} generated.`,
+          timestamp: new Date()
+        },
+        {
+          stage: "Step 0.3: Sequential Office Routing",
+          status: routingResult.status,
+          updatedBy: "GovConnect Exchange Layer",
+          note: `Routed to ${routingResult.currentOffice}. Verification Chain: ${routingResult.officeChain.join(" → ")}.`,
           timestamp: new Date()
         }
       ]
@@ -91,118 +93,271 @@ export const createApplication = async (req, res) => {
 
     await application.save();
 
-    // 🔔 Trigger Event Notification (Email, SMS, WhatsApp)
-    triggerNotificationEvent({
-      eventType: "APPLICATION_SUBMITTED",
-      recipientEmail: applicantDetails?.email || req.user.email,
-      recipientPhone: applicantDetails?.phone || req.user.phone,
-      recipientName: applicantDetails?.fullName,
-      referenceId: applicationId,
-      serviceName: serviceType,
-      newStatus: "Submitted"
+    await AuditLog.create({
+      action: "APPLICATION_SUBMITTED_AND_ROUTED",
+      performedBy: userId,
+      entity: "Application",
+      details: `Application ${applicationId} created for ${serviceConfig.title} and routed to ${routingResult.currentOffice}`,
+      ipAddress: req.ip || "127.0.0.1"
     });
 
-    return res.status(201).json({ message: "Application submitted successfully", application });
+    return res.status(201).json({
+      success: true,
+      message: "Application successfully created and routed through office exchange layer.",
+      application
+    });
   } catch (error) {
     console.error("Error creating application:", error);
-    return res.status(500).json({ message: "Server error submitting application", error: error.message });
+    return res.status(500).json({ success: false, message: "Failed to submit application", error: error.message });
   }
 };
 
-// Citizen: Get My Applications
-export const getUserApplications = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const applications = await Application.find({ user: userId }).sort({ createdAt: -1 });
-    return res.json(applications);
-  } catch (error) {
-    console.error("Error fetching user applications:", error);
-    return res.status(500).json({ message: "Server error fetching applications" });
-  }
-};
-
-// Official / Admin: Get All Applications
-export const getAllApplications = async (req, res) => {
-  try {
-    const { status, serviceType } = req.query;
-    let query = {};
-    if (status) query.status = status;
-    if (serviceType) query.serviceType = serviceType;
-
-    const applications = await Application.find(query)
-      .populate("user", "name email phone")
-      .sort({ createdAt: -1 });
-    return res.json(applications);
-  } catch (error) {
-    console.error("Error fetching all applications:", error);
-    return res.status(500).json({ message: "Server error fetching applications" });
-  }
-};
-
-// Official / Admin: Update Application Workflow / Approval
-export const updateApplicationStatus = async (req, res) => {
+// 💳 Step 1.8: Integrated Dues Payment & Auto-Clearance Endpoint
+export const payApplicationDues = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, remarks, assignedOfficer, rejectionReason } = req.body;
+    const { paymentMethod } = req.body; // e.g. "UPI", "NetBanking", "Card"
 
-    const application = await Application.findById(id).populate("user");
+    const application = await Application.findById(id);
     if (!application) {
-      return res.status(404).json({ message: "Application not found" });
+      return res.status(404).json({ success: false, message: "Application not found" });
     }
 
-    if (status) application.status = status;
-    if (remarks) application.remarks = remarks;
-    if (assignedOfficer) application.assignedOfficer = assignedOfficer;
-    if (rejectionReason) application.rejectionReason = rejectionReason;
+    if (!application.pendingDues || application.pendingDues.amount <= 0 || application.pendingDues.isPaid) {
+      return res.status(400).json({ success: false, message: "No active pending dues found for this application." });
+    }
 
-    if (status === "Approved") {
+    const receiptNo = `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    // Update Application state
+    application.pendingDues.isPaid = true;
+    application.pendingDues.paymentReceiptNo = receiptNo;
+    application.pendingDues.paidAt = new Date();
+
+    // Clear matching entry in shared Dues Ledger
+    const targetId = application.pendingDues.surveyOrPropertyId;
+    const dueIndex = MASTER_DATASETS.duesLedger.findIndex(
+      (d) => d.surveyOrPropertyId === targetId || d.aadhaarId === application.applicantDetails.aadhaarId
+    );
+    if (dueIndex !== -1) {
+      MASTER_DATASETS.duesLedger[dueIndex].isPaid = true;
+    }
+
+    // Update current stage verification flag
+    const stageIdx = application.currentStageIndex;
+    if (application.stageVerifications[stageIdx]) {
+      application.stageVerifications[stageIdx].status = "cleared";
+      application.stageVerifications[stageIdx].officerRemarks = `Dues ₹${application.pendingDues.amount} paid via ${paymentMethod || "UPI"}. Receipt: ${receiptNo}`;
+    }
+
+    // Advance to next office in verification chain or mark approved
+    const nextIndex = stageIdx + 1;
+    if (nextIndex < application.officeChain.length) {
+      application.currentStageIndex = nextIndex;
+      application.currentOffice = application.officeChain[nextIndex];
+      application.status = `${application.currentOffice} Verification Pending`;
+      application.assignedOfficer = `${application.currentOffice} Officer-In-Charge`;
+    } else {
+      application.currentOffice = "Completed";
+      application.status = "Approved";
       application.approvalDate = new Date();
+      application.issuedCertificate = {
+        certificateId: `CERT-DOC-${Math.floor(100000 + Math.random() * 900000)}`,
+        issuedAt: new Date(),
+        digitalSignature: `SIG-DIGI-OFFICIAL-EGRAM-${Date.now()}`,
+        qrCodeData: `https://egram.gov.in/verify/${application.applicationId}`,
+        downloadUrl: `/api/applications/${application._id}/download`
+      };
     }
 
     application.timeline.push({
-      stage: `Stage: ${status}`,
-      status: status,
-      updatedBy: req.admin ? "Admin Official" : "Department Manager",
-      note: remarks || rejectionReason || `Status updated to ${status}`,
+      stage: "Step 1.8: Online Dues Payment",
+      status: "Dues Cleared",
+      updatedBy: "Citizen",
+      note: `Paid ₹${application.pendingDues.amount} via ${paymentMethod || "UPI"}. Receipt: ${receiptNo}. Dues flag cleared across all offices.`,
       timestamp: new Date()
     });
 
     await application.save();
 
-    // 🔔 Trigger Event-driven Multi-channel Notifications (Email / SMS / WhatsApp)
-    triggerNotificationEvent({
-      eventType: status === "Approved" ? "APPROVED" : status === "Rejected" ? "REJECTED" : "STAGE_CHANGED",
-      recipientEmail: application.applicantDetails?.email || application.user?.email,
-      recipientPhone: application.applicantDetails?.phone || application.user?.phone,
-      recipientName: application.applicantDetails?.fullName || application.user?.name,
-      referenceId: application.applicationId,
-      serviceName: application.serviceType,
-      newStatus: status,
-      customMessage: remarks || rejectionReason
+    return res.json({
+      success: true,
+      message: `Payment of ₹${application.pendingDues.amount} successful! Dues flag cleared across connected offices.`,
+      receiptNo,
+      application
     });
-
-    return res.json({ message: "Application status updated successfully", application });
   } catch (error) {
-    console.error("Error updating application status:", error);
-    return res.status(500).json({ message: "Server error updating application" });
+    console.error("Error processing dues payment:", error);
+    return res.status(500).json({ success: false, message: "Payment processing failed", error: error.message });
   }
 };
 
-// Unified Track / Single Application fetch
+// 🏛️ Office Internal Workflow: Approve / Reject / Flag Discrepancy (Sections 2.2, 3.2, 4.2, 5.2)
+export const verifyOfficeStage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, officerRemarks, verifiedBy } = req.body; // action: "approve", "discrepancy", "reject"
+
+    const application = await Application.findById(id);
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    const currentOffice = application.currentOffice;
+    const stageIdx = application.currentStageIndex;
+
+    if (action === "approve") {
+      application.stageVerifications[stageIdx].status = "cleared";
+      application.stageVerifications[stageIdx].officerRemarks = officerRemarks || `Verified & Approved by ${currentOffice} Officer.`;
+      application.stageVerifications[stageIdx].verifiedBy = verifiedBy || `${currentOffice} Officer`;
+      application.stageVerifications[stageIdx].verifiedAt = new Date();
+
+      const nextIdx = stageIdx + 1;
+      if (nextIdx < application.officeChain.length) {
+        application.currentStageIndex = nextIdx;
+        application.currentOffice = application.officeChain[nextIdx];
+        application.status = `${application.currentOffice} Verification Pending`;
+        application.assignedOfficer = `${application.currentOffice} Senior Officer`;
+      } else {
+        // Final Office Approval -> Generate Digitally Signed Certificate
+        application.currentOffice = "Completed";
+        application.status = "Approved";
+        application.approvalDate = new Date();
+        application.issuedCertificate = {
+          certificateId: `CERT-DOC-${Math.floor(100000 + Math.random() * 900000)}`,
+          issuedAt: new Date(),
+          digitalSignature: `SIG-DIGI-OFFICIAL-EGRAM-${Date.now()}`,
+          qrCodeData: `https://egram.gov.in/verify/${application.applicationId}`,
+          downloadUrl: `/api/applications/${application._id}/download`
+        };
+      }
+
+      application.timeline.push({
+        stage: `Office Clearance (${currentOffice})`,
+        status: application.status,
+        updatedBy: verifiedBy || `${currentOffice} Officer`,
+        note: officerRemarks || `${currentOffice} office verification completed successfully.`,
+        timestamp: new Date()
+      });
+    } else if (action === "discrepancy") {
+      application.stageVerifications[stageIdx].status = "discrepancy";
+      application.stageVerifications[stageIdx].officerRemarks = officerRemarks || "Discrepancy found in records.";
+      application.status = "Discrepancy Found";
+      application.rejectionReason = officerRemarks || "Document discrepancy noted by officer.";
+
+      application.timeline.push({
+        stage: `Discrepancy Flagged (${currentOffice})`,
+        status: "Discrepancy Found",
+        updatedBy: verifiedBy || `${currentOffice} Officer`,
+        note: `Officer Action: ${officerRemarks}. Action required from citizen.`,
+        timestamp: new Date()
+      });
+    } else if (action === "reject") {
+      application.stageVerifications[stageIdx].status = "rejected";
+      application.status = "Rejected";
+      application.rejectionReason = officerRemarks || "Application rejected during office review.";
+
+      application.timeline.push({
+        stage: `Application Rejected (${currentOffice})`,
+        status: "Rejected",
+        updatedBy: verifiedBy || `${currentOffice} Officer`,
+        note: `Rejection reason: ${officerRemarks}`,
+        timestamp: new Date()
+      });
+    }
+
+    await application.save();
+
+    return res.json({
+      success: true,
+      message: `Office stage verified successfully (${action})`,
+      application
+    });
+  } catch (error) {
+    console.error("Error verifying office stage:", error);
+    return res.status(500).json({ success: false, message: "Error verifying office stage", error: error.message });
+  }
+};
+
+// 🏢 Get Office Queue (Applications assigned to a specific office)
+export const getOfficeQueue = async (req, res) => {
+  try {
+    const { officeName } = req.params; // "Municipality", "Tehsildar", "Revenue", "Talati"
+    const applications = await Application.find({
+      $or: [
+        { currentOffice: officeName },
+        { primaryOffice: officeName },
+        { "officeChain": officeName }
+      ]
+    }).sort({ createdAt: -1 });
+
+    return res.json({ success: true, count: applications.length, applications });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Error fetching office queue" });
+  }
+};
+
+// 📄 Citizen Applications List
+export const getUserApplications = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    const applications = await Application.find({ user: userId }).sort({ createdAt: -1 });
+    return res.json(applications);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Server error fetching user applications" });
+  }
+};
+
+// 🔍 Unified Application Search / Tracker (Step 1.6)
 export const getApplicationById = async (req, res) => {
   try {
     const { id } = req.params;
     const application = await Application.findOne({
-      $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { applicationId: id }]
+      $or: [
+        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+        { applicationId: id }
+      ]
     }).populate("user", "name email phone");
 
     if (!application) {
-      return res.status(404).json({ message: "Application not found" });
+      return res.status(404).json({ success: false, message: "Application not found" });
     }
 
     return res.json(application);
   } catch (error) {
-    console.error("Error fetching application details:", error);
-    return res.status(500).json({ message: "Server error fetching application" });
+    return res.status(500).json({ success: false, message: "Server error fetching application details" });
+  }
+};
+
+// 📥 Digital Signed Certificate Download / Data Payload (Step 1.10)
+export const getCertificateData = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const application = await Application.findById(id);
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Certificate application not found" });
+    }
+
+    if (application.status !== "Approved") {
+      return res.status(400).json({ success: false, message: "Certificate not approved yet." });
+    }
+
+    return res.json({
+      success: true,
+      certificate: {
+        certificateId: application.issuedCertificate?.certificateId || `CERT-${application.applicationId}`,
+        title: application.title,
+        applicantName: application.applicantDetails.fullName,
+        aadhaarId: application.applicantDetails.aadhaarId,
+        address: application.applicantDetails.address,
+        issueDate: application.approvalDate || new Date(),
+        digitalSignature: application.issuedCertificate?.digitalSignature || `SIG-OFFICIAL-${application._id}`,
+        qrCodePayload: application.issuedCertificate?.qrCodeData || `EGRAM-VERIFIED-${application.applicationId}`,
+        verifyingOffices: application.officeChain
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Error generating certificate download" });
   }
 };

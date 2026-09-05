@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import ApprovalsHub from "./ApprovalsHub";
+import OfficeWorkspacesView from "./OfficeWorkspacesView";
 import AdminDepartmentsView from "./AdminDepartmentsView";
 import AdminApiHealth from "./AdminApiHealth";
 import AdminFailedTransactions from "./AdminFailedTransactions";
@@ -8,13 +9,13 @@ import AuditLogsViewer from "./AuditLogsViewer";
 import AdminUserActivity from "./AdminUserActivity";
 import WorkflowOrchestration from "./WorkflowOrchestration";
 import AdminConsentRecords from "./AdminConsentRecords";
-import { FaCheckCircle, FaProjectDiagram, FaHistory, FaBuilding, FaHeartbeat, FaExclamationTriangle, FaLock, FaUserShield, FaExclamationCircle, FaNetworkWired, FaUsers, FaShieldAlt, FaServer } from "react-icons/fa";
+import { FaCheckCircle, FaProjectDiagram, FaHistory, FaBuilding, FaHeartbeat, FaExclamationTriangle, FaLock, FaUserShield, FaExclamationCircle, FaNetworkWired, FaUsers, FaShieldAlt, FaServer, FaLandmark } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 export default function OfficialPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCitizenSession, setIsCitizenSession] = useState(false);
-  const [activeTab, setActiveTab] = useState("applications");
+  const [activeTab, setActiveTab] = useState("offices_workspaces");
 
   // Official Login Form State
   const [email, setEmail] = useState("admin@egram.gov.in");
@@ -58,7 +59,7 @@ export default function OfficialPortal() {
         setErrorMsg("Authentication failed. No token received.");
       }
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || "Invalid Admin credentials. Check backend .env settings.");
+      setErrorMsg(err.response?.data?.message || "Invalid Admin credentials.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function OfficialPortal() {
           </div>
           <h2 style={{ margin: "0 0 8px 0", color: "#991b1b", fontSize: "1.6rem", fontWeight: "800" }}>Citizen Session Active</h2>
           <p style={{ color: "#475569", fontSize: "0.95rem", lineHeight: "1.5", marginBottom: "20px" }}>
-            The Admin Portal is restricted to platform administrators. Switch session to authenticate.
+            The Admin Portal is restricted to platform administrators and office personnel.
           </p>
           <button
             onClick={handleOfficialLogout}
@@ -101,8 +102,8 @@ export default function OfficialPortal() {
             <div style={{ background: "#d8f3dc", color: "#1b4332", width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "1.75rem" }}>
               <FaUserShield />
             </div>
-            <h2 style={{ margin: "0 0 6px 0", color: "#1b4332", fontSize: "1.6rem", fontWeight: "800" }}>Admin Portal Login</h2>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>GovConnect Platform Management Console.</p>
+            <h2 style={{ margin: "0 0 6px 0", color: "#1b4332", fontSize: "1.6rem", fontWeight: "800" }}>Official &amp; Admin Portal</h2>
+            <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>Federated 4-Office Management Console.</p>
           </div>
 
           {errorMsg && (
@@ -113,7 +114,7 @@ export default function OfficialPortal() {
 
           <form onSubmit={handleOfficialLogin}>
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Admin Email</label>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Official Email</label>
               <input
                 type="email"
                 value={email}
@@ -155,7 +156,7 @@ export default function OfficialPortal() {
                 gap: "8px"
               }}
             >
-              {loading ? "Authenticating..." : <><FaLock /> Authenticate Admin Portal</>}
+              {loading ? "Authenticating..." : <><FaLock /> Authenticate Official Portal</>}
             </button>
           </form>
         </div>
@@ -172,17 +173,17 @@ export default function OfficialPortal() {
             <div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <span style={{ background: "#2d6a4f", color: "white", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: "800" }}>
-                  PORTAL 5 — ADMIN PORTAL
+                  FEDERATED 4-OFFICE PORTAL
                 </span>
                 <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "4px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "700" }}>
-                  GovConnect Oversight
+                  Municipality • Tehsildar • Revenue • Talati
                 </span>
               </div>
               <h1 style={{ margin: "8px 0 4px 0", fontSize: "2rem", fontWeight: "800", color: "#e0ffe0" }}>
-                Government Administrator Command Console
+                Government Office Command &amp; Review Console
               </h1>
               <p style={{ margin: 0, color: "#a8e6a3", fontSize: "0.95rem" }}>
-                System-wide monitoring, immutable audit logs, role-based access control, and API exception handling.
+                Sequential verification workspace, cross-office clearance flags, and digital signature issuance.
               </p>
             </div>
 
@@ -194,51 +195,16 @@ export default function OfficialPortal() {
                 onClick={handleOfficialLogout}
                 style={{ background: "#dc2626", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" }}
               >
-                Sign Out Admin Session
+                Sign Out Session
               </button>
             </div>
           </div>
 
-          {/* 📊 Exact Requested Dashboard Header Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-            
-            {/* Connected Departments Card */}
-            <div style={{ background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "14px", padding: "16px" }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#a8e6a3", textTransform: "uppercase" }}>Connected Departments: 3</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px", fontSize: "0.9rem", fontWeight: "700" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Municipality</span> <span>🟢</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Revenue</span> <span>🟢</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}><span>Health</span> <span>🟢</span></div>
-              </div>
-            </div>
-
-            {/* Applications Card */}
-            <div style={{ background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#a8e6a3", textTransform: "uppercase" }}>Applications Processed</div>
-              <div style={{ fontSize: "2rem", fontWeight: "900", color: "#ffffff", marginTop: "4px" }}>1,245</div>
-              <small style={{ color: "#d8f3dc" }}>Cross-Portal Total Submissions</small>
-            </div>
-
-            {/* Successful APIs Card */}
-            <div style={{ background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#a8e6a3", textTransform: "uppercase" }}>Successful APIs</div>
-              <div style={{ fontSize: "2rem", fontWeight: "900", color: "#4ade80", marginTop: "4px" }}>98.5%</div>
-              <small style={{ color: "#d8f3dc" }}>HTTP 200 OK Response Rate</small>
-            </div>
-
-            {/* Failed APIs Card */}
-            <div style={{ background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#fca5a5", textTransform: "uppercase" }}>Failed APIs</div>
-              <div style={{ fontSize: "2rem", fontWeight: "900", color: "#f87171", marginTop: "4px" }}>1.5%</div>
-              <small style={{ color: "#fca5a5" }}>Handled Graceful Exceptions</small>
-            </div>
-
-          </div>
-
-          {/* 8 Required Admin Navigation Tabs */}
+          {/* Navigation Tabs */}
           <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "4px" }}>
             {[
-              { id: "applications", label: "Applications", icon: <FaCheckCircle /> },
+              { id: "offices_workspaces", label: "4-Office Workspaces", icon: <FaLandmark /> },
+              { id: "applications", label: "Approvals Hub", icon: <FaCheckCircle /> },
               { id: "departments", label: "Departments", icon: <FaBuilding /> },
               { id: "api_health", label: "API Health", icon: <FaServer /> },
               { id: "failed_tx", label: "Failed Transactions", icon: <FaExclamationTriangle /> },
@@ -275,6 +241,7 @@ export default function OfficialPortal() {
 
       {/* Main Tab View Content */}
       <div style={{ maxWidth: "1300px", margin: "24px auto 0 auto", padding: "0 20px" }}>
+        {activeTab === "offices_workspaces" && <OfficeWorkspacesView />}
         {activeTab === "applications" && <ApprovalsHub />}
         {activeTab === "departments" && <AdminDepartmentsView />}
         {activeTab === "api_health" && <AdminApiHealth />}

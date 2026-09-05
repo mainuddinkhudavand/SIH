@@ -5,19 +5,16 @@ const ApplicationSchema = new mongoose.Schema(
     applicationId: {
       type: String,
       unique: true,
-      required: true,
-      default: () => `APP-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`
+      required: true
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true
     },
-    portal: {
+    serviceId: {
       type: String,
-      enum: ["municipal", "revenue", "health"],
-      required: true,
-      default: "municipal"
+      required: true
     },
     serviceType: {
       type: String,
@@ -27,12 +24,44 @@ const ApplicationSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    routingType: {
+      type: String,
+      enum: ["single-office", "multi-office"],
+      default: "single-office"
+    },
+    officeChain: [
+      {
+        type: String // e.g. ["Talati", "Tehsildar", "Revenue"]
+      }
+    ],
+    primaryOffice: {
+      type: String,
+      enum: ["Municipality", "Tehsildar", "Revenue", "Talati"],
+      default: "Municipality"
+    },
+    currentOffice: {
+      type: String,
+      enum: ["Municipality", "Tehsildar", "Revenue", "Talati", "Completed"],
+      default: "Municipality"
+    },
+    currentStageIndex: {
+      type: Number,
+      default: 0
+    },
     applicantDetails: {
       fullName: { type: String, required: true },
       phone: { type: String, required: true },
       email: { type: String },
       address: { type: String, required: true },
-      identityNumber: { type: String }
+      aadhaarId: { type: String, required: true },
+      surveyNumber: { type: String },
+      propertyId: { type: String },
+      wardCode: { type: String },
+      annualIncome: { type: String },
+      casteCategory: { type: String },
+      deceasedName: { type: String },
+      businessName: { type: String },
+      reason: { type: String }
     },
     documents: [
       {
@@ -41,24 +70,56 @@ const ApplicationSchema = new mongoose.Schema(
         uploadedAt: { type: Date, default: Date.now }
       }
     ],
+    stageVerifications: [
+      {
+        officeName: { type: String },
+        stageName: { type: String },
+        status: {
+          type: String,
+          enum: ["pending", "cleared", "dues_pending", "discrepancy", "approved", "rejected"],
+          default: "pending"
+        },
+        officerRemarks: { type: String },
+        verifiedBy: { type: String },
+        verifiedAt: { type: Date }
+      }
+    ],
+    pendingDues: {
+      officeName: { type: String },
+      dueType: { type: String },
+      amount: { type: Number, default: 0 },
+      surveyOrPropertyId: { type: String },
+      isPaid: { type: Boolean, default: false },
+      paymentReceiptNo: { type: String },
+      paidAt: { type: Date }
+    },
+    issuedCertificate: {
+      certificateId: { type: String },
+      issuedAt: { type: Date },
+      digitalSignature: { type: String },
+      qrCodeData: { type: String },
+      downloadUrl: { type: String }
+    },
     status: {
       type: String,
-      enum: ["Submitted", "Under Review", "GovConnect Verification", "Field Verification", "Approved", "Rejected"],
+      enum: [
+        "Submitted",
+        "Under Verification",
+        "Talati Verification Pending",
+        "Tehsildar Verification Pending",
+        "Revenue Dues Pending",
+        "Municipal Review Pending",
+        "Field Visit Scheduled",
+        "Approved",
+        "Discrepancy Found",
+        "Rejected"
+      ],
       default: "Submitted"
     },
     assignedOfficer: { type: String },
     remarks: { type: String },
     rejectionReason: { type: String },
     approvalDate: { type: Date },
-    interopDataVerified: { type: Boolean, default: false },
-    interopLogs: [
-      {
-        sourcePortal: { type: String },
-        targetPortal: { type: String },
-        action: { type: String },
-        timestamp: { type: Date, default: Date.now }
-      }
-    ],
     timeline: [
       {
         stage: { type: String },

@@ -2,29 +2,36 @@ import express from "express";
 import auth from "../middleware/auth.js";
 import adminMiddleware from "../middleware/adminMiddleware.js";
 import {
+  getServicesList,
   createApplication,
-  createWaterApplication,
+  payApplicationDues,
+  verifyOfficeStage,
+  getOfficeQueue,
   getUserApplications,
-  getAllApplications,
-  updateApplicationStatus,
-  getApplicationById
+  getApplicationById,
+  getCertificateData
 } from "../controllers/applicationController.js";
 
 const router = express.Router();
 
-// 🌟 Technical Pipeline Demonstration: POST /api/applications/water
-// Flow: API Gateway -> Authentication -> Service Router -> Workflow Engine -> Municipality Connector -> Municipality API
-router.post("/water", auth, createWaterApplication);
+// 📋 Public / Citizen Services Lookup Map
+router.get("/services", getServicesList);
 
-// Citizen routes
+// 📝 Citizen Submit & Route Application
 router.post("/submit", auth, createApplication);
 router.get("/my-applications", auth, getUserApplications);
 
-// Official / Admin routes
-router.get("/all", adminMiddleware, getAllApplications);
-router.put("/:id/status", adminMiddleware, updateApplicationStatus);
+// 💳 Integrated Dues Payment Gateway & Auto-Clearance
+router.post("/:id/pay-dues", auth, payApplicationDues);
 
-// Tracking / single application lookup (Public or auth)
+// 🏛️ Office Internal Workflow Queue & Stage Verification
+router.get("/office-queue/:officeName", getOfficeQueue);
+router.put("/:id/verify-stage", verifyOfficeStage);
+
+// 📄 Certificate Download Payload
+router.get("/certificate/:id", getCertificateData);
+
+// 🔍 Unified Application & Certificate Tracker Lookup
 router.get("/track/:id", getApplicationById);
 
 export default router;
