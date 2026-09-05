@@ -22,11 +22,25 @@ export default function UnifiedApplicationTracker() {
 
   // Payment Modal State (Step 1.8)
   const [showPayModal, setShowPayModal] = useState(false);
-  const [payMethod, setPayMethod] = useState("NetBanking");
+  const [payMethod, setPayMethod] = useState("UPI");
+  
+  // UPI State
+  const [upiApp, setUpiApp] = useState("PhonePe");
+  const [upiId, setUpiId] = useState("9876543210@ybl");
+  const [upiPin, setUpiPin] = useState("9482");
+
+  // NetBanking State
   const [bankName, setBankName] = useState("State Bank of India");
   const [accountNumber, setAccountNumber] = useState("4589201938");
   const [accountHolderName, setAccountHolderName] = useState("Pavan Kumar");
   const [ifscCode, setIfscCode] = useState("SBIN0001420");
+
+  // Card State
+  const [cardType, setCardType] = useState("RuPay Card");
+  const [cardNumber, setCardNumber] = useState("4532891048219012");
+  const [cardExpiry, setCardExpiry] = useState("08/29");
+  const [cardCvv, setCardCvv] = useState("842");
+
   const [processingPay, setProcessingPay] = useState(false);
 
   // Download Certificate Modal State (Step 1.10)
@@ -91,13 +105,33 @@ export default function UnifiedApplicationTracker() {
     if (!application) return;
     setProcessingPay(true);
 
-    const paymentPayload = {
-      paymentMethod: payMethod,
-      bankName: bankName || "State Bank of India",
-      accountNumber: accountNumber ? `XXXX-${accountNumber.slice(-4)}` : "XXXX-4892",
-      accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
-      ifscCode: ifscCode || "SBIN0001420"
-    };
+    let paymentPayload = {};
+    if (payMethod === "UPI") {
+      paymentPayload = {
+        paymentMethod: `UPI (${upiApp})`,
+        bankName: `UPI Provider: ${upiApp}`,
+        accountNumber: upiId ? `VPA: ${upiId}` : "9876543210@ybl",
+        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+        ifscCode: `UPI PIN Authorized`
+      };
+    } else if (payMethod === "Card") {
+      const maskedCard = cardNumber ? `Card XXXX-${cardNumber.replace(/\D/g, "").slice(-4)}` : "Card XXXX-9012";
+      paymentPayload = {
+        paymentMethod: `Card (${cardType})`,
+        bankName: cardType,
+        accountNumber: maskedCard,
+        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+        ifscCode: `Expiry: ${cardExpiry || "08/29"}`
+      };
+    } else {
+      paymentPayload = {
+        paymentMethod: "NetBanking",
+        bankName: bankName || "State Bank of India",
+        accountNumber: accountNumber ? `XXXX-${accountNumber.slice(-4)}` : "XXXX-4892",
+        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+        ifscCode: ifscCode || "SBIN0001420"
+      };
+    }
 
     const receiptNo = `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -114,7 +148,7 @@ export default function UnifiedApplicationTracker() {
             return {
               ...s,
               status: "cleared",
-              officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${payMethod} (${paymentPayload.bankName}). Receipt: ${receiptNo}`,
+              officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${paymentPayload.paymentMethod}. Receipt: ${receiptNo}`,
               verifiedBy: "Online Payment Engine",
               verifiedAt: new Date().toISOString()
             };
@@ -130,7 +164,7 @@ export default function UnifiedApplicationTracker() {
           pendingDues: {
             ...application.pendingDues,
             isPaid: true,
-            paymentMethod: payMethod,
+            paymentMethod: paymentPayload.paymentMethod,
             bankName: paymentPayload.bankName,
             accountNumber: paymentPayload.accountNumber,
             accountHolderName: paymentPayload.accountHolderName,
@@ -148,7 +182,7 @@ export default function UnifiedApplicationTracker() {
           return {
             ...s,
             status: "cleared",
-            officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${payMethod} (${paymentPayload.bankName}). Receipt: ${receiptNo}`,
+            officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${paymentPayload.paymentMethod}. Receipt: ${receiptNo}`,
             verifiedBy: "Online Payment Engine",
             verifiedAt: new Date().toISOString()
           };
@@ -164,7 +198,7 @@ export default function UnifiedApplicationTracker() {
         pendingDues: {
           ...application.pendingDues,
           isPaid: true,
-          paymentMethod: payMethod,
+          paymentMethod: paymentPayload.paymentMethod,
           bankName: paymentPayload.bankName,
           accountNumber: paymentPayload.accountNumber,
           accountHolderName: paymentPayload.accountHolderName,
@@ -410,7 +444,7 @@ export default function UnifiedApplicationTracker() {
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>Select Payment Mode</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-                {["NetBanking", "UPI", "Card"].map((m) => (
+                {["UPI", "NetBanking", "Card"].map((m) => (
                   <button
                     key={m}
                     type="button"
@@ -427,65 +461,198 @@ export default function UnifiedApplicationTracker() {
                       fontSize: "0.85rem"
                     }}
                   >
-                    {m}
+                    {m === "UPI" ? "📱 UPI (PhonePe/GPay)" : m === "NetBanking" ? "🏦 NetBanking" : "💳 Credit/Debit Card"}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Bank Name</label>
-              <select
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", color: "#0f172a" }}
-              >
-                <option value="State Bank of India">State Bank of India (SBI)</option>
-                <option value="HDFC Bank">HDFC Bank</option>
-                <option value="ICICI Bank">ICICI Bank</option>
-                <option value="Bank of Baroda">Bank of Baroda</option>
-                <option value="Axis Bank">Axis Bank</option>
-                <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
-                <option value="Canara Bank">Canara Bank</option>
-              </select>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+            {/* Mode 1: UPI Payment (PhonePe, Google Pay, Paytm, BHIM) */}
+            {payMethod === "UPI" && (
               <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account / Card Number</label>
-                <input
-                  type="text"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="e.g. 501002938471"
-                  required
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>IFSC Code / PIN</label>
-                <input
-                  type="text"
-                  value={ifscCode}
-                  onChange={(e) => setIfscCode(e.target.value)}
-                  placeholder="e.g. SBIN0001420"
-                  required
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
-                />
-              </div>
-            </div>
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Select UPI Application</label>
+                  <select
+                    value={upiApp}
+                    onChange={(e) => setUpiApp(e.target.value)}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "700", color: "#0f172a" }}
+                  >
+                    <option value="PhonePe">💜 PhonePe (Fast Checkout)</option>
+                    <option value="Google Pay (GPay)">💙 Google Pay / GPay</option>
+                    <option value="Paytm UPI">💙 Paytm UPI</option>
+                    <option value="BHIM UPI">🇮🇳 BHIM National UPI</option>
+                    <option value="Amazon Pay">🧡 Amazon Pay UPI</option>
+                    <option value="WhatsApp Pay">💚 WhatsApp Pay</option>
+                  </select>
+                </div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account Holder Name</label>
-              <input
-                type="text"
-                value={accountHolderName}
-                onChange={(e) => setAccountHolderName(e.target.value)}
-                placeholder="e.g. Pavan Kumar"
-                required
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
-              />
-            </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>UPI ID / VPA Handle</label>
+                    <input
+                      type="text"
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
+                      placeholder="e.g. 9876543210@ybl"
+                      required
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>UPI Security PIN</label>
+                    <input
+                      type="password"
+                      value={upiPin}
+                      maxLength={6}
+                      onChange={(e) => setUpiPin(e.target.value)}
+                      placeholder="4 or 6-digit PIN"
+                      required
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Payer Name (Linked to UPI)</label>
+                  <input
+                    type="text"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    placeholder="e.g. Pavan Kumar"
+                    required
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Mode 2: NetBanking Payment */}
+            {payMethod === "NetBanking" && (
+              <div>
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Select Bank</label>
+                  <select
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", color: "#0f172a" }}
+                  >
+                    <option value="State Bank of India">State Bank of India (SBI)</option>
+                    <option value="HDFC Bank">HDFC Bank</option>
+                    <option value="ICICI Bank">ICICI Bank</option>
+                    <option value="Bank of Baroda">Bank of Baroda</option>
+                    <option value="Axis Bank">Axis Bank</option>
+                    <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
+                    <option value="Canara Bank">Canara Bank</option>
+                  </select>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account Number</label>
+                    <input
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="e.g. 501002938471"
+                      required
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>IFSC Code</label>
+                    <input
+                      type="text"
+                      value={ifscCode}
+                      onChange={(e) => setIfscCode(e.target.value)}
+                      placeholder="e.g. SBIN0001420"
+                      required
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account Holder Name</label>
+                  <input
+                    type="text"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    placeholder="e.g. Pavan Kumar"
+                    required
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Mode 3: Card Payment (Debit / Credit) */}
+            {payMethod === "Card" && (
+              <div>
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Card Network / Type</label>
+                  <select
+                    value={cardType}
+                    onChange={(e) => setCardType(e.target.value)}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "700", color: "#0f172a" }}
+                  >
+                    <option value="RuPay Card">🇮🇳 RuPay Debit / Credit Card (Govt Pre-Approved)</option>
+                    <option value="Visa Card">💳 Visa Debit / Credit Card</option>
+                    <option value="MasterCard">💳 MasterCard</option>
+                    <option value="Maestro Card">💳 Maestro / Cirrus Card</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>16-Digit Card Number</label>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value)}
+                    placeholder="e.g. 4532 8910 4821 9012"
+                    required
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Expiry (MM/YY)</label>
+                    <input
+                      type="text"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(e.target.value)}
+                      placeholder="e.g. 08/29"
+                      required
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>CVV / Security Code</label>
+                    <input
+                      type="password"
+                      value={cardCvv}
+                      maxLength={4}
+                      onChange={(e) => setCardCvv(e.target.value)}
+                      placeholder="3 or 4-digit CVV"
+                      required
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Cardholder Name</label>
+                  <input
+                    type="text"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    placeholder="e.g. Pavan Kumar"
+                    required
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
+                  />
+                </div>
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setShowPayModal(false)} style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
