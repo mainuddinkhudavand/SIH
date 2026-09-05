@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import ApprovalsHub from "./ApprovalsHub";
 import OfficeWorkspacesView from "./OfficeWorkspacesView";
+import CitizenMasterDirectoryView from "./CitizenMasterDirectoryView";
 import AdminDepartmentsView from "./AdminDepartmentsView";
 import AdminApiHealth from "./AdminApiHealth";
 import AdminFailedTransactions from "./AdminFailedTransactions";
@@ -9,8 +10,7 @@ import AuditLogsViewer from "./AuditLogsViewer";
 import AdminUserActivity from "./AdminUserActivity";
 import WorkflowOrchestration from "./WorkflowOrchestration";
 import AdminConsentRecords from "./AdminConsentRecords";
-import { FaCheckCircle, FaProjectDiagram, FaHistory, FaBuilding, FaHeartbeat, FaExclamationTriangle, FaLock, FaUserShield, FaExclamationCircle, FaNetworkWired, FaUsers, FaShieldAlt, FaServer, FaLandmark } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { FaCheckCircle, FaProjectDiagram, FaHistory, FaBuilding, FaExclamationTriangle, FaLock, FaUserShield, FaExclamationCircle, FaUsers, FaShieldAlt, FaServer, FaLandmark, FaAddressCard } from "react-icons/fa";
 
 export default function OfficialPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -201,6 +201,7 @@ export default function OfficialPortal() {
           <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "4px" }}>
             {[
               { id: "offices_workspaces", label: "4-Office Workspaces", icon: <FaLandmark /> },
+              { id: "citizen_master", label: "Citizens Master Dataset", icon: <FaAddressCard /> },
               { id: "applications", label: "Approvals Hub", icon: <FaCheckCircle /> },
               { id: "departments", label: "Departments", icon: <FaBuilding /> },
               { id: "api_health", label: "API Health", icon: <FaServer /> },
@@ -239,6 +240,7 @@ export default function OfficialPortal() {
       {/* Main Tab View Content */}
       <div style={{ maxWidth: "1300px", margin: "24px auto 0 auto", padding: "0 20px" }}>
         {activeTab === "offices_workspaces" && <OfficeWorkspacesView />}
+        {activeTab === "citizen_master" && <CitizenMasterDirectoryView />}
         {activeTab === "applications" && <ApprovalsHub />}
         {activeTab === "departments" && <AdminDepartmentsView />}
         {activeTab === "api_health" && <AdminApiHealth />}

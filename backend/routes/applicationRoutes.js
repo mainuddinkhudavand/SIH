@@ -3,6 +3,7 @@ import auth from "../middleware/auth.js";
 import adminMiddleware from "../middleware/adminMiddleware.js";
 import {
   getServicesList,
+  getCitizensMasterDirectory,
   createApplication,
   payApplicationDues,
   verifyOfficeStage,
@@ -16,6 +17,9 @@ const router = express.Router();
 
 // 📋 Public / Citizen Services Lookup Map
 router.get("/services", getServicesList);
+
+// 👨‍👩‍👧‍👦 Master Dataset of Citizens across 4 Offices
+router.get("/citizens-master", getCitizensMasterDirectory);
 
 // 📝 Citizen Submit & Route Application
 router.post("/submit", auth, createApplication);

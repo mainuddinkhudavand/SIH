@@ -1,6 +1,6 @@
 import Application from "../models/Application.js";
 import AuditLog from "../models/AuditLog.js";
-import { SERVICE_OFFICE_MAP, runOfficeRoutingCheck, MASTER_DATASETS } from "../utils/routingEngine.js";
+import { SERVICE_OFFICE_MAP, runOfficeRoutingCheck, MASTER_DATASETS, CITIZENS_MASTER_DATASET } from "../utils/routingEngine.js";
 import { triggerNotificationEvent } from "../utils/notificationEngine.js";
 
 // 📋 Get List of All Categorized E-Governance Services
@@ -12,6 +12,19 @@ export const getServicesList = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Error fetching services list" });
+  }
+};
+
+// 👨‍👩‍👧‍👦 Get Full Citizen Master Directory across all 4 Offices
+export const getCitizensMasterDirectory = async (req, res) => {
+  try {
+    return res.json({
+      success: true,
+      count: CITIZENS_MASTER_DATASET.length,
+      citizens: CITIZENS_MASTER_DATASET
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Error fetching citizens master dataset" });
   }
 };
 

@@ -327,8 +327,324 @@ export const SERVICE_OFFICE_MAP = {
   }
 };
 
+// 👨‍👩‍👧‍👦 Master Dataset of Citizens with ID Proofs & Linked Data across all 4 Offices
+export const CITIZENS_MASTER_DATASET = [
+  {
+    citizenId: "CIT-IND-9001",
+    fullName: "Pavan Kumar",
+    phone: "+91 98765 43210",
+    email: "pavan.kumar@egram.gov.in",
+    aadhaarId: "9876-5432-1000",
+    panNumber: "ABCDE1234F",
+    voterId: "VTR-MH-901234",
+    address: "House #14, Sector 3, Ward 4, Gram Panchayat Zone",
+    wardCode: "WARD-04",
+    villageCode: "VIL-MAH-01",
+    kycStatus: "Verified",
+    
+    // 🏢 Municipality Data
+    municipality: {
+      propertyId: "PROP-MH-401",
+      builtUpAreaSqFt: 1200,
+      taxAssessmentValue: 12500,
+      taxStatus: "Paid",
+      pendingTaxArrears: 0,
+      waterMeterId: "WAT-901",
+      waterConnectionStatus: "Active",
+      tradeLicenseId: "LIC-301",
+      businessName: "Shree Balaji Traders",
+      birthRecordRef: "BD-1001"
+    },
+
+    // 📜 Tehsildar Data
+    tehsildar: {
+      annualIncome: 85000,
+      incomeCategory: "LIG (Low Income Group)",
+      casteCategory: "General",
+      subCaste: "Open",
+      residenceDurationYears: 18,
+      solvencyAmount: 5000000,
+      agriculturistVerified: true,
+      legalHeirRef: "HEIR-101"
+    },
+
+    // 🌾 Revenue Data
+    revenue: {
+      surveyNumber: "SRV-101",
+      landAreaAcres: 3.5,
+      landClassification: "Agricultural (Sugarcane)",
+      revenueTaxStatus: "Paid",
+      pendingRevenueDues: 0,
+      encumbranceStatus: "Cleared (No Loan)",
+      courtDisputeStatus: "No Dispute"
+    },
+
+    // 🏡 Talati Data
+    talati: {
+      khataNumber712: "KHT-901",
+      extract8ASummary: "3.5 Acres across 1 Survey Parcel",
+      familyRegisterId: "FAM-101",
+      familyMembersCount: 4,
+      rationCardType: "APL-Yellow",
+      schemeBeneficiaryStatus: "Verified (PM-KISAN)",
+      cropLossPercentage: 0,
+      fieldVisitStatus: "Not Required"
+    }
+  },
+  {
+    citizenId: "CIT-IND-9002",
+    fullName: "Rajesh Patil",
+    phone: "+91 98765 43214",
+    email: "rajesh.patil@egram.gov.in",
+    aadhaarId: "9876-5432-1001",
+    panNumber: "PATIL7890R",
+    voterId: "VTR-MH-890123",
+    address: "Plot 18, Ward 2, Village Main Road",
+    wardCode: "WARD-02",
+    villageCode: "VIL-MAH-01",
+    kycStatus: "Verified",
+
+    // 🏢 Municipality Data
+    municipality: {
+      propertyId: "PROP-MH-405",
+      builtUpAreaSqFt: 1450,
+      taxAssessmentValue: 8200,
+      taxStatus: "Paid",
+      pendingTaxArrears: 0,
+      waterMeterId: "WAT-905",
+      waterConnectionStatus: "Active",
+      tradeLicenseId: "N/A",
+      businessName: "N/A",
+      birthRecordRef: "BD-1004"
+    },
+
+    // 📜 Tehsildar Data
+    tehsildar: {
+      annualIncome: 140000,
+      incomeCategory: "MIG (Middle Income Group)",
+      casteCategory: "OBC",
+      subCaste: "Kunbi",
+      residenceDurationYears: 22,
+      solvencyAmount: 3000000,
+      agriculturistVerified: true,
+      legalHeirRef: "N/A"
+    },
+
+    // 🌾 Revenue Data
+    revenue: {
+      surveyNumber: "SRV-102",
+      landAreaAcres: 2.1,
+      landClassification: "Agricultural (Cotton)",
+      revenueTaxStatus: "Paid",
+      pendingRevenueDues: 0,
+      encumbranceStatus: "Active Mortgage (₹2.5L Bank of Maharashtra)",
+      courtDisputeStatus: "No Dispute"
+    },
+
+    // 🏡 Talati Data
+    talati: {
+      khataNumber712: "KHT-902",
+      extract8ASummary: "2.1 Acres",
+      familyRegisterId: "FAM-102",
+      familyMembersCount: 5,
+      rationCardType: "APL",
+      schemeBeneficiaryStatus: "Enrolled (Crop Insurance)",
+      cropLossPercentage: 0,
+      fieldVisitStatus: "Not Required"
+    }
+  },
+  {
+    citizenId: "CIT-IND-9003",
+    fullName: "Suresh Deshmukh",
+    phone: "+91 98765 43212",
+    email: "suresh.d@egram.gov.in",
+    aadhaarId: "9876-5432-1002",
+    panNumber: "DESHM5432S",
+    voterId: "VTR-MH-765432",
+    address: "Survey 103 Parcel, Ward 1, Gram Panchayat Sector",
+    wardCode: "WARD-01",
+    villageCode: "VIL-MAH-01",
+    kycStatus: "Verified",
+
+    // 🏢 Municipality Data
+    municipality: {
+      propertyId: "PROP-MH-402",
+      builtUpAreaSqFt: 850,
+      taxAssessmentValue: 3400,
+      taxStatus: "Pending",
+      pendingTaxArrears: 3400,
+      waterMeterId: "WAT-902",
+      waterConnectionStatus: "Bill Pending",
+      tradeLicenseId: "N/A",
+      businessName: "N/A",
+      birthRecordRef: "BD-1002"
+    },
+
+    // 📜 Tehsildar Data
+    tehsildar: {
+      annualIncome: 60000,
+      incomeCategory: "BPL Category",
+      casteCategory: "SC",
+      subCaste: "Mahar",
+      residenceDurationYears: 25,
+      solvencyAmount: 1000000,
+      agriculturistVerified: true,
+      legalHeirRef: "HEIR-202"
+    },
+
+    // 🌾 Revenue Data
+    revenue: {
+      surveyNumber: "SRV-103",
+      landAreaAcres: 4.8,
+      landClassification: "Agricultural (Soybean)",
+      revenueTaxStatus: "Arrears Pending",
+      pendingRevenueDues: 1850,
+      encumbranceStatus: "Cleared",
+      courtDisputeStatus: "No Dispute"
+    },
+
+    // 🏡 Talati Data
+    talati: {
+      khataNumber712: "KHT-903",
+      extract8ASummary: "4.8 Acres",
+      familyRegisterId: "FAM-103",
+      familyMembersCount: 6,
+      rationCardType: "BPL-Yellow",
+      schemeBeneficiaryStatus: "Verified (Food Security Subsidy)",
+      cropLossPercentage: 35,
+      fieldVisitStatus: "Inspection Completed"
+    }
+  },
+  {
+    citizenId: "CIT-IND-9004",
+    fullName: "Anita Sharma",
+    phone: "+91 98765 43211",
+    email: "anita.sharma@egram.gov.in",
+    aadhaarId: "9876-5432-1003",
+    panNumber: "SHARM9876A",
+    voterId: "VTR-MH-432109",
+    address: "Plot 42, Sector 1, Civic Enclave",
+    wardCode: "WARD-01",
+    villageCode: "VIL-MAH-01",
+    kycStatus: "Verified",
+
+    // 🏢 Municipality Data
+    municipality: {
+      propertyId: "PROP-MH-408",
+      builtUpAreaSqFt: 2100,
+      taxAssessmentValue: 18000,
+      taxStatus: "Paid",
+      pendingTaxArrears: 0,
+      waterMeterId: "WAT-908",
+      waterConnectionStatus: "Active",
+      tradeLicenseId: "LIC-305",
+      businessName: "Sharma Architectural Consultancy",
+      birthRecordRef: "BD-1008"
+    },
+
+    // 📜 Tehsildar Data
+    tehsildar: {
+      annualIncome: 210000,
+      incomeCategory: "MIG Category",
+      casteCategory: "General",
+      subCaste: "Open",
+      residenceDurationYears: 12,
+      solvencyAmount: 8000000,
+      agriculturistVerified: true,
+      legalHeirRef: "HEIR-303"
+    },
+
+    // 🌾 Revenue Data
+    revenue: {
+      surveyNumber: "SRV-104",
+      landAreaAcres: 1.5,
+      landClassification: "Agricultural (Wheat)",
+      revenueTaxStatus: "Paid",
+      pendingRevenueDues: 0,
+      encumbranceStatus: "Cleared",
+      courtDisputeStatus: "No Dispute"
+    },
+
+    // 🏡 Talati Data
+    talati: {
+      khataNumber712: "KHT-904",
+      extract8ASummary: "1.5 Acres",
+      familyRegisterId: "FAM-104",
+      familyMembersCount: 3,
+      rationCardType: "APL-White",
+      schemeBeneficiaryStatus: "Enrolled",
+      cropLossPercentage: 45,
+      fieldVisitStatus: "Field Visit Scheduled"
+    }
+  },
+  {
+    citizenId: "CIT-IND-9005",
+    fullName: "Mahesh Pawar",
+    phone: "+91 98765 43215",
+    email: "mahesh.pawar@egram.gov.in",
+    aadhaarId: "9876-5432-1004",
+    panNumber: "PAWAR1420M",
+    voterId: "VTR-MH-654321",
+    address: "Ward 3, Panchayat Market Area",
+    wardCode: "WARD-03",
+    villageCode: "VIL-MAH-01",
+    kycStatus: "Verified",
+
+    // 🏢 Municipality Data
+    municipality: {
+      propertyId: "PROP-MH-410",
+      builtUpAreaSqFt: 1600,
+      taxAssessmentValue: 15400,
+      taxStatus: "Paid",
+      pendingTaxArrears: 0,
+      waterMeterId: "WAT-910",
+      waterConnectionStatus: "Active",
+      tradeLicenseId: "LIC-308",
+      businessName: "Pawar Kirana & Agro Services",
+      birthRecordRef: "BD-1010"
+    },
+
+    // 📜 Tehsildar Data
+    tehsildar: {
+      annualIncome: 175000,
+      incomeCategory: "MIG Category",
+      casteCategory: "OBC",
+      subCaste: "Maratha Kunbi",
+      residenceDurationYears: 30,
+      solvencyAmount: 4500000,
+      agriculturistVerified: true,
+      legalHeirRef: "N/A"
+    },
+
+    // 🌾 Revenue Data
+    revenue: {
+      surveyNumber: "SRV-105",
+      landAreaAcres: 5.2,
+      landClassification: "Non-Agricultural (Commercial)",
+      revenueTaxStatus: "Paid",
+      pendingRevenueDues: 0,
+      encumbranceStatus: "Cleared",
+      courtDisputeStatus: "No Dispute"
+    },
+
+    // 🏡 Talati Data
+    talati: {
+      khataNumber712: "KHT-905",
+      extract8ASummary: "5.2 Acres",
+      familyRegisterId: "FAM-105",
+      familyMembersCount: 4,
+      rationCardType: "APL",
+      schemeBeneficiaryStatus: "Verified (Agro-Commercial Subsidy)",
+      cropLossPercentage: 0,
+      fieldVisitStatus: "Not Required"
+    }
+  }
+];
+
 // 📊 Realistic Master Datasets for Federated Cross-Office Queries
 export const MASTER_DATASETS = {
+  citizensMaster: CITIZENS_MASTER_DATASET,
+
   // Dues Ledger shared across exchange layer
   duesLedger: [
     {
