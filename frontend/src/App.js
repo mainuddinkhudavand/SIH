@@ -11,15 +11,10 @@ import Chatbot from "./components/Chatbot";
 import { ToastProvider } from "./context/ToastContext"; 
 import Profile from "./pages/Profile";
 
-// 🏛️ Departmental Portals
+// 🏛️ Primary Federated Portals
 import CitizenPortal from "./pages/citizen/CitizenPortal";
 import GovConnectPlatform from "./pages/govconnect/GovConnectPlatform";
-import MunicipalPortal from "./pages/portals/MunicipalPortal";
-import RevenuePortal from "./pages/portals/RevenuePortal";
-import HealthPortal from "./pages/portals/HealthPortal";
-import EnergyPortal from "./pages/portals/EnergyPortal";
 import OfficialPortal from "./pages/admin/OfficialPortal";
-import SectorModulesPage from "./pages/citizen/SectorModulesPage";
 
 const Private = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -32,34 +27,21 @@ export default function App() {
       <>
         <Navbar />
         <Routes>
-          {/* Public Entry Landing Route */}
+          {/* Public Landing Route */}
           <Route path="/" element={<HomePage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
-          {/* 🌟 1. CITIZEN PORTAL */}
+          {/* 🌟 1. CITIZEN PORTAL (Services, Dynamic Forms, Tracker, Dues Payment, Certificates) */}
           <Route path="/citizen/*" element={<CitizenPortal />} />
 
-          {/* 🌟 2. GOVCONNECT MIDDLEWARE PLATFORM */}
-          <Route path="/govconnect" element={<GovConnectPlatform />} />
-
-          {/* 🌟 3. MUNICIPAL PORTAL */}
-          <Route path="/portals/municipal" element={<MunicipalPortal />} />
-
-          {/* 🌟 4. REVENUE PORTAL */}
-          <Route path="/portals/revenue" element={<RevenuePortal />} />
-
-          {/* 🌟 5. HEALTH / WELFARE PORTAL */}
-          <Route path="/portals/health" element={<HealthPortal />} />
-
-          {/* 🌟 6. RENEWABLE ENERGY PORTAL */}
-          <Route path="/portals/energy" element={<EnergyPortal />} />
-
-          {/* 🌟 7. ADMIN PORTAL */}
+          {/* 🌟 2. 4-OFFICE WORKSPACES & OFFICIAL PORTAL (Municipality, Tehsildar, Revenue, Talati) */}
           <Route path="/official/*" element={<OfficialPortal />} />
 
+          {/* 🌟 3. GOVCONNECT MIDDLEWARE PLATFORM */}
+          <Route path="/govconnect" element={<GovConnectPlatform />} />
+
           {/* Utility Routes */}
-          <Route path="/modules/*" element={<SectorModulesPage />} />
           <Route path="/kyc" element={<Private><KYC /></Private>} />
           <Route path="/profile" element={<Private><Profile /></Private>} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
