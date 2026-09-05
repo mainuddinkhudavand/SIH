@@ -22,7 +22,11 @@ export default function UnifiedApplicationTracker() {
 
   // Payment Modal State (Step 1.8)
   const [showPayModal, setShowPayModal] = useState(false);
-  const [payMethod, setPayMethod] = useState("UPI");
+  const [payMethod, setPayMethod] = useState("NetBanking");
+  const [bankName, setBankName] = useState("State Bank of India");
+  const [accountNumber, setAccountNumber] = useState("4589201938");
+  const [accountHolderName, setAccountHolderName] = useState("Pavan Kumar");
+  const [ifscCode, setIfscCode] = useState("SBIN0001420");
   const [processingPay, setProcessingPay] = useState(false);
 
   // Download Certificate Modal State (Step 1.10)
@@ -87,36 +91,88 @@ export default function UnifiedApplicationTracker() {
     if (!application) return;
     setProcessingPay(true);
 
-    try {
-      const res = await API.post(`/applications/${application._id || "demo-app-1"}/pay-dues`, {
-        paymentMethod: payMethod
-      });
+    const paymentPayload = {
+      paymentMethod: payMethod,
+      bankName: bankName || "State Bank of India",
+      accountNumber: accountNumber ? `XXXX-${accountNumber.slice(-4)}` : "XXXX-4892",
+      accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+      ifscCode: ifscCode || "SBIN0001420"
+    };
 
-      if (res.data?.success) {
+    const receiptNo = `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    try {
+      const res = await API.post(`/applications/${application._id || "demo-app-1"}/pay-dues`, paymentPayload);
+
+      if (res.data?.success && res.data?.application) {
         setApplication(res.data.application);
       } else {
         // Fallback state update
+        const nextOffice = application.officeChain?.[(application.currentStageIndex || 0) + 1] || "Tehsildar";
+        const updatedVerifications = (application.stageVerifications || []).map((s) => {
+          if (s.status === "dues_pending" || s.officeName === application.currentOffice) {
+            return {
+              ...s,
+              status: "cleared",
+              officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${payMethod} (${paymentPayload.bankName}). Receipt: ${receiptNo}`,
+              verifiedBy: "Online Payment Engine",
+              verifiedAt: new Date().toISOString()
+            };
+          }
+          return s;
+        });
+
         setApplication({
           ...application,
-          status: "Tehsildar Verification Pending",
-          currentOffice: "Tehsildar",
-          currentStageIndex: 2,
-          pendingDues: { ...application.pendingDues, isPaid: true, paymentReceiptNo: `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}` },
-          stageVerifications: application.stageVerifications.map((s, idx) =>
-            idx === 1 ? { ...s, status: "cleared", officerRemarks: `Dues ₹${application.pendingDues.amount} paid via ${payMethod}.` } : s
-          )
+          status: `${nextOffice} Verification Pending`,
+          currentOffice: nextOffice,
+          currentStageIndex: (application.currentStageIndex || 0) + 1,
+          pendingDues: {
+            ...application.pendingDues,
+            isPaid: true,
+            paymentMethod: payMethod,
+            bankName: paymentPayload.bankName,
+            accountNumber: paymentPayload.accountNumber,
+            accountHolderName: paymentPayload.accountHolderName,
+            ifscCode: paymentPayload.ifscCode,
+            paymentReceiptNo: receiptNo,
+            paidAt: new Date().toISOString()
+          },
+          stageVerifications: updatedVerifications
         });
       }
     } catch (err) {
+      const nextOffice = application.officeChain?.[(application.currentStageIndex || 0) + 1] || "Tehsildar";
+      const updatedVerifications = (application.stageVerifications || []).map((s) => {
+        if (s.status === "dues_pending" || s.officeName === application.currentOffice) {
+          return {
+            ...s,
+            status: "cleared",
+            officerRemarks: `Dues ₹${application.pendingDues?.amount} paid via ${payMethod} (${paymentPayload.bankName}). Receipt: ${receiptNo}`,
+            verifiedBy: "Online Payment Engine",
+            verifiedAt: new Date().toISOString()
+          };
+        }
+        return s;
+      });
+
       setApplication({
         ...application,
-        status: "Tehsildar Verification Pending",
-        currentOffice: "Tehsildar",
-        currentStageIndex: 2,
-        pendingDues: { ...application.pendingDues, isPaid: true, paymentReceiptNo: `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}` },
-        stageVerifications: application.stageVerifications.map((s, idx) =>
-          idx === 1 ? { ...s, status: "cleared", officerRemarks: `Dues ₹${application.pendingDues.amount} paid via ${payMethod}.` } : s
-        )
+        status: `${nextOffice} Verification Pending`,
+        currentOffice: nextOffice,
+        currentStageIndex: (application.currentStageIndex || 0) + 1,
+        pendingDues: {
+          ...application.pendingDues,
+          isPaid: true,
+          paymentMethod: payMethod,
+          bankName: paymentPayload.bankName,
+          accountNumber: paymentPayload.accountNumber,
+          accountHolderName: paymentPayload.accountHolderName,
+          ifscCode: paymentPayload.ifscCode,
+          paymentReceiptNo: receiptNo,
+          paidAt: new Date().toISOString()
+        },
+        stageVerifications: updatedVerifications
       });
     } finally {
       setProcessingPay(false);
@@ -235,6 +291,23 @@ export default function UnifiedApplicationTracker() {
             </div>
           )}
 
+          {/* Dues Cleared & Paid Receipt Banner (Section 1.8) */}
+          {application.pendingDues && application.pendingDues.isPaid && (
+            <div style={{ background: "#f0fdf4", border: "2px solid #22c55e", padding: "20px", borderRadius: "14px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#166534", fontWeight: "800", fontSize: "1.1rem", marginBottom: "10px" }}>
+                <FaCheckCircle color="#16a34a" size={22} /> DUES CLEARED &amp; PAYMENT VERIFIED ACROSS ALL OFFICES
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", background: "white", padding: "16px", borderRadius: "10px", border: "1px solid #bbf7d0", fontSize: "0.85rem", color: "#334155" }}>
+                <div><span style={{ color: "#64748b" }}>Payment Receipt:</span> <br/><strong style={{ color: "#15803d" }}>{application.pendingDues.paymentReceiptNo || "PAY-RC-2026-849201"}</strong></div>
+                <div><span style={{ color: "#64748b" }}>Bank Name:</span> <br/><strong>{application.pendingDues.bankName || "State Bank of India"}</strong></div>
+                <div><span style={{ color: "#64748b" }}>Account / Card:</span> <br/><strong>{application.pendingDues.accountNumber || "XXXX-4892"}</strong></div>
+                <div><span style={{ color: "#64748b" }}>Account Holder:</span> <br/><strong>{application.pendingDues.accountHolderName || application.applicantDetails?.fullName}</strong></div>
+                <div><span style={{ color: "#64748b" }}>Mode / IFSC:</span> <br/><strong>{application.pendingDues.paymentMethod || "NetBanking"} ({application.pendingDues.ifscCode || "SBIN0001420"})</strong></div>
+                <div><span style={{ color: "#64748b" }}>Paid Amount:</span> <br/><strong style={{ color: "#b45309" }}>₹{application.pendingDues.amount}</strong></div>
+              </div>
+            </div>
+          )}
+
           {/* Sequential Office Verification Chain Progress Bar (Section 0.3) */}
           <div style={{ marginBottom: "28px" }}>
             <h4 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", fontWeight: "800", color: "#1e293b" }}>
@@ -334,23 +407,24 @@ export default function UnifiedApplicationTracker() {
               </div>
             </div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#334155", marginBottom: "8px" }}>Select Payment Mode</label>
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>Select Payment Mode</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-                {["UPI", "NetBanking", "Card"].map((m) => (
+                {["NetBanking", "UPI", "Card"].map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setPayMethod(m)}
                     style={{
-                      padding: "10px",
+                      padding: "8px",
                       borderRadius: "8px",
                       border: "2px solid",
                       borderColor: payMethod === m ? "#15803d" : "#cbd5e1",
                       background: payMethod === m ? "#f0fdf4" : "white",
                       color: payMethod === m ? "#166534" : "#475569",
                       fontWeight: "700",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      fontSize: "0.85rem"
                     }}
                   >
                     {m}
@@ -359,10 +433,64 @@ export default function UnifiedApplicationTracker() {
               </div>
             </div>
 
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Bank Name</label>
+              <select
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", color: "#0f172a" }}
+              >
+                <option value="State Bank of India">State Bank of India (SBI)</option>
+                <option value="HDFC Bank">HDFC Bank</option>
+                <option value="ICICI Bank">ICICI Bank</option>
+                <option value="Bank of Baroda">Bank of Baroda</option>
+                <option value="Axis Bank">Axis Bank</option>
+                <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
+                <option value="Canara Bank">Canara Bank</option>
+              </select>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account / Card Number</label>
+                <input
+                  type="text"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="e.g. 501002938471"
+                  required
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>IFSC Code / PIN</label>
+                <input
+                  type="text"
+                  value={ifscCode}
+                  onChange={(e) => setIfscCode(e.target.value)}
+                  placeholder="e.g. SBIN0001420"
+                  required
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", fontWeight: "600", boxSizing: "border-box" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Account Holder Name</label>
+              <input
+                type="text"
+                value={accountHolderName}
+                onChange={(e) => setAccountHolderName(e.target.value)}
+                placeholder="e.g. Pavan Kumar"
+                required
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "600", boxSizing: "border-box" }}
+              />
+            </div>
+
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setShowPayModal(false)} style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
               <button onClick={handleProcessDuesPayment} disabled={processingPay} style={{ padding: "10px 22px", borderRadius: "8px", border: "none", background: "#15803d", color: "white", fontWeight: "800", cursor: "pointer" }}>
-                {processingPay ? "Processing Payment..." : `Pay ₹${application.pendingDues?.amount} & Clear Flag`}
+                {processingPay ? "Authorizing Bank Transfer..." : `Pay ₹${application.pendingDues?.amount} & Clear Flag`}
               </button>
             </div>
           </div>

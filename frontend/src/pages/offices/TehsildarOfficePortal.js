@@ -217,6 +217,27 @@ export default function TehsildarOfficePortal() {
                     </span>
                   </div>
 
+                  {/* Dues Ledger & Payment Info Display */}
+                  {app.pendingDues && app.pendingDues.amount > 0 && (
+                    <div style={{ background: app.pendingDues.isPaid ? "#f0fdf4" : "#fffbeb", padding: "12px 16px", borderRadius: "10px", border: `1px solid ${app.pendingDues.isPaid ? "#bbf7d0" : "#fde68a"}`, fontSize: "0.85rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: app.pendingDues.isPaid ? "6px" : "0", flexWrap: "wrap", gap: "8px" }}>
+                        <span><strong>Dues Ledger:</strong> {app.pendingDues.dueType} — Amount: <strong>₹{app.pendingDues.amount}</strong></span>
+                        <span style={{ fontWeight: "800", color: app.pendingDues.isPaid ? "#15803d" : "#b45309" }}>
+                          {app.pendingDues.isPaid ? "✅ DUES CLEARED VIA BANK PAYMENT" : "⚠️ DUES PENDING PAYMENT BY CITIZEN"}
+                        </span>
+                      </div>
+                      {app.pendingDues.isPaid && (
+                        <div style={{ fontSize: "0.8rem", color: "#334155", background: "#ffffff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dcfce7", display: "flex", gap: "16px", flexWrap: "wrap", marginTop: "4px" }}>
+                          <div><strong>Bank:</strong> {app.pendingDues.bankName || "State Bank of India"}</div>
+                          <div><strong>Acc/Card:</strong> {app.pendingDues.accountNumber || "XXXX-4892"}</div>
+                          <div><strong>Holder:</strong> {app.pendingDues.accountHolderName || app.applicantDetails?.fullName}</div>
+                          <div><strong>Receipt:</strong> {app.pendingDues.paymentReceiptNo}</div>
+                          <div><strong>Mode:</strong> {app.pendingDues.paymentMethod || "NetBanking"}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Prior Talati & Revenue Verification Results (Section 3.2) */}
                   <div style={{ background: "#ffffff", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                     <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#334155", marginBottom: "6px" }}>

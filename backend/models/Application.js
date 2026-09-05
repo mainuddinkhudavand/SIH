@@ -90,6 +90,11 @@ const ApplicationSchema = new mongoose.Schema(
       amount: { type: Number, default: 0 },
       surveyOrPropertyId: { type: String },
       isPaid: { type: Boolean, default: false },
+      paymentMethod: { type: String },
+      bankName: { type: String },
+      accountNumber: { type: String },
+      accountHolderName: { type: String },
+      ifscCode: { type: String },
       paymentReceiptNo: { type: String },
       paidAt: { type: Date }
     },

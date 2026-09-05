@@ -129,21 +129,32 @@ export const createApplication = async (req, res) => {
 export const payApplicationDues = async (req, res) => {
   try {
     const { id } = req.params;
-    const { paymentMethod } = req.body; // e.g. "UPI", "NetBanking", "Card"
+    const { paymentMethod, bankName, accountNumber, accountHolderName, ifscCode } = req.body;
 
-    const application = await Application.findById(id);
+    const application = await Application.findOne({
+      $or: [
+        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+        { applicationId: id }
+      ]
+    });
+
     if (!application) {
       return res.status(404).json({ success: false, message: "Application not found" });
     }
 
-    if (!application.pendingDues || application.pendingDues.amount <= 0 || application.pendingDues.isPaid) {
-      return res.status(400).json({ success: false, message: "No active pending dues found for this application." });
+    if (!application.pendingDues || application.pendingDues.isPaid) {
+      return res.status(400).json({ success: false, message: "No active unpaid dues found for this application." });
     }
 
     const receiptNo = `PAY-RC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Update Application state
+    // Store complete Bank & Payment Info
     application.pendingDues.isPaid = true;
+    application.pendingDues.paymentMethod = paymentMethod || "NetBanking";
+    application.pendingDues.bankName = bankName || "State Bank of India";
+    application.pendingDues.accountNumber = accountNumber ? `XXXX-${accountNumber.slice(-4)}` : "XXXX-4892";
+    application.pendingDues.accountHolderName = accountHolderName || application.applicantDetails.fullName;
+    application.pendingDues.ifscCode = ifscCode || "SBIN0001420";
     application.pendingDues.paymentReceiptNo = receiptNo;
     application.pendingDues.paidAt = new Date();
 
@@ -156,12 +167,23 @@ export const payApplicationDues = async (req, res) => {
       MASTER_DATASETS.duesLedger[dueIndex].isPaid = true;
     }
 
-    // Update current stage verification flag
+    // Mark current office stage verification as CLEARED
     const stageIdx = application.currentStageIndex;
     if (application.stageVerifications[stageIdx]) {
       application.stageVerifications[stageIdx].status = "cleared";
-      application.stageVerifications[stageIdx].officerRemarks = `Dues ₹${application.pendingDues.amount} paid via ${paymentMethod || "UPI"}. Receipt: ${receiptNo}`;
+      application.stageVerifications[stageIdx].officerRemarks = `Dues ₹${application.pendingDues.amount} paid via ${paymentMethod || "NetBanking"} (${bankName || "SBI"}). Receipt: ${receiptNo}`;
+      application.stageVerifications[stageIdx].verifiedBy = "Online Payment Engine";
+      application.stageVerifications[stageIdx].verifiedAt = new Date();
     }
+
+    // Also clear any other stageVerifications marked "dues_pending"
+    application.stageVerifications.forEach((stg) => {
+      if (stg.status === "dues_pending") {
+        stg.status = "cleared";
+        stg.officerRemarks = `Dues ₹${application.pendingDues.amount} paid & cleared. Receipt: ${receiptNo}`;
+        stg.verifiedAt = new Date();
+      }
+    });
 
     // Advance to next office in verification chain or mark approved
     const nextIndex = stageIdx + 1;
@@ -184,18 +206,22 @@ export const payApplicationDues = async (req, res) => {
     }
 
     application.timeline.push({
-      stage: "Step 1.8: Online Dues Payment",
+      stage: "Step 1.8: Online Bank Payment & Dues Clearance",
       status: "Dues Cleared",
-      updatedBy: "Citizen",
-      note: `Paid ₹${application.pendingDues.amount} via ${paymentMethod || "UPI"}. Receipt: ${receiptNo}. Dues flag cleared across all offices.`,
+      updatedBy: "Citizen Payment Gateway",
+      note: `Paid ₹${application.pendingDues.amount} via ${paymentMethod || "NetBanking"} (${bankName || "SBI"}). Receipt: ${receiptNo}. Cleared across all connected offices.`,
       timestamp: new Date()
     });
+
+    application.markModified("pendingDues");
+    application.markModified("stageVerifications");
+    application.markModified("timeline");
 
     await application.save();
 
     return res.json({
       success: true,
-      message: `Payment of ₹${application.pendingDues.amount} successful! Dues flag cleared across connected offices.`,
+      message: `Payment of ₹${application.pendingDues.amount} successful! Dues flag cleared across all connected offices.`,
       receiptNo,
       application
     });
