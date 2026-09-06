@@ -440,12 +440,20 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
   const allApps = getAllApplicationsFromStore();
   let updatedApp = null;
 
+  const targetId = typeof appId === "object" ? (appId.applicationId || appId._id) : String(appId || "");
+  const altId = typeof appId === "object" ? (appId._id || appId.applicationId) : String(appId || "");
+
   const action = updatePayload.action;
   const officerRemarks = updatePayload.officerRemarks || updatePayload.note || "";
   const verifiedBy = updatePayload.verifiedBy || `${updatePayload.officeName || "Office"} Officer`;
 
   const updatedApps = allApps.map((item) => {
-    if (item._id === appId || item.applicationId === appId) {
+    const isMatch =
+      item._id === targetId ||
+      item.applicationId === targetId ||
+      (altId && (item._id === altId || item.applicationId === altId));
+
+    if (isMatch) {
       const stageIdx = item.currentStageIndex || 0;
       const officeChain = item.officeChain || [item.currentOffice || "Municipality"];
 
@@ -484,7 +492,7 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
             certificateId: `CERT-DOC-${Math.floor(100000 + Math.random() * 900000)}`,
             issuedAt: new Date().toISOString(),
             digitalSignature: `SIG-DIGI-OFFICIAL-EGRAM-${Date.now()}`,
-            qrCodeData: `https://egram.gov.in/verify/${item.applicationId}`
+            qrCodeData: `https://egram.gov.in/verify/${item.applicationId || targetId}`
           };
         }
       } else if (action === "discrepancy") {
@@ -515,11 +523,11 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedApps));
 
   // Dispatch custom event to notify all active UI components for instant re-render
-  window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: { appId, updatedApp } }));
+  window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: { appId: targetId, updatedApp } }));
 
   // Also sync with backend asynchronously if backend is available
-  if (notifyBackend && appId && action) {
-    API.put(`/applications/${appId}/verify-stage`, {
+  if (notifyBackend && targetId && action) {
+    API.put(`/applications/${targetId}/verify-stage`, {
       action,
       officerRemarks,
       verifiedBy

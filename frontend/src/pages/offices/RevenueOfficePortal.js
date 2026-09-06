@@ -56,19 +56,38 @@ export default function RevenueOfficePortal() {
     }
   };
 
-  const handleAction = async (appId, action) => {
-    const note = remarks[appId] || "";
+  const handleAction = async (target, action) => {
+    const appId = typeof target === "object" ? (target.applicationId || target._id) : target;
+    const note = remarks[appId] || (typeof target === "object" ? remarks[target._id] : "") || "";
     setStatusMsg(null);
 
+    const verifiedBy = "Revenue Inspector Officer";
+    const officerRemarks = note || `Revenue Officer action: ${action.toUpperCase()}`;
+
+    // 1. Update central application store
     const updated = updateApplicationInStore(appId, {
       action,
-      officerRemarks: note || `Revenue Officer action: ${action.toUpperCase()}`,
-      verifiedBy: "Revenue Inspector Officer",
+      officerRemarks,
+      verifiedBy,
       officeName: "Revenue"
     });
 
+    // 2. Call backend API for real-time database update
+    try {
+      await API.put(`/applications/${appId}/verify-stage`, {
+        action,
+        officerRemarks,
+        verifiedBy
+      });
+    } catch (err) {
+      console.warn("Backend stage verification sync notice:", err.message);
+    }
+
+    // 3. Reload queue to reflect live backend status
+    await loadRevenueQueue();
+
     const statusText = action === "approve" 
-      ? (updated?.status === "Approved" ? "Approved & Certificate Issued" : `Stage Cleared → Moved to ${updated?.currentOffice}`)
+      ? (updated?.status === "Approved" ? "Approved & Certificate Issued" : `Stage Cleared → Moved to ${updated?.currentOffice || "Next Office"}`)
       : action === "discrepancy" ? "Discrepancy Flagged" : "Application Rejected";
 
     setStatusMsg({
@@ -414,28 +433,28 @@ function RevenueCard({ app, remarks, setRemarks, handleAction, isApprovedCard, i
           <input
             type="text"
             placeholder="Add Revenue Inspector Remarks / Audit Notes..."
-            value={remarks[app._id || app.applicationId] || ""}
-            onChange={(e) => setRemarks({ ...remarks, [app._id || app.applicationId]: e.target.value })}
+            value={remarks[app.applicationId || app._id] || remarks[app._id] || ""}
+            onChange={(e) => setRemarks({ ...remarks, [app.applicationId || app._id]: e.target.value })}
             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", marginBottom: "12px" }}
           />
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button
-              onClick={() => handleAction(app._id || app.applicationId, "approve")}
+              onClick={() => handleAction(app.applicationId || app._id, "approve")}
               style={{ background: "#16a34a", color: "white", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
             >
               <FaCheckCircle /> Grant Revenue Clearance
             </button>
 
             <button
-              onClick={() => handleAction(app._id || app.applicationId, "discrepancy")}
+              onClick={() => handleAction(app.applicationId || app._id, "discrepancy")}
               style={{ background: "#d97706", color: "white", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
             >
               <FaExclamationTriangle /> Flag Revenue Discrepancy
             </button>
 
             <button
-              onClick={() => handleAction(app._id || app.applicationId, "reject")}
+              onClick={() => handleAction(app.applicationId || app._id, "reject")}
               style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
             >
               <FaTimesCircle /> Reject Revenue Request
