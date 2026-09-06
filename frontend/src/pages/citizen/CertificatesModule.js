@@ -137,7 +137,8 @@ export default function CertificatesModule() {
         serviceId: serviceIdMap[selectedType] || "cert-gen",
         serviceTitle: selectedType,
         serviceType: "Certificates",
-        governmentFee: {
+        governmentFee: feeAmount,
+        paymentInfo: {
           amount: feeAmount,
           isPaid: true,
           paymentMethod: paymentMethod,

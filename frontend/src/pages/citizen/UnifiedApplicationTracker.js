@@ -277,7 +277,7 @@ export default function UnifiedApplicationTracker() {
               <div>
                 <strong>Official Govt Fee:</strong>{" "}
                 <span style={{ background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "6px", fontWeight: "900", fontSize: "0.82rem" }}>
-                  ₹{application.governmentFee?.amount || 50} (Paid &amp; Verified)
+                  ₹{typeof application.governmentFee === "object" ? (typeof application.governmentFee.amount === "object" ? application.governmentFee.amount?.amount || 50 : application.governmentFee.amount || 50) : (application.governmentFee || 50)} (Paid &amp; Verified)
                 </span>
               </div>
             </div>

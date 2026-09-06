@@ -400,7 +400,7 @@ function WorkspaceCard({ app, discrepancyNote, setDiscrepancyNote, handleVerifyA
         <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
         <div><strong>Aadhaar ID:</strong> {app.applicantDetails?.aadhaarId || "N/A"}</div>
         <div><strong>Current Stage:</strong> {app.currentOffice || activeOffice}</div>
-        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#e2e8f0", color: "#1e293b", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{app.governmentFee?.amount || 50}</span></div>
+        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#e2e8f0", color: "#1e293b", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{typeof app.governmentFee === "object" ? (typeof app.governmentFee.amount === "object" ? app.governmentFee.amount?.amount || 50 : app.governmentFee.amount || 50) : (app.governmentFee || 50)}</span></div>
       </div>
 
       {isPaidDues && (

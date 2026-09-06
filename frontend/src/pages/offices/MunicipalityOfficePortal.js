@@ -418,7 +418,7 @@ function MunicipalityCard({ app, remarks, setRemarks, handleAction, isApprovedCa
         <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
         <div><strong>Aadhaar ID:</strong> {app.applicantDetails?.aadhaarId || "N/A"}</div>
         <div><strong>Address/Ward:</strong> {app.applicantDetails?.address || app.applicantDetails?.wardCode || "N/A"}</div>
-        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{app.governmentFee?.amount || 50}</span></div>
+        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{typeof app.governmentFee === "object" ? (typeof app.governmentFee.amount === "object" ? app.governmentFee.amount?.amount || 50 : app.governmentFee.amount || 50) : (app.governmentFee || 50)}</span></div>
       </div>
 
       {/* Payment Details Notification Box */}

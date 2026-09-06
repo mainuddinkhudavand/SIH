@@ -134,7 +134,8 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
         serviceId: selectedService.serviceId,
         serviceTitle: selectedService.title,
         serviceType: selectedService.category,
-        governmentFee: {
+        governmentFee: feeAmount,
+        paymentInfo: {
           amount: feeAmount,
           isPaid: true,
           paymentMethod: paymentMethod,

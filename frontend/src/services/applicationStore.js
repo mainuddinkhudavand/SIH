@@ -393,6 +393,31 @@ const INITIAL_MASTER_APPLICATIONS = [
   }
 ];
 
+// Helper to sanitize application object and prevent nested object rendering bugs
+export const sanitizeApp = (app) => {
+  if (!app) return app;
+  let amount = 50;
+  if (app.governmentFee !== undefined && app.governmentFee !== null) {
+    if (typeof app.governmentFee === "number" || typeof app.governmentFee === "string") {
+      amount = app.governmentFee;
+    } else if (typeof app.governmentFee === "object") {
+      const rawAmt = app.governmentFee.amount;
+      if (typeof rawAmt === "number" || typeof rawAmt === "string") {
+        amount = rawAmt;
+      } else if (typeof rawAmt === "object" && rawAmt !== null) {
+        amount = typeof rawAmt.amount === "number" || typeof rawAmt.amount === "string" ? rawAmt.amount : 50;
+      }
+    }
+  }
+  return {
+    ...app,
+    governmentFee: {
+      amount: typeof amount === "object" ? 50 : amount,
+      isPaid: app.governmentFee?.isPaid !== undefined ? Boolean(app.governmentFee.isPaid) : true
+    }
+  };
+};
+
 // Helper to get master applications from LocalStorage or initialize default
 export const getAllApplicationsFromStore = () => {
   try {
@@ -400,15 +425,16 @@ export const getAllApplicationsFromStore = () => {
     if (data) {
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return parsed.map(sanitizeApp);
       }
     }
   } catch (err) {
     console.error("Error loading application store:", err);
   }
   // Initialize LocalStorage with default applications
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MASTER_APPLICATIONS));
-  return INITIAL_MASTER_APPLICATIONS;
+  const sanitizedDefaults = INITIAL_MASTER_APPLICATIONS.map(sanitizeApp);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedDefaults));
+  return sanitizedDefaults;
 };
 
 // Helper to filter applications for a specific office portal ("Municipality", "Tehsildar", "Revenue", "Talati")
@@ -503,7 +529,7 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
         rejectionReason = officerRemarks || "Application rejected during office review.";
       }
 
-      updatedApp = {
+      updatedApp = sanitizeApp({
         ...item,
         ...updatePayload,
         status: action ? nextStatus : (updatePayload.status || item.status),
@@ -514,7 +540,7 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
         issuedCertificate: issuedCertificate,
         rejectionReason: rejectionReason,
         updatedAt: new Date().toISOString()
-      };
+      });
       return updatedApp;
     }
     return item;
@@ -563,7 +589,7 @@ export const payDuesInStore = (appId, paymentPayload) => {
 
       const isFinal = nextIdx >= (item.officeChain?.length || 1);
 
-      updatedApp = {
+      updatedApp = sanitizeApp({
         ...item,
         status: isFinal ? "Approved" : `${nextOffice} Verification Pending`,
         currentOffice: isFinal ? "Completed" : nextOffice,
@@ -592,7 +618,7 @@ export const payDuesInStore = (appId, paymentPayload) => {
         },
         stageVerifications: updatedVerifications,
         updatedAt: new Date().toISOString()
-      };
+      });
       return updatedApp;
     }
     return item;
@@ -630,7 +656,16 @@ export const createNewApplicationInStore = (payload) => {
     officeChain = ["Talati"];
   }
 
-  const newApp = {
+  let feeAmount = 50;
+  if (typeof payload.governmentFee === "number" || typeof payload.governmentFee === "string") {
+    feeAmount = payload.governmentFee;
+  } else if (typeof payload.governmentFee === "object" && payload.governmentFee !== null) {
+    if (typeof payload.governmentFee.amount === "number" || typeof payload.governmentFee.amount === "string") {
+      feeAmount = payload.governmentFee.amount;
+    }
+  }
+
+  const newApp = sanitizeApp({
     _id: `app-local-${Date.now()}`,
     applicationId,
     serviceId,
@@ -641,7 +676,7 @@ export const createNewApplicationInStore = (payload) => {
     officeChain,
     currentStageIndex: 0,
     governmentFee: {
-      amount: payload.governmentFee || 50,
+      amount: feeAmount,
       isPaid: true
     },
     status: `${officeChain[0]} Verification Pending`,
@@ -663,7 +698,7 @@ export const createNewApplicationInStore = (payload) => {
       status: "pending"
     })),
     createdAt: new Date().toISOString()
-  };
+  });
 
   const allApps = getAllApplicationsFromStore();
   const updatedApps = [newApp, ...allApps];
