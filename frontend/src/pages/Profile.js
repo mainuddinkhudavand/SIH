@@ -184,17 +184,6 @@ export default function Profile() {
 
       {/* 📊 Resident Activity & Verification Counters */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", margin: "20px 0" }}>
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "14px", border: "1px solid #d8f3dc", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ background: "#ecfdf5", color: "#059669", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>
-              <FaFileAlt />
-            </div>
-            <div>
-              <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Complaints Raised</span>
-              <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#1b4332", marginTop: "2px" }}>{totalComplaints}</div>
-            </div>
-          </div>
-        </div>
 
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "14px", border: "1px solid #d8f3dc", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

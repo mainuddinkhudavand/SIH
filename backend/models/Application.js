@@ -10,7 +10,7 @@ const ApplicationSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: false
     },
     serviceId: {
       type: String,
@@ -47,6 +47,10 @@ const ApplicationSchema = new mongoose.Schema(
     currentStageIndex: {
       type: Number,
       default: 0
+    },
+    governmentFee: {
+      amount: { type: Number, default: 50 },
+      isPaid: { type: Boolean, default: true }
     },
     applicantDetails: {
       fullName: { type: String, required: true },

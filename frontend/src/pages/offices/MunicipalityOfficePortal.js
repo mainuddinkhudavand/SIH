@@ -66,21 +66,20 @@ export default function MunicipalityOfficePortal() {
     const note = remarks[appId] || "";
     setStatusMsg(null);
 
-    const newStatus = action === "approve" ? "Approved" : action === "discrepancy" ? "Discrepancy Found" : "Rejected";
-
-    // Update central store & local storage immediately
-    updateApplicationInStore(appId, {
+    const updated = updateApplicationInStore(appId, {
       action,
-      status: newStatus,
-      currentOffice: action === "approve" ? "Completed" : "Municipality",
-      rejectionReason: action !== "approve" ? note || "Discrepancy / rejection recorded." : undefined,
       officerRemarks: note || `Municipal Officer action: ${action.toUpperCase()}`,
-      verifiedBy: "Municipal Officer"
+      verifiedBy: "Municipal Executive Officer",
+      officeName: "Municipality"
     });
+
+    const statusText = action === "approve" 
+      ? (updated?.status === "Approved" ? "Approved & License/Cert Issued" : `Stage Cleared → Moved to ${updated?.currentOffice}`)
+      : action === "discrepancy" ? "Discrepancy Flagged" : "Service Request Rejected";
 
     setStatusMsg({
       type: "success",
-      text: `Municipal Status successfully updated to '${newStatus}' for Application ${appId}!`
+      text: `Municipal Action Executed! Application ${appId} status updated to '${statusText}'.`
     });
   };
 
@@ -353,8 +352,8 @@ export default function MunicipalityOfficePortal() {
 function MunicipalityCard({ app, remarks, setRemarks, handleAction, isApprovedCard, isRejectedCard }) {
   const isApproved = (app.status || "").toLowerCase().includes("approved") || app.currentOffice === "Completed";
   const isRejected = (app.status || "").toLowerCase().includes("reject") || (app.status || "").toLowerCase().includes("discrepancy");
-  const isPendingDues = app.pendingDues && !app.pendingDues.isPaid;
-  const isPaidDues = app.pendingDues && app.pendingDues.isPaid;
+  const isPendingDues = app.pendingDues && Number(app.pendingDues.amount) > 0 && !app.pendingDues.isPaid;
+  const isPaidDues = app.pendingDues && Number(app.pendingDues.amount) > 0 && app.pendingDues.isPaid;
 
   const cardBorder = isApproved ? "#86efac" : isRejected ? "#fca5a5" : isPendingDues ? "#fde047" : "#e2e8f0";
   const cardBg = isApprovedCard ? "#ffffff" : isRejectedCard ? "#ffffff" : isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#ffffff";
@@ -395,11 +394,12 @@ function MunicipalityCard({ app, remarks, setRemarks, handleAction, isApprovedCa
       </div>
 
       {/* Applicant & Details Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
         <div><strong>Applicant:</strong> {app.applicantDetails?.fullName || "Citizen"}</div>
         <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
         <div><strong>Aadhaar ID:</strong> {app.applicantDetails?.aadhaarId || "N/A"}</div>
         <div><strong>Address/Ward:</strong> {app.applicantDetails?.address || app.applicantDetails?.wardCode || "N/A"}</div>
+        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{app.governmentFee?.amount || 50}</span></div>
       </div>
 
       {/* Payment Details Notification Box */}

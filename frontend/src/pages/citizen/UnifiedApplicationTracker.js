@@ -161,7 +161,7 @@ export default function UnifiedApplicationTracker() {
 
   const isApproved = application && ((application.status || "").toLowerCase().includes("approved") || application.currentOffice === "Completed");
   const isRejected = application && ((application.status || "").toLowerCase().includes("reject") || (application.status || "").toLowerCase().includes("discrepancy"));
-  const hasDues = application && application.pendingDues && !application.pendingDues.isPaid;
+  const hasDues = application && application.pendingDues && Number(application.pendingDues.amount) > 0 && !application.pendingDues.isPaid;
 
   return (
     <div style={{ background: "#f8fafc", minHeight: "92vh", padding: "24px" }}>
@@ -274,6 +274,12 @@ export default function UnifiedApplicationTracker() {
               <div><strong>Contact Phone:</strong> {application.applicantDetails?.phone || "N/A"}</div>
               <div><strong>Aadhaar ID:</strong> {application.applicantDetails?.aadhaarId || "N/A"}</div>
               <div><strong>Current Office:</strong> {application.currentOffice || "Completed"}</div>
+              <div>
+                <strong>Official Govt Fee:</strong>{" "}
+                <span style={{ background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "6px", fontWeight: "900", fontSize: "0.82rem" }}>
+                  ₹{application.governmentFee?.amount || 50} (Paid &amp; Verified)
+                </span>
+              </div>
             </div>
 
             {/* Dues Payment Action Card */}

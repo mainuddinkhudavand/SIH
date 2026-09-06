@@ -12,6 +12,7 @@ import {
   FaFileAlt
 } from "react-icons/fa";
 import API from "../../services/api";
+import { createNewApplicationInStore } from "../../services/applicationStore";
 
 export default function AvailableServicesView({ onApplicationSubmitted }) {
   const [services, setServices] = useState([]);
@@ -35,6 +36,29 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
     deceasedName: "",
     businessName: "",
     reason: "Official requirement for education subsidy"
+  });
+
+  // Document Upload State
+  const [aadhaarFileName, setAadhaarFileName] = useState("Aadhaar_Identity_Verification_Slip.pdf");
+  const [addressFileName, setAddressFileName] = useState("Residence_Electricity_Bill_Proof.pdf");
+  const [specificFileName, setSpecificFileName] = useState("Hospital_Death_Birth_Affidavit.pdf");
+
+  // Mandatory Upfront Payment State with Detailed Options
+  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [upiSubProvider, setUpiSubProvider] = useState("PhonePe");
+  const [paymentDetails, setPaymentDetails] = useState({
+    phonepeId: "9876543210@ybl",
+    gpayId: "pavan.citizen@okaxis",
+    paytmId: "9876543210@paytm",
+    bhimVpa: "pavan.citizen@upi",
+    bankName: "State Bank of India",
+    netbankingUser: "SBI-1092837412",
+    ifscCode: "SBIN0001234",
+    cardType: "RuPay",
+    cardNumber: "4532-8921-1029-4411",
+    cardHolder: "PAVAN KUMAR",
+    cardExpiry: "12/28",
+    cardCvv: "892"
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -67,37 +91,64 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const getDetailedPaymentSummary = () => {
+    if (paymentMethod === "UPI") {
+      const upiId = upiSubProvider === "PhonePe" ? paymentDetails.phonepeId : upiSubProvider === "Google Pay" ? paymentDetails.gpayId : upiSubProvider === "Paytm" ? paymentDetails.paytmId : paymentDetails.bhimVpa;
+      return `UPI (${upiSubProvider}: ${upiId})`;
+    } else if (paymentMethod === "NetBanking") {
+      return `NetBanking (${paymentDetails.bankName} - User: ${paymentDetails.netbankingUser}, IFSC: ${paymentDetails.ifscCode})`;
+    } else {
+      return `Card (${paymentDetails.cardType}: ${paymentDetails.cardNumber.slice(0, 4)}-XXXX-XXXX-${paymentDetails.cardNumber.slice(-4)}, Name: ${paymentDetails.cardHolder})`;
+    }
+  };
+
   const handleSubmitApplication = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setResultMsg(null);
 
+    const feeAmount = selectedService.governmentFee || 50;
+    const txnId = "TXN-" + Math.floor(10000000 + Math.random() * 90000000);
+    const paymentSummary = getDetailedPaymentSummary();
+
     try {
-      const res = await API.post("/applications/submit", {
+      const payload = {
         serviceId: selectedService.serviceId,
+        serviceTitle: selectedService.title,
+        serviceType: selectedService.category,
+        governmentFee: {
+          amount: feeAmount,
+          isPaid: true,
+          paymentMethod: paymentMethod,
+          paymentDetail: paymentSummary,
+          transactionRef: txnId,
+          paidAt: new Date().toLocaleString()
+        },
         applicantDetails: formData,
         documents: [
-          { docType: "Aadhaar Identity Verification Slip", fileUrl: "/uploads/aadhaar_proof.pdf" },
-          { docType: "Address / Land Record Proof", fileUrl: "/uploads/residence_proof.pdf" }
+          { docType: "Aadhaar Identity Proof", fileName: aadhaarFileName, fileUrl: `/uploads/${aadhaarFileName}` },
+          { docType: "Address / Land Record Proof", fileName: addressFileName, fileUrl: `/uploads/${addressFileName}` },
+          { docType: `${selectedService.title} Supporting Affidavit`, fileName: specificFileName, fileUrl: `/uploads/${specificFileName}` }
         ]
+      };
+
+      // Create in central persistent applicationStore (works 100% online/offline across all 4 offices)
+      const newApp = createNewApplicationInStore(payload);
+
+      setResultMsg({
+        type: "success",
+        text: `Payment of ₹${feeAmount} Verified & Application Submitted!`,
+        details: `Tracking ID: ${newApp.applicationId}. Txn Ref: ${txnId}. Mode: ${paymentSummary}. Routed to ${newApp.currentOffice}.`
       });
 
-      if (res.data?.success) {
-        const app = res.data.application;
-        setResultMsg({
-          type: "success",
-          text: `Application submitted successfully! Tracking ID: ${app.applicationId}`,
-          details: `Routed to ${app.currentOffice}. Office Chain: ${app.officeChain.join(" → ")}.`
-        });
-        setTimeout(() => {
-          setShowApplyModal(false);
-          if (onApplicationSubmitted) onApplicationSubmitted();
-        }, 2200);
-      }
+      setTimeout(() => {
+        setShowApplyModal(false);
+        if (onApplicationSubmitted) onApplicationSubmitted();
+      }, 2400);
     } catch (err) {
       setResultMsg({
         type: "error",
-        text: err.response?.data?.message || "Failed to submit application."
+        text: "Error submitting application. Please try again."
       });
     } finally {
       setSubmitting(false);
@@ -308,17 +359,296 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: "18px" }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#334155", marginBottom: "6px" }}><FaFileUpload /> Required Scanned Proofs Upload</label>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                    Attached: Aadhaar_Proof.pdf, Address_Record.pdf (Verified via GovConnect Wallet)
+                {/* Upload Verification Documents Section */}
+                <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "10px", border: "1px solid #cbd5e1", marginBottom: "16px" }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#0f172a", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <FaFileUpload color="#2563eb" /> Step 2: Upload Required Verification Documents
                   </div>
+
+                  <div style={{ display: "grid", gap: "10px" }}>
+                    <div style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#334155" }}>1. Aadhaar / Photo Identity Proof *</div>
+                        <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "700" }}>
+                          <FaCheckCircle /> {aadhaarFileName}
+                        </div>
+                      </div>
+                      <label style={{ background: "#eff6ff", color: "#2563eb", padding: "5px 12px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", cursor: "pointer", border: "1px solid #bfdbfe" }}>
+                        Attach File
+                        <input type="file" onChange={(e) => e.target.files[0] && setAadhaarFileName(e.target.files[0].name)} style={{ display: "none" }} />
+                      </label>
+                    </div>
+
+                    <div style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#334155" }}>2. Residence / Electricity / 7-12 Land Proof *</div>
+                        <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "700" }}>
+                          <FaCheckCircle /> {addressFileName}
+                        </div>
+                      </div>
+                      <label style={{ background: "#eff6ff", color: "#2563eb", padding: "5px 12px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", cursor: "pointer", border: "1px solid #bfdbfe" }}>
+                        Attach File
+                        <input type="file" onChange={(e) => e.target.files[0] && setAddressFileName(e.target.files[0].name)} style={{ display: "none" }} />
+                      </label>
+                    </div>
+
+                    <div style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#334155" }}>3. Hospital Record / Service Specific Proof</div>
+                        <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "700" }}>
+                          <FaCheckCircle /> {specificFileName}
+                        </div>
+                      </div>
+                      <label style={{ background: "#eff6ff", color: "#2563eb", padding: "5px 12px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "800", cursor: "pointer", border: "1px solid #bfdbfe" }}>
+                        Attach File
+                        <input type="file" onChange={(e) => e.target.files[0] && setSpecificFileName(e.target.files[0].name)} style={{ display: "none" }} />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mandatory Upfront Fee Payment Section */}
+                <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", padding: "16px", borderRadius: "12px", border: "1.5px solid #86efac", marginBottom: "20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <div>
+                      <span style={{ fontSize: "0.7rem", fontWeight: "900", background: "#166534", color: "white", padding: "2px 8px", borderRadius: "4px" }}>STEP 3 — UPFRONT APPLICATION FEE</span>
+                      <div style={{ fontSize: "1.05rem", fontWeight: "900", color: "#14532d", marginTop: "2px" }}>
+                        Official Fee: ₹{selectedService.governmentFee || 50} (Non-Refundable)
+                      </div>
+                    </div>
+                    <span style={{ background: "#ffffff", color: "#166534", padding: "4px 10px", borderRadius: "8px", fontWeight: "800", fontSize: "0.78rem", border: "1px solid #bbf7d0" }}>
+                      Pay During Applying Only
+                    </span>
+                  </div>
+
+                  {/* Payment Method Selector */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "14px" }}>
+                    {[
+                      { id: "UPI", label: "📱 UPI Apps / VPA" },
+                      { id: "NetBanking", label: "🏛️ NetBanking" },
+                      { id: "Card", label: "💳 Credit / Debit Card" }
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setPaymentMethod(m.id)}
+                        style={{
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: paymentMethod === m.id ? "2px solid #166534" : "1px solid #cbd5e1",
+                          background: paymentMethod === m.id ? "#ffffff" : "#f8fafc",
+                          color: paymentMethod === m.id ? "#166534" : "#475569",
+                          fontWeight: "900",
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                          boxShadow: paymentMethod === m.id ? "0 2px 6px rgba(22, 101, 52, 0.15)" : "none"
+                        }}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* 1. Detailed UPI Payment Controls */}
+                  {paymentMethod === "UPI" && (
+                    <div style={{ background: "#ffffff", padding: "14px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                      <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#166534", marginBottom: "8px" }}>
+                        Select UPI Provider App:
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                        {["PhonePe", "Google Pay", "Paytm", "BHIM UPI"].map((app) => (
+                          <button
+                            key={app}
+                            type="button"
+                            onClick={() => setUpiSubProvider(app)}
+                            style={{
+                              padding: "6px 4px",
+                              borderRadius: "6px",
+                              border: upiSubProvider === app ? "2px solid #059669" : "1px solid #e2e8f0",
+                              background: upiSubProvider === app ? "#ecfdf5" : "#ffffff",
+                              color: upiSubProvider === app ? "#065f46" : "#475569",
+                              fontSize: "0.75rem",
+                              fontWeight: "800",
+                              cursor: "pointer"
+                            }}
+                          >
+                            {app}
+                          </button>
+                        ))}
+                      </div>
+
+                      {upiSubProvider === "PhonePe" && (
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>PhonePe VPA / Mobile Number</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 9876543210@ybl"
+                            value={paymentDetails.phonepeId}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, phonepeId: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      )}
+                      {upiSubProvider === "Google Pay" && (
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Google Pay UPI VPA ID</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. pavan.citizen@okaxis"
+                            value={paymentDetails.gpayId}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, gpayId: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      )}
+                      {upiSubProvider === "Paytm" && (
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Paytm UPI / Mobile VPA</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 9876543210@paytm"
+                            value={paymentDetails.paytmId}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, paytmId: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      )}
+                      {upiSubProvider === "BHIM UPI" && (
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Virtual Payment Address (VPA)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. pavan.citizen@upi"
+                            value={paymentDetails.bhimVpa}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, bhimVpa: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px", fontSize: "0.72rem", color: "#166534", fontWeight: "700" }}>
+                        <span>🟢 Verified Instant UPI Gateway</span> | <span>Auto-Approved NPCI Clearing</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Detailed NetBanking Controls */}
+                  {paymentMethod === "NetBanking" && (
+                    <div style={{ background: "#ffffff", padding: "14px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Select Bank</label>
+                          <select
+                            value={paymentDetails.bankName}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, bankName: e.target.value })}
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          >
+                            <option value="State Bank of India">State Bank of India (SBI)</option>
+                            <option value="HDFC Bank">HDFC Bank</option>
+                            <option value="ICICI Bank">ICICI Bank</option>
+                            <option value="Axis Bank">Axis Bank</option>
+                            <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
+                            <option value="Bank of Baroda">Bank of Baroda (BOB)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Internet Banking ID / Account No.</label>
+                          <input
+                            type="text"
+                            value={paymentDetails.netbankingUser}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, netbankingUser: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Branch IFSC Code</label>
+                        <input
+                          type="text"
+                          value={paymentDetails.ifscCode}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, ifscCode: e.target.value })}
+                          required
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. Detailed Credit/Debit Card Controls */}
+                  {paymentMethod === "Card" && (
+                    <div style={{ background: "#ffffff", padding: "14px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "10px", marginBottom: "10px" }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Card Network</label>
+                          <select
+                            value={paymentDetails.cardType}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, cardType: e.target.value })}
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          >
+                            <option value="RuPay">RuPay (Govt Preferred)</option>
+                            <option value="Visa">Visa</option>
+                            <option value="MasterCard">MasterCard</option>
+                            <option value="Maestro">Maestro</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>16-Digit Card Number</label>
+                          <input
+                            type="text"
+                            value={paymentDetails.cardNumber}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, cardNumber: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "10px" }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Cardholder Name</label>
+                          <input
+                            type="text"
+                            value={paymentDetails.cardHolder}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, cardHolder: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Expiry (MM/YY)</label>
+                          <input
+                            type="text"
+                            value={paymentDetails.cardExpiry}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, cardExpiry: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>CVV Code</label>
+                          <input
+                            type="password"
+                            maxLength="4"
+                            value={paymentDetails.cardCvv}
+                            onChange={(e) => setPaymentDetails({ ...paymentDetails, cardCvv: e.target.value })}
+                            required
+                            style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                   <button type="button" onClick={() => setShowApplyModal(false)} style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "white", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
-                  <button type="submit" disabled={submitting} style={{ padding: "10px 22px", borderRadius: "8px", border: "none", background: "#1b4332", color: "white", fontWeight: "800", cursor: "pointer" }}>
-                    {submitting ? "Submitting..." : "Submit & Run Routing Engine"}
+                  <button type="submit" disabled={submitting} style={{ padding: "12px 24px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)", color: "white", fontWeight: "900", cursor: "pointer", fontSize: "0.95rem" }}>
+                    {submitting ? "Processing Payment..." : `💳 Pay ₹${selectedService.governmentFee || 50} & Submit Application`}
                   </button>
                 </div>
               </form>

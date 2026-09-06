@@ -1,114 +1,110 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
-import Department from "../models/Department.js";
-import Complaint from "../models/Complaint.js";
+import Application from "../models/Application.js";
 
 export async function seedInitialData() {
   try {
     const userCount = await User.countDocuments();
     if (userCount === 0) {
-      const hashedPassword = await bcrypt.hash("admin123", 10);
-      const userPassword = await bcrypt.hash("user123", 10);
+      console.log("🌱 Database empty. Initializing automatic demo seeding...");
 
-      // Create Admin User
-      await User.create({
-        name: "State Admin",
+      const adminPassword = await bcrypt.hash("Admin@123", 10);
+      const citizenPassword = await bcrypt.hash("Citizen@123", 10);
+      const officialPassword = await bcrypt.hash("Official@123", 10);
+
+      // 1. Create State Admin User
+      const admin = await User.create({
+        name: "State Administrator",
         email: "admin@egram.com",
-        phone: "9999999999",
-        password: hashedPassword,
+        phone: "+91-9876543210",
+        password: adminPassword,
+        role: "admin",
         isVerified: true,
         kycCompleted: true,
-        address: { district: "Central District", state: "State Govt" }
+        address: { district: "Central District", state: "State Govt", pin: "110001" }
       });
 
-      // Create Sample Citizen User
+      // 2. Create Sample Citizen User
       const citizen = await User.create({
         name: "Rajesh Kumar",
         email: "citizen@example.com",
-        phone: "9876543210",
-        password: userPassword,
+        phone: "+91-9876543211",
+        password: citizenPassword,
+        role: "citizen",
         isVerified: true,
         kycCompleted: true,
         address: { street: "Station Road", town: "Green Valley", district: "Central District", state: "State Govt", pin: "110001" }
       });
 
-      // Create Sample Departments
-      const waterDept = await Department.create({
-        name: "Water Supply & Sanitation Dept",
-        district: "Central District",
-        state: "State Govt",
-        pincode: "110001",
-        email: "water@district.gov.in",
-        password: hashedPassword
+      // 3. Create Sample Official User
+      const official = await User.create({
+        name: "Officer Verification Cell",
+        email: "official@egram.gov.in",
+        phone: "+91-9876543212",
+        password: officialPassword,
+        role: "official",
+        isVerified: true,
+        kycCompleted: true,
+        address: { district: "Central District", state: "State Govt", pin: "110001" }
       });
 
-      const powerDept = await Department.create({
-        name: "Electricity Board & Utility Dept",
-        district: "Central District",
-        state: "State Govt",
-        pincode: "110001",
-        email: "power@district.gov.in",
-        password: hashedPassword
-      });
-
-      // Create Sample Complaints with spatial coordinates for Heatmap
-      const now = new Date();
-      const sla24 = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-      await Complaint.create([
+      // 4. Create Sample Applications for testing
+      await Application.create([
         {
+          applicationId: `APP-${Date.now()}-101`,
           user: citizen._id,
-          grievance: "Water supply/leakages",
-          utilityCategory: "Water supply/leakages",
-          title: "Main Pipeline Burst on Station Road",
-          description: "Severe water leakage disrupting main supply to residential Block B.",
-          imageUrl: "/uploads/sample_water.jpg",
-          urgency: "High",
-          slaDueDate: sla24,
-          status: "Assigned",
-          department: waterDept._id,
-          assignedAt: now,
-          address: { street: "Station Road", town: "Green Valley", district: "Central District", state: "State Govt", pin: "110001" },
-          location: { type: "Point", coordinates: [77.2090, 28.6139] },
-          aiVerification: { status: "PASS", confidenceScore: 98, flags: [] }
+          serviceId: "SRV-RES-01",
+          serviceType: "Residency Certificate",
+          title: "Application for Domicile & Residency Certificate",
+          routingType: "multi-office",
+          officeChain: ["Talati", "Tehsildar", "Revenue"],
+          primaryOffice: "Talati",
+          currentOffice: "Talati",
+          status: "Submitted",
+          applicantDetails: {
+            fullName: citizen.name,
+            phone: citizen.phone,
+            email: citizen.email,
+            address: "123 Station Road, Green Valley, Central District, State Govt - 110001",
+            aadhaarId: "9999-8888-7777",
+            annualIncome: "350000",
+            reason: "Educational admission and domicile verification"
+          },
+          governmentFee: { amount: 50, isPaid: true },
+          timeline: [
+            { stage: "Submitted", status: "Submitted", note: "Application submitted by citizen", timestamp: new Date() }
+          ]
         },
         {
+          applicationId: `APP-${Date.now()}-102`,
           user: citizen._id,
-          grievance: "Streetlights/ Electricity",
-          utilityCategory: "Streetlights/ Electricity",
-          title: "Transformer Fault & Power Outage",
-          description: "Transformer sparking near Market Complex causing complete blackout.",
-          imageUrl: "/uploads/sample_power.jpg",
-          urgency: "Critical",
-          slaDueDate: new Date(now.getTime() + 12 * 60 * 60 * 1000),
-          status: "Pending",
-          address: { street: "Market Complex", town: "Green Valley", district: "Central District", state: "State Govt", pin: "110001" },
-          location: { type: "Point", coordinates: [77.2150, 28.6180] },
-          aiVerification: { status: "PASS", confidenceScore: 92, flags: [] }
-        },
-        {
-          user: citizen._id,
-          grievance: "Roads/potholes",
-          utilityCategory: "Roads/potholes",
-          title: "Deep Pothole Hazard on Highway Crossing",
-          description: "Large pothole causing vehicle damage and traffic slowdown.",
-          imageUrl: "/uploads/sample_road.jpg",
-          urgency: "Medium",
-          slaDueDate: new Date(now.getTime() + 48 * 60 * 60 * 1000),
-          status: "Completed",
-          department: powerDept._id,
-          assignedAt: now,
-          address: { street: "Highway Crossing", town: "Green Valley", district: "Central District", state: "State Govt", pin: "110001" },
-          location: { type: "Point", coordinates: [77.2200, 28.6100] },
-          aiVerification: { status: "PASS", confidenceScore: 95, flags: [] },
-          feedbacks: [{ user: citizen._id, text: "Fixed promptly by field crew. Thank you!", rating: 5 }]
+          serviceId: "SRV-MUN-02",
+          serviceType: "Property Tax Assessment",
+          title: "Property Assessment & Tax Clearance",
+          routingType: "single-office",
+          primaryOffice: "Municipality",
+          currentOffice: "Municipality",
+          status: "Under Verification",
+          applicantDetails: {
+            fullName: citizen.name,
+            phone: citizen.phone,
+            email: citizen.email,
+            address: "Plot 45, Green Valley Colony",
+            aadhaarId: "9999-8888-7777",
+            propertyId: "PROP-GV-2024-88",
+            reason: "Annual municipal tax assessment"
+          },
+          governmentFee: { amount: 100, isPaid: true },
+          timeline: [
+            { stage: "Submitted", status: "Submitted", note: "Application received", timestamp: new Date() },
+            { stage: "Under Verification", status: "In Progress", note: "Assigned to Municipal inspector", timestamp: new Date() }
+          ]
         }
       ]);
 
-
-      console.log("Database seeded successfully with default Admin, Citizen, Departments & Heatmap Complaints.");
+      console.log("✅ Initial demo dataset seeded successfully into database.");
     }
   } catch (err) {
-    console.error("Seed error:", err.message);
+    console.error("⚠️ Seeding notice:", err.message);
   }
 }

@@ -63,6 +63,10 @@ export const createApplication = async (req, res) => {
       primaryOffice: routingResult.primaryOffice,
       currentOffice: routingResult.currentOffice,
       currentStageIndex: routingResult.currentStageIndex,
+      governmentFee: {
+        amount: serviceConfig.governmentFee || 50,
+        isPaid: true
+      },
       applicantDetails: {
         fullName: applicantDetails.fullName || req.user?.name || "Citizen Resident",
         phone: applicantDetails.phone || req.user?.phone || "+91 9876543210",

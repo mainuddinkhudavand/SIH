@@ -1,0 +1,20 @@
+{
+  "name": "govconnect-platform",
+  "version": "1.0.0",
+  "description": "GovConnect Interoperability Platform - Empowering Residency using MERN Stack",
+  "main": "backend/server.js",
+  "scripts": {
+    "setup": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "install:all": "npm run setup",
+    "dev": "concurrently --kill-others-on-fail -n \"BACKEND,FRONTEND\" -c \"blue,green\" \"npm run dev --prefix backend\" \"npm run start --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run start --prefix frontend",
+    "start": "npm run dev",
+    "start:backend": "npm run start --prefix backend",
+    "start:frontend": "npm run start --prefix frontend",
+    "seed": "node backend/config/seedData.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

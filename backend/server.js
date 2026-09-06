@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
+import { seedInitialData } from "./config/seedData.js";
 import fs from "fs";
 
 // API Gateway & Middleware Layer
@@ -118,8 +119,22 @@ const startServer = (portToTry) => {
   });
 };
 
-connectDB().then(() => {
+connectDB().then(async () => {
+  await seedInitialData();
   startServer(DEFAULT_PORT);
+  console.log(`
+  ==============================================================
+  🏛️  GovConnect Interoperability Platform Active
+  ==============================================================
+  🌐 Backend Gateway  : http://localhost:${DEFAULT_PORT}
+  💻 Frontend App     : http://localhost:3000
+
+  🔑 Demo Credentials:
+     • State Admin   : admin@egram.com      / Admin@123
+     • Demo Official : official@egram.gov.in / Official@123
+     • Demo Citizen  : citizen@example.com  / Citizen@123
+  ==============================================================
+  `);
 }).catch((err) => {
   console.error("Database connection initialization failed:", err);
 });

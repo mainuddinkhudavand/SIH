@@ -60,20 +60,20 @@ export default function TalatiOfficePortal() {
     const note = remarks[appId] || "";
     setStatusMsg(null);
 
-    const newStatus = action === "approve" ? "Approved" : action === "discrepancy" ? "Discrepancy Found" : "Rejected";
-
-    updateApplicationInStore(appId, {
+    const updated = updateApplicationInStore(appId, {
       action,
-      status: newStatus,
-      currentOffice: action === "approve" ? "Completed" : "Talati",
-      rejectionReason: action !== "approve" ? note || "Talati land record discrepancy recorded." : undefined,
       officerRemarks: note || `Talati Village Officer action: ${action.toUpperCase()}`,
-      verifiedBy: "Talati Village Accountant"
+      verifiedBy: "Talati Village Accountant",
+      officeName: "Talati"
     });
+
+    const statusText = action === "approve" 
+      ? (updated?.status === "Approved" ? "Digitally Signed & Approved" : `Stage Cleared → Moved to ${updated?.currentOffice}`)
+      : action === "discrepancy" ? "Land Discrepancy Flagged" : "Extract Request Rejected";
 
     setStatusMsg({
       type: "success",
-      text: `Talati Status updated to '${newStatus}' for Application ${appId}!`
+      text: `Talati Action Executed! Application ${appId} status updated to '${statusText}'.`
     });
   };
 
@@ -337,7 +337,7 @@ export default function TalatiOfficePortal() {
 function TalatiCard({ app, remarks, setRemarks, handleAction, isApprovedCard, isRejectedCard }) {
   const isApproved = (app.status || "").toLowerCase().includes("approved") || app.currentOffice === "Completed";
   const isRejected = (app.status || "").toLowerCase().includes("reject") || (app.status || "").toLowerCase().includes("discrepancy");
-  const isPaidDues = app.pendingDues && app.pendingDues.isPaid;
+  const isPaidDues = app.pendingDues && Number(app.pendingDues.amount) > 0 && app.pendingDues.isPaid;
 
   const cardBorder = isApproved ? "#86efac" : isRejected ? "#fca5a5" : "#e2e8f0";
   const cardBg = isApprovedCard ? "#ffffff" : isRejectedCard ? "#ffffff" : isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#ffffff";
@@ -376,11 +376,12 @@ function TalatiCard({ app, remarks, setRemarks, handleAction, isApprovedCard, is
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
         <div><strong>Landholder:</strong> {app.applicantDetails?.fullName || "Citizen"}</div>
         <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
         <div><strong>Survey/Gat No:</strong> {app.applicantDetails?.surveyNumber || "Gat 201"}</div>
         <div><strong>Village/Address:</strong> {app.applicantDetails?.address || "N/A"}</div>
+        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#fef3c7", color: "#b45309", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{app.governmentFee?.amount || 50}</span></div>
       </div>
 
       {isPaidDues && (

@@ -60,20 +60,20 @@ export default function TehsildarOfficePortal() {
     const note = remarks[appId] || "";
     setStatusMsg(null);
 
-    const newStatus = action === "approve" ? "Approved" : action === "discrepancy" ? "Discrepancy Found" : "Rejected";
-
-    updateApplicationInStore(appId, {
+    const updated = updateApplicationInStore(appId, {
       action,
-      status: newStatus,
-      currentOffice: action === "approve" ? "Completed" : "Tehsildar",
-      rejectionReason: action !== "approve" ? note || "Tehsildar discrepancy/rejection recorded." : undefined,
       officerRemarks: note || `Tehsildar Executive action: ${action.toUpperCase()}`,
-      verifiedBy: "Tehsildar Executive Officer"
+      verifiedBy: "Tehsildar Executive Officer",
+      officeName: "Tehsildar"
     });
+
+    const statusText = action === "approve" 
+      ? (updated?.status === "Approved" ? "Sanctioned & Certificate Issued" : `Stage Cleared → Moved to ${updated?.currentOffice}`)
+      : action === "discrepancy" ? "Discrepancy Flagged" : "Certificate Request Rejected";
 
     setStatusMsg({
       type: "success",
-      text: `Tehsildar Status updated to '${newStatus}' for Application ${appId}!`
+      text: `Tehsildar Action Executed! Application ${appId} status updated to '${statusText}'.`
     });
   };
 
@@ -337,7 +337,7 @@ export default function TehsildarOfficePortal() {
 function TehsildarCard({ app, remarks, setRemarks, handleAction, isApprovedCard, isRejectedCard }) {
   const isApproved = (app.status || "").toLowerCase().includes("approved") || app.currentOffice === "Completed";
   const isRejected = (app.status || "").toLowerCase().includes("reject") || (app.status || "").toLowerCase().includes("discrepancy");
-  const isPaidDues = app.pendingDues && app.pendingDues.isPaid;
+  const isPaidDues = app.pendingDues && Number(app.pendingDues.amount) > 0 && app.pendingDues.isPaid;
 
   const cardBorder = isApproved ? "#86efac" : isRejected ? "#fca5a5" : "#e2e8f0";
   const cardBg = isApprovedCard ? "#ffffff" : isRejectedCard ? "#ffffff" : isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#ffffff";
@@ -376,11 +376,12 @@ function TehsildarCard({ app, remarks, setRemarks, handleAction, isApprovedCard,
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
         <div><strong>Applicant:</strong> {app.applicantDetails?.fullName || "Citizen"}</div>
         <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
         <div><strong>Aadhaar ID:</strong> {app.applicantDetails?.aadhaarId || "N/A"}</div>
         <div><strong>Address:</strong> {app.applicantDetails?.address || "N/A"}</div>
+        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#e0e7ff", color: "#4338ca", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{app.governmentFee?.amount || 50}</span></div>
       </div>
 
       {isPaidDues && (

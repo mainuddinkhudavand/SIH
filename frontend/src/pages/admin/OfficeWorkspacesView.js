@@ -60,18 +60,19 @@ export default function OfficeWorkspacesView() {
   const handleVerifyAction = async (appId, action) => {
     const note = discrepancyNote[appId] || "";
     setStatusMsg(null);
-    const newStatus = action === "approve" ? "Approved" : action === "discrepancy" ? "Discrepancy Found" : "Rejected";
 
-    updateApplicationInStore(appId, {
+    const updated = updateApplicationInStore(appId, {
       action,
-      status: newStatus,
-      currentOffice: action === "approve" ? "Completed" : activeOffice,
-      rejectionReason: action !== "approve" ? note || "Discrepancy/rejection noted by officer." : undefined,
       officerRemarks: note || `Officer Action (${activeOffice}): ${action.toUpperCase()}`,
-      verifiedBy: `${activeOffice} Senior Officer`
+      verifiedBy: `${activeOffice} Senior Officer`,
+      officeName: activeOffice
     });
 
-    setStatusMsg({ type: "success", text: `Application ${appId} status updated to '${newStatus}' across all portals!` });
+    const statusText = action === "approve"
+      ? (updated?.status === "Approved" ? "Approved & Issued" : `Stage Cleared → Advanced to ${updated?.currentOffice}`)
+      : action === "discrepancy" ? "Discrepancy Flagged" : "Application Rejected";
+
+    setStatusMsg({ type: "success", text: `Action Executed! Application ${appId} status updated to '${statusText}'.` });
   };
 
   const offices = [
@@ -355,7 +356,7 @@ export default function OfficeWorkspacesView() {
 function WorkspaceCard({ app, discrepancyNote, setDiscrepancyNote, handleVerifyAction, activeOffice, isApprovedCard, isRejectedCard }) {
   const isApproved = (app.status || "").toLowerCase().includes("approved") || app.currentOffice === "Completed";
   const isRejected = (app.status || "").toLowerCase().includes("reject") || (app.status || "").toLowerCase().includes("discrepancy");
-  const isPaidDues = app.pendingDues && app.pendingDues.isPaid;
+  const isPaidDues = app.pendingDues && Number(app.pendingDues.amount) > 0 && app.pendingDues.isPaid;
 
   const cardBorder = isApproved ? "#86efac" : isRejected ? "#fca5a5" : "#cbd5e1";
   const cardBg = isApprovedCard ? "#ffffff" : isRejectedCard ? "#ffffff" : isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#ffffff";
@@ -394,11 +395,12 @@ function WorkspaceCard({ app, discrepancyNote, setDiscrepancyNote, handleVerifyA
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px", fontSize: "0.85rem", marginBottom: "14px" }}>
         <div><strong>Applicant:</strong> {app.applicantDetails?.fullName || "Citizen"}</div>
         <div><strong>Phone:</strong> {app.applicantDetails?.phone || "N/A"}</div>
         <div><strong>Aadhaar ID:</strong> {app.applicantDetails?.aadhaarId || "N/A"}</div>
         <div><strong>Current Stage:</strong> {app.currentOffice || activeOffice}</div>
+        <div><strong>Official Govt Fee:</strong> <span style={{ background: "#e2e8f0", color: "#1e293b", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>₹{app.governmentFee?.amount || 50}</span></div>
       </div>
 
       {isPaidDues && (

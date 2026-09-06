@@ -56,7 +56,7 @@ export default function ApplicationsModule() {
 
         {/* Filter Buttons */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          {["ALL", "Water", "Property", "Health", "Grievance", "Certificate"].map((cat) => (
+          {["ALL", "Water", "Property", "Certificate"].map((cat) => (
             <button
               key={cat}
               onClick={() => setFilterService(cat)}

@@ -13,6 +13,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Streetlight Installation & Repair Request",
     serviceId: "streetlight-repair",
     serviceType: "Civic Utilities",
+    governmentFee: { amount: 20, isPaid: true },
     applicantDetails: { fullName: "Ramesh Patil", phone: "+91 98765 43210", aadhaarId: "9876-5432-1001", wardCode: "WARD-02", address: "Plot 18, Ward 2, City Center" },
     status: "Municipal Review Pending",
     primaryOffice: "Municipality",
@@ -31,6 +32,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Building Plan Sanction & Zoning Clearance",
     serviceId: "building-plan-sanction",
     serviceType: "Civic Utilities",
+    governmentFee: { amount: 750, isPaid: true },
     applicantDetails: { fullName: "Anita Sharma", phone: "+91 98765 43211", aadhaarId: "9876-5432-1003", surveyNumber: "SRV-104", address: "Plot 42, Sector 1, Industrial Zone" },
     status: "Municipal Review Pending",
     primaryOffice: "Municipality",
@@ -50,6 +52,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Birth Certificate Registration & Digital Issuance",
     serviceId: "birth-certificate",
     serviceType: "Certificates",
+    governmentFee: { amount: 25, isPaid: true },
     applicantDetails: { fullName: "Pavan Kumar", phone: "+91 98765 43210", aadhaarId: "9876-5432-1000", deceasedName: "Baby of Pavan", address: "Ward 4 Civil Hospital" },
     status: "Municipal Verification Pending",
     primaryOffice: "Municipality",
@@ -68,6 +71,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Trade & Business License Sanction",
     serviceId: "trade-license",
     serviceType: "Licenses",
+    governmentFee: { amount: 500, isPaid: true },
     applicantDetails: { fullName: "Sanjay Gupta", phone: "+91 98765 88990", aadhaarId: "9876-5432-8811", wardCode: "WARD-05", address: "Shop 12, Main Market" },
     status: "Approved",
     primaryOffice: "Municipality",
@@ -93,6 +97,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Water Connection Pipe Line Extension",
     serviceId: "water-connection",
     serviceType: "Civic Utilities",
+    governmentFee: { amount: 200, isPaid: true },
     applicantDetails: { fullName: "Vikas Verma", phone: "+91 98765 11223", aadhaarId: "9876-5432-9900", wardCode: "WARD-01", address: "House 90, Ward 1" },
     status: "Rejected",
     primaryOffice: "Municipality",
@@ -114,6 +119,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Domicile & Permanent Residence Certificate",
     serviceId: "domicile-certificate",
     serviceType: "Certificates",
+    governmentFee: { amount: 50, isPaid: true },
     applicantDetails: { fullName: "Pavan Kumar", phone: "+91 98765 43210", aadhaarId: "9876-5432-1000", address: "Plot 14, Green Valley, Dist Nashik" },
     status: "Pending Citizen Dues Payment",
     primaryOffice: "Tehsildar",
@@ -141,6 +147,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Annual Family Income Certificate",
     serviceId: "income-certificate",
     serviceType: "Certificates",
+    governmentFee: { amount: 30, isPaid: true },
     applicantDetails: { fullName: "Suresh Deshmukh", phone: "+91 98220 11223", aadhaarId: "9876-5432-4411", address: "At Post Rahuri, Taluka Rahuri" },
     status: "Tehsildar Verification Pending",
     primaryOffice: "Tehsildar",
@@ -160,6 +167,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Caste Certificate & Tribe Verification",
     serviceId: "caste-certificate",
     serviceType: "Certificates",
+    governmentFee: { amount: 50, isPaid: true },
     applicantDetails: { fullName: "Pooja Kadam", phone: "+91 98331 44556", aadhaarId: "9876-5432-7722", address: "Ward 3, Village Shirdi" },
     status: "Approved",
     primaryOffice: "Tehsildar",
@@ -186,6 +194,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Solvency & Financial Worth Certificate",
     serviceId: "solvency-certificate",
     serviceType: "Certificates",
+    governmentFee: { amount: 100, isPaid: true },
     applicantDetails: { fullName: "Rohan Sawant", phone: "+91 98440 99887", aadhaarId: "9876-5432-3399", address: "Main Road, Sangamner" },
     status: "Rejected",
     primaryOffice: "Tehsildar",
@@ -208,6 +217,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Property Tax Assessment & Annual Mutation",
     serviceId: "property-tax-assessment",
     serviceType: "Revenue & Taxes",
+    governmentFee: { amount: 150, isPaid: true },
     applicantDetails: { fullName: "Sunil Pawar", phone: "+91 97654 32109", aadhaarId: "9876-5432-2200", propertyId: "PROP-88120", address: "Gat No 45, Revenue Block A" },
     status: "Revenue Verification Pending",
     primaryOffice: "Revenue",
@@ -226,6 +236,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Land Revenue Cess Clearance & NOC",
     serviceId: "land-revenue-clearance",
     serviceType: "Revenue & Taxes",
+    governmentFee: { amount: 100, isPaid: true },
     applicantDetails: { fullName: "Mahesh Bhosale", phone: "+91 97654 99112", aadhaarId: "9876-5432-6633", surveyNumber: "SRV-309", address: "Post Akole, Survey 309" },
     status: "Pending Citizen Dues Payment",
     primaryOffice: "Revenue",
@@ -252,6 +263,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Agricultural Land Holder Status Certificate",
     serviceId: "agri-land-certificate",
     serviceType: "Certificates",
+    governmentFee: { amount: 50, isPaid: true },
     applicantDetails: { fullName: "Ganpat Jadhav", phone: "+91 97654 00011", aadhaarId: "9876-5432-1144", address: "Gat 112, Kopargaon" },
     status: "Approved",
     primaryOffice: "Revenue",
@@ -278,6 +290,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Non-Agricultural (NA) Land Conversion Permission",
     serviceId: "na-land-conversion",
     serviceType: "Revenue & Taxes",
+    governmentFee: { amount: 1000, isPaid: true },
     applicantDetails: { fullName: "Kiran Shinde", phone: "+91 97654 77889", aadhaarId: "9876-5432-5588", address: "Plot 88, Revenue Circle 2" },
     status: "Rejected",
     primaryOffice: "Revenue",
@@ -300,6 +313,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "7/12 & 8A Land Rights Extracts Digital Verification",
     serviceId: "land-extract-712",
     serviceType: "Land Records",
+    governmentFee: { amount: 15, isPaid: true },
     applicantDetails: { fullName: "Kavita More", phone: "+91 99887 65432", aadhaarId: "9876-5432-5500", surveyNumber: "SRV-201", address: "Village Chinchwad, Gat No 201" },
     status: "Talati Verification Pending",
     primaryOffice: "Talati",
@@ -318,6 +332,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Legal Heirship & Family Succession Certification",
     serviceId: "heirship-certificate",
     serviceType: "Land Records",
+    governmentFee: { amount: 100, isPaid: true },
     applicantDetails: { fullName: "Vikram Salunkhe", phone: "+91 99887 11223", aadhaarId: "9876-5432-3311", address: "At Post Loni, Taluka Rahata" },
     status: "Talati Verification Pending",
     primaryOffice: "Talati",
@@ -336,6 +351,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Varai & Mutation Register Certificate (Haqq Mutation)",
     serviceId: "varai-mutation",
     serviceType: "Land Records",
+    governmentFee: { amount: 50, isPaid: true },
     applicantDetails: { fullName: "Santosh Thorat", phone: "+91 99887 44332", aadhaarId: "9876-5432-9988", address: "Village Babhaleshwar" },
     status: "Approved",
     primaryOffice: "Talati",
@@ -361,6 +377,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     title: "Boundary Dispute & Encroachment Spot Inspection",
     serviceId: "boundary-dispute",
     serviceType: "Land Records",
+    governmentFee: { amount: 200, isPaid: true },
     applicantDetails: { fullName: "Dipak Wagh", phone: "+91 99887 55443", aadhaarId: "9876-5432-6611", address: "Survey 40, Gram Panchayat Circle" },
     status: "Rejected",
     primaryOffice: "Talati",
@@ -423,11 +440,71 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
   const allApps = getAllApplicationsFromStore();
   let updatedApp = null;
 
+  const action = updatePayload.action;
+  const officerRemarks = updatePayload.officerRemarks || updatePayload.note || "";
+  const verifiedBy = updatePayload.verifiedBy || `${updatePayload.officeName || "Office"} Officer`;
+
   const updatedApps = allApps.map((item) => {
     if (item._id === appId || item.applicationId === appId) {
+      const stageIdx = item.currentStageIndex || 0;
+      const officeChain = item.officeChain || [item.currentOffice || "Municipality"];
+
+      let updatedVerifications = (item.stageVerifications || []).map((s, idx) => {
+        if (idx === stageIdx || s.officeName === item.currentOffice) {
+          return {
+            ...s,
+            status: action === "approve" ? "cleared" : action === "discrepancy" ? "discrepancy" : "rejected",
+            officerRemarks: officerRemarks || s.officerRemarks || `Officer Action: ${action ? action.toUpperCase() : "UPDATED"}`,
+            verifiedBy: verifiedBy,
+            verifiedAt: new Date().toISOString()
+          };
+        }
+        return s;
+      });
+
+      let nextStatus = item.status;
+      let nextOffice = item.currentOffice;
+      let nextStageIdx = stageIdx;
+      let approvalDate = item.approvalDate;
+      let issuedCertificate = item.issuedCertificate;
+      let rejectionReason = item.rejectionReason;
+
+      if (action === "approve") {
+        const nextIdx = stageIdx + 1;
+        if (nextIdx < officeChain.length) {
+          nextStageIdx = nextIdx;
+          nextOffice = officeChain[nextIdx];
+          nextStatus = `${nextOffice} Verification Pending`;
+        } else {
+          // Final office clearance -> Application fully Approved
+          nextOffice = "Completed";
+          nextStatus = "Approved";
+          approvalDate = new Date().toISOString();
+          issuedCertificate = item.issuedCertificate || {
+            certificateId: `CERT-DOC-${Math.floor(100000 + Math.random() * 900000)}`,
+            issuedAt: new Date().toISOString(),
+            digitalSignature: `SIG-DIGI-OFFICIAL-EGRAM-${Date.now()}`,
+            qrCodeData: `https://egram.gov.in/verify/${item.applicationId}`
+          };
+        }
+      } else if (action === "discrepancy") {
+        nextStatus = "Discrepancy Found";
+        rejectionReason = officerRemarks || "Discrepancy flagged by officer during verification.";
+      } else if (action === "reject") {
+        nextStatus = "Rejected";
+        rejectionReason = officerRemarks || "Application rejected during office review.";
+      }
+
       updatedApp = {
         ...item,
         ...updatePayload,
+        status: action ? nextStatus : (updatePayload.status || item.status),
+        currentOffice: action ? nextOffice : (updatePayload.currentOffice || item.currentOffice),
+        currentStageIndex: nextStageIdx,
+        stageVerifications: updatedVerifications,
+        approvalDate: approvalDate,
+        issuedCertificate: issuedCertificate,
+        rejectionReason: rejectionReason,
         updatedAt: new Date().toISOString()
       };
       return updatedApp;
@@ -441,14 +518,12 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
   window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: { appId, updatedApp } }));
 
   // Also sync with backend asynchronously if backend is available
-  if (notifyBackend && appId) {
-    if (updatePayload.action) {
-      API.put(`/applications/${appId}/verify-stage`, {
-        action: updatePayload.action,
-        officerRemarks: updatePayload.officerRemarks || updatePayload.note,
-        verifiedBy: updatePayload.verifiedBy || `${updatePayload.officeName || "Office"} Officer`
-      }).catch((err) => console.warn("Backend sync notice (offline mode active):", err.message));
-    }
+  if (notifyBackend && appId && action) {
+    API.put(`/applications/${appId}/verify-stage`, {
+      action,
+      officerRemarks,
+      verifiedBy
+    }).catch((err) => console.warn("Backend sync notice (offline mode active):", err.message));
   }
 
   return updatedApp;
@@ -524,6 +599,76 @@ export const payDuesInStore = (appId, paymentPayload) => {
   );
 
   return updatedApp;
+};
+
+// Helper to create & insert a new application into the central store seamlessly
+export const createNewApplicationInStore = (payload) => {
+  const serviceId = payload.serviceId || "custom-service";
+  const isCert = serviceId.includes("certificate") || serviceId.includes("extract") || serviceId.includes("cert");
+  const prefix = isCert ? "CERT" : "APP";
+  const applicationId = `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  let primaryOffice = "Municipality";
+  let officeChain = ["Municipality"];
+
+  if (serviceId.includes("income") || serviceId.includes("caste") || serviceId.includes("domicile") || serviceId.includes("residence") || serviceId.includes("solvency") || serviceId.includes("heir")) {
+    primaryOffice = "Tehsildar";
+    officeChain = ["Talati", "Tehsildar"];
+  } else if (serviceId.includes("land") || serviceId.includes("mutation") || serviceId.includes("revenue") || serviceId.includes("tax")) {
+    primaryOffice = "Revenue";
+    officeChain = ["Talati", "Revenue"];
+  } else if (serviceId.includes("7-12") || serviceId.includes("8-a") || serviceId.includes("crop") || serviceId.includes("extract")) {
+    primaryOffice = "Talati";
+    officeChain = ["Talati"];
+  }
+
+  const newApp = {
+    _id: `app-local-${Date.now()}`,
+    applicationId,
+    serviceId,
+    serviceType: payload.serviceType || "E-Governance Public Service",
+    title: payload.title || payload.serviceTitle || `${serviceId.replace("-", " ").toUpperCase()} Request`,
+    primaryOffice,
+    currentOffice: officeChain[0],
+    officeChain,
+    currentStageIndex: 0,
+    governmentFee: {
+      amount: payload.governmentFee || 50,
+      isPaid: true
+    },
+    status: `${officeChain[0]} Verification Pending`,
+    applicantDetails: {
+      fullName: payload.applicantDetails?.fullName || "Citizen Resident",
+      phone: payload.applicantDetails?.phone || "+91 98765 43210",
+      email: payload.applicantDetails?.email || "citizen@egram.gov.in",
+      aadhaarId: payload.applicantDetails?.aadhaarId || "9876-5432-1000",
+      address: payload.applicantDetails?.address || "Village Ward #2, Gram Panchayat Zone",
+      ...payload.applicantDetails
+    },
+    documents: payload.documents || [
+      { docType: "Aadhaar Identity Proof", fileUrl: "/uploads/aadhaar.pdf" },
+      { docType: "Address Verification Slip", fileUrl: "/uploads/proof.pdf" }
+    ],
+    stageVerifications: officeChain.map((off, idx) => ({
+      officeName: off,
+      stageName: `Step ${idx + 1}: ${off} Verification Audit`,
+      status: "pending"
+    })),
+    createdAt: new Date().toISOString()
+  };
+
+  const allApps = getAllApplicationsFromStore();
+  const updatedApps = [newApp, ...allApps];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedApps));
+
+  window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: { appId: applicationId, updatedApp: newApp } }));
+
+  // Asynchronously attempt backend API creation if connected
+  API.post("/applications/submit", payload).catch((err) =>
+    console.warn("Backend API submit notice (offline local store active):", err.message)
+  );
+
+  return newApp;
 };
 
 // Subscribe helper for components to re-render automatically on updates

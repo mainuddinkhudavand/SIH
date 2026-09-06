@@ -100,8 +100,6 @@ export default function CitizenDashboardView({ onNavigateTab }) {
           {[
             { title: "Water Connection", icon: <FaTint size={22} color="#0284c7" />, bg: "#e0f2fe" },
             { title: "Property Service", icon: <FaHome size={22} color="#d97706" />, bg: "#fef3c7" },
-            { title: "Health Service", icon: <FaHeartbeat size={22} color="#16a34a" />, bg: "#dcfce7" },
-            { title: "Grievance", icon: <FaExclamationCircle size={22} color="#dc2626" />, bg: "#fee2e2" },
             { title: "Certificate Service", icon: <FaCertificate size={22} color="#9333ea" />, bg: "#f3e8ff" }
           ].map((s, idx) => (
             <button
