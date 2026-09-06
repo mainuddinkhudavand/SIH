@@ -12,6 +12,10 @@ export default function CitizenDashboardView({ onNavigateTab }) {
   const [recentApps, setRecentApps] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [pendingConsentApps, setPendingConsentApps] = useState([]);
+  const [grantingConsent, setGrantingConsent] = useState(false);
+  const [consentMsg, setConsentMsg] = useState(null);
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -24,6 +28,8 @@ export default function CitizenDashboardView({ onNavigateTab }) {
       const certs = res.data?.certificates || [];
 
       setRecentApps(apps.slice(0, 4));
+      setPendingConsentApps(apps.filter(a => a.status === "Consent Approval Pending"));
+
       setSummary({
         totalApps: apps.length,
         approvedApps: apps.filter(a => a.status === "Approved").length,
@@ -34,6 +40,20 @@ export default function CitizenDashboardView({ onNavigateTab }) {
       console.warn("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGrantConsent = async () => {
+    setGrantingConsent(true);
+    setConsentMsg(null);
+    try {
+      await API.post("/user/consent", { status: "Granted" });
+      setConsentMsg("✅ Inter-office data sharing consent GRANTED! Application workflow unpaused and advanced to next office.");
+      fetchDashboardData();
+    } catch (err) {
+      setConsentMsg("⚠️ Failed to grant consent. Please try again.");
+    } finally {
+      setGrantingConsent(false);
     }
   };
 
@@ -77,6 +97,54 @@ export default function CitizenDashboardView({ onNavigateTab }) {
           <span style={{ fontSize: "0.75rem", color: "#9333ea", fontWeight: "700" }}>Digital Seals Issued</span>
         </div>
       </div>
+
+      {/* 🔒 Gate 2 Pending Inter-Office Data Handoff Consent Safeguard Panel */}
+      {pendingConsentApps.length > 0 && (
+        <div style={{ background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", padding: "24px", borderRadius: "16px", border: "2px solid #fdba74", marginBottom: "28px", boxShadow: "0 6px 18px rgba(234, 88, 12, 0.12)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <FaShieldAlt style={{ fontSize: "1.8rem", color: "#ea580c" }} />
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: "900", color: "#9a3412" }}>
+                  🔒 GATE 2 PRIVACY SAFEGUARD: INTER-OFFICE DATA HANDOFF CONSENT REQUIRED
+                </h3>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.88rem", color: "#c2410c" }}>
+                  {pendingConsentApps.length} application(s) paused. An office is requesting access to your land/residency records for verification.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleGrantConsent}
+              disabled={grantingConsent}
+              style={{ background: "#ea580c", color: "white", border: "none", padding: "12px 20px", borderRadius: "10px", fontWeight: "900", fontSize: "0.9rem", cursor: "pointer", boxShadow: "0 4px 12px rgba(234, 88, 12, 0.25)" }}
+            >
+              {grantingConsent ? "Granting Consent..." : "🔓 Grant Consent & Unpause Applications"}
+            </button>
+          </div>
+
+          {consentMsg && (
+            <div style={{ padding: "10px 14px", borderRadius: "8px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", fontSize: "0.85rem", fontWeight: "800", marginBottom: "12px" }}>
+              {consentMsg}
+            </div>
+          )}
+
+          <div style={{ display: "grid", gap: "10px" }}>
+            {pendingConsentApps.map(app => (
+              <div key={app._id || app.applicationId} style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #fed7aa", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem" }}>
+                <div>
+                  <span style={{ fontWeight: "800", color: "#ea580c", marginRight: "8px" }}>{app.applicationId}</span>
+                  <span style={{ fontWeight: "700", color: "#0f172a" }}>{app.title}</span>
+                  <span style={{ color: "#7c2d12", fontSize: "0.78rem", marginLeft: "10px" }}>• Paused at stage: {app.currentOffice} Handoff</span>
+                </div>
+                <span style={{ background: "#ffedd5", color: "#9a3412", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "800" }}>
+                  Consent Pending
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 🚀 Available Services Quick Launch (5 Categories) */}
       <div style={{ background: "#ffffff", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", marginBottom: "28px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>

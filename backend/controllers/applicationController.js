@@ -1,5 +1,6 @@
 import Application from "../models/Application.js";
 import AuditLog from "../models/AuditLog.js";
+import logAuditEvent from "../utils/auditLogger.js";
 import { SERVICE_OFFICE_MAP, runOfficeRoutingCheck, MASTER_DATASETS, CITIZENS_MASTER_DATASET } from "../utils/routingEngine.js";
 import { triggerNotificationEvent } from "../utils/notificationEngine.js";
 
@@ -34,6 +35,29 @@ export const createApplication = async (req, res) => {
     const { serviceId, applicantDetails, documents } = req.body;
     const userId = req.user?._id || req.user?.id;
 
+    // 🔒 Gate 1: Check user KYC completeness before allowing application creation
+    if (userId) {
+      const User = (await import("../models/User.js")).default;
+      const user = await User.findById(userId);
+      if (user && user.kycCompleted !== true) {
+        await logAuditEvent({
+          action: "APPLICATION_BLOCKED_KYC_INCOMPLETE",
+          userId,
+          userRole: "citizen",
+          resourceType: "Application",
+          details: `Application submission blocked: Citizen ${user.name} has not completed Aadhaar & Address KYC verification.`,
+          ipAddress: req.ip || "127.0.0.1"
+        });
+
+        return res.status(403).json({
+          success: false,
+          message: "KYC Incomplete! You must complete Aadhaar & Address KYC verification before applying for government services.",
+          kycRequired: true,
+          redirect: "/kyc"
+        });
+      }
+    }
+
     const serviceConfig = SERVICE_OFFICE_MAP[serviceId] || {
       serviceId: serviceId || "custom-service",
       title: "Government Civic Application",
@@ -52,6 +76,8 @@ export const createApplication = async (req, res) => {
     // Execute Section 0 Routing Engine Logic
     const routingResult = runOfficeRoutingCheck(serviceId, applicantDetails);
 
+    const details = applicantDetails || req.body || {};
+
     const application = new Application({
       applicationId,
       user: userId,
@@ -68,19 +94,19 @@ export const createApplication = async (req, res) => {
         isPaid: true
       },
       applicantDetails: {
-        fullName: applicantDetails.fullName || req.user?.name || "Citizen Resident",
-        phone: applicantDetails.phone || req.user?.phone || "+91 9876543210",
-        email: applicantDetails.email || req.user?.email || "citizen@egram.gov.in",
-        address: applicantDetails.address || "Village Ward #2, Gram Panchayat Zone",
-        aadhaarId: applicantDetails.aadhaarId || "9876-5432-1000",
-        surveyNumber: applicantDetails.surveyNumber || "",
-        propertyId: applicantDetails.propertyId || "",
-        wardCode: applicantDetails.wardCode || "",
-        annualIncome: applicantDetails.annualIncome || "",
-        casteCategory: applicantDetails.casteCategory || "",
-        deceasedName: applicantDetails.deceasedName || "",
-        businessName: applicantDetails.businessName || "",
-        reason: applicantDetails.reason || ""
+        fullName: details.fullName || req.user?.name || "Citizen Resident",
+        phone: details.phone || req.user?.phone || "+91 98765 43210",
+        email: details.email || req.user?.email || "citizen@egram.gov.in",
+        address: details.address || "Village Ward #2, Gram Panchayat Zone",
+        aadhaarId: details.aadhaarId || details.aadhaar || "9876-5432-1000",
+        surveyNumber: details.surveyNumber || "",
+        propertyId: details.propertyId || "",
+        wardCode: details.wardCode || "",
+        annualIncome: details.annualIncome || "",
+        casteCategory: details.casteCategory || "",
+        deceasedName: details.deceasedName || "",
+        businessName: details.businessName || "",
+        reason: details.reason || ""
       },
       documents: documents || [
         { docType: "Aadhaar Identity Proof", fileUrl: "/uploads/sample_aadhaar.pdf" },
@@ -110,10 +136,12 @@ export const createApplication = async (req, res) => {
 
     await application.save();
 
-    await AuditLog.create({
+    await logAuditEvent({
       action: "APPLICATION_SUBMITTED_AND_ROUTED",
-      performedBy: userId,
-      entity: "Application",
+      userId,
+      userRole: "citizen",
+      resourceType: "Application",
+      resourceId: applicationId,
       details: `Application ${applicationId} created for ${serviceConfig.title} and routed to ${routingResult.currentOffice}`,
       ipAddress: req.ip || "127.0.0.1"
     });
@@ -223,6 +251,17 @@ export const payApplicationDues = async (req, res) => {
 
     await application.save();
 
+    await logAuditEvent({
+      action: "PAYMENT_DUES_CLEARED",
+      userId: application.user || req.user?._id || "Citizen",
+      userRole: "citizen",
+      resourceType: "Application",
+      resourceId: application.applicationId,
+      changesSnapshot: { amount: application.pendingDues.amount, receiptNo, isPaid: true },
+      details: `Citizen cleared dues ₹${application.pendingDues.amount} via ${paymentMethod || "NetBanking"}. Receipt: ${receiptNo}. Advanced to ${application.currentOffice}`,
+      ipAddress: req.ip || "127.0.0.1"
+    });
+
     return res.json({
       success: true,
       message: `Payment of ₹${application.pendingDues.amount} successful! Dues flag cleared across all connected offices.`,
@@ -265,10 +304,61 @@ export const verifyOfficeStage = async (req, res) => {
 
       const nextIdx = stageIdx + 1;
       if (nextIdx < application.officeChain.length) {
-        application.currentStageIndex = nextIdx;
-        application.currentOffice = application.officeChain[nextIdx];
-        application.status = `${application.currentOffice} Verification Pending`;
-        application.assignedOfficer = `${application.currentOffice} Senior Officer`;
+        const nextOffice = application.officeChain[nextIdx];
+
+        // 🔒 Gate 2: Verify active granted ConsentRecord for Inter-Office Data Handoff (e.g. Talati -> Revenue)
+        const ConsentRecord = (await import("../models/ConsentRecord.js")).default;
+        const consent = await ConsentRecord.findOne({
+          $or: [
+            { user: application.user },
+            { citizenId: application.applicantDetails?.aadhaarId }
+          ],
+          status: "Granted"
+        });
+
+        if (!consent) {
+          // Pause application workflow: Citizen consent approval required
+          application.currentStageIndex = nextIdx;
+          application.currentOffice = nextOffice;
+          application.status = "Consent Approval Pending";
+          application.assignedOfficer = "Citizen (Inter-Office Data Handoff Consent Required)";
+          if (application.stageVerifications[nextIdx]) {
+            application.stageVerifications[nextIdx].status = "consent_pending";
+            application.stageVerifications[nextIdx].officerRemarks = `Data handoff to ${nextOffice} requires explicit citizen consent approval.`;
+          }
+
+          application.timeline.push({
+            stage: `Inter-Office Data Handoff Paused (${currentOffice} → ${nextOffice})`,
+            status: "Consent Approval Pending",
+            updatedBy: "GovConnect Exchange Layer",
+            note: `Data handoff to ${nextOffice} paused. Citizen must grant consent in portal to unpause application.`,
+            timestamp: new Date()
+          });
+
+          await logAuditEvent({
+            action: "CONSENT_APPROVAL_REQUIRED_BY_CITIZEN",
+            userId: req.user?._id || verifiedBy || `${currentOffice} Officer`,
+            userRole: `${currentOffice}_officer`,
+            resourceType: "Application",
+            resourceId: application.applicationId,
+            details: `Application ${application.applicationId} paused at 'Consent Approval Pending' during ${currentOffice} -> ${nextOffice} handoff. Citizen consent required.`,
+            ipAddress: req.ip || "127.0.0.1"
+          });
+        } else {
+          // Consent exists -> Proceed to next office
+          application.currentStageIndex = nextIdx;
+          application.currentOffice = nextOffice;
+          application.status = `${nextOffice} Verification Pending`;
+          application.assignedOfficer = `${nextOffice} Senior Officer`;
+
+          application.timeline.push({
+            stage: `Office Clearance (${currentOffice})`,
+            status: application.status,
+            updatedBy: verifiedBy || `${currentOffice} Officer`,
+            note: officerRemarks || `${currentOffice} office verification completed successfully. Consent verified for ${nextOffice} handoff.`,
+            timestamp: new Date()
+          });
+        }
       } else {
         // Final Office Approval -> Generate Digitally Signed Certificate
         application.currentOffice = "Completed";
@@ -281,15 +371,15 @@ export const verifyOfficeStage = async (req, res) => {
           qrCodeData: `https://egram.gov.in/verify/${application.applicationId}`,
           downloadUrl: `/api/applications/${application._id}/download`
         };
-      }
 
-      application.timeline.push({
-        stage: `Office Clearance (${currentOffice})`,
-        status: application.status,
-        updatedBy: verifiedBy || `${currentOffice} Officer`,
-        note: officerRemarks || `${currentOffice} office verification completed successfully.`,
-        timestamp: new Date()
-      });
+        application.timeline.push({
+          stage: `Final Office Approval (${currentOffice})`,
+          status: "Approved",
+          updatedBy: verifiedBy || `${currentOffice} Officer`,
+          note: officerRemarks || `${currentOffice} final approval completed. Certificate issued.`,
+          timestamp: new Date()
+        });
+      }
     } else if (action === "discrepancy") {
       if (application.stageVerifications[stageIdx]) {
         application.stageVerifications[stageIdx].status = "discrepancy";
@@ -326,6 +416,17 @@ export const verifyOfficeStage = async (req, res) => {
     application.markModified("pendingDues");
 
     await application.save();
+
+    await logAuditEvent({
+      action: `OFFICE_STAGE_${action.toUpperCase()}`,
+      userId: req.user?._id || verifiedBy || `${currentOffice} Officer`,
+      userRole: req.user?.role || `${currentOffice}_officer`,
+      resourceType: "Application",
+      resourceId: application.applicationId,
+      changesSnapshot: { currentOffice, action, status: application.status },
+      details: `${currentOffice} Officer executed '${action.toUpperCase()}' for application ${application.applicationId}. New status: ${application.status}`,
+      ipAddress: req.ip || "127.0.0.1"
+    });
 
     return res.json({
       success: true,
@@ -382,7 +483,17 @@ export const getApplicationById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Application not found" });
     }
 
-    return res.json(application);
+    const auditLogs = await AuditLog.find({
+      $or: [
+        { resourceId: application.applicationId },
+        { resourceId: application._id.toString() }
+      ]
+    }).sort({ createdAt: -1 });
+
+    const appObj = application.toObject();
+    appObj.auditLogs = auditLogs;
+
+    return res.json(appObj);
   } catch (error) {
     return res.status(500).json({ success: false, message: "Server error fetching application details" });
   }

@@ -32,14 +32,36 @@ export const restoreDiskBackup = async () => {
     if (!raw.trim()) return;
     const backupData = JSON.parse(raw);
 
-    const collections = mongoose.connection.collections;
+    const db = mongoose.connection.db;
+    if (!db) return;
+
     for (const name in backupData) {
       const docs = backupData[name];
       if (Array.isArray(docs) && docs.length > 0) {
-        if (collections[name]) {
-          await collections[name].deleteMany({});
-          await collections[name].insertMany(docs);
-        }
+        const cleanDocs = docs.map(doc => {
+          const clean = { ...doc };
+          if (clean._id) {
+            if (typeof clean._id === "string" && clean._id.match(/^[0-9a-fA-F]{24}$/)) {
+              clean._id = new mongoose.Types.ObjectId(clean._id);
+            } else if (clean._id?.$oid) {
+              clean._id = new mongoose.Types.ObjectId(clean._id.$oid);
+            }
+          }
+          ["user", "primaryUser", "performedBy"].forEach(field => {
+            if (clean[field]) {
+              if (typeof clean[field] === "string" && clean[field].match(/^[0-9a-fA-F]{24}$/)) {
+                clean[field] = new mongoose.Types.ObjectId(clean[field]);
+              } else if (clean[field]?.$oid) {
+                clean[field] = new mongoose.Types.ObjectId(clean[field].$oid);
+              }
+            }
+          });
+          return clean;
+        });
+
+        const collection = db.collection(name);
+        await collection.deleteMany({});
+        await collection.insertMany(cleanDocs);
       }
     }
     console.log("✅ Restored persistent database state from local disk backup.");
@@ -55,11 +77,10 @@ const connectDB = async () => {
     await mongoose.connect(primaryUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 1500
+      serverSelectionTimeoutMS: 2000
     });
     console.log("✅ Connected to MongoDB Atlas Cloud Database successfully!");
   } catch (err) {
-    // Clean, reassuring log message instead of scary Atlas IP warning
     console.log("⚡ Cloud DB offline/unreachable. Initializing Local Database Engine...");
     try {
       const { MongoMemoryServer } = await import("mongodb-memory-server");
@@ -78,8 +99,8 @@ const connectDB = async () => {
   // Restore saved disk backup if available
   await restoreDiskBackup();
 
-  // Schedule auto-save every 10 seconds
-  setInterval(saveDiskBackup, 10000);
+  // Schedule auto-save every 15 seconds
+  setInterval(saveDiskBackup, 15000);
 
   // Auto-save on process termination
   process.on("SIGINT", async () => {

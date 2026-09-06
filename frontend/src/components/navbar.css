@@ -3,11 +3,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #2e4d2c; /* green */
+  background: linear-gradient(135deg, #081c15 0%, #1b4332 50%, #081c15 100%);
   color: white;
   padding: 1rem 2rem;
   font-family: Arial, sans-serif;
   flex-wrap: wrap; /* allow wrapping on mobile */
+  border-bottom: 1px solid rgba(82, 183, 136, 0.2);
 }
 
 .navbar-brand {
@@ -148,7 +149,7 @@
     top: 100%;
     left: 0;
     width: 100%;
-    background-color: rgba(46, 77, 44, 0.98);
+    background-color: rgba(8, 28, 21, 0.98);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     display: flex;

@@ -80,7 +80,7 @@ const ApplicationSchema = new mongoose.Schema(
         stageName: { type: String },
         status: {
           type: String,
-          enum: ["pending", "cleared", "dues_pending", "discrepancy", "approved", "rejected"],
+          enum: ["pending", "cleared", "dues_pending", "consent_pending", "discrepancy", "approved", "rejected"],
           default: "pending"
         },
         officerRemarks: { type: String },
@@ -116,7 +116,9 @@ const ApplicationSchema = new mongoose.Schema(
         "Under Verification",
         "Talati Verification Pending",
         "Tehsildar Verification Pending",
+        "Revenue Verification Pending",
         "Revenue Dues Pending",
+        "Consent Approval Pending",
         "Municipal Review Pending",
         "Field Visit Scheduled",
         "Approved",

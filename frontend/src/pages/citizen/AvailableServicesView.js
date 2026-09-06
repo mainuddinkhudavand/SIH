@@ -64,9 +64,23 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [resultMsg, setResultMsg] = useState(null);
 
+  const [isKycCompleted, setIsKycCompleted] = useState(true);
+
   useEffect(() => {
     fetchServicesCatalog();
+    checkUserKyc();
   }, []);
+
+  const checkUserKyc = async () => {
+    try {
+      const res = await API.get("/user/kyc-status");
+      if (res.data?.kycCompleted !== undefined) {
+        setIsKycCompleted(res.data.kycCompleted);
+      }
+    } catch (err) {
+      console.warn("KYC Status Check (Offline mode active)");
+    }
+  };
 
   const fetchServicesCatalog = async () => {
     try {
@@ -82,6 +96,10 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   };
 
   const handleOpenApply = (service) => {
+    if (!isKycCompleted) {
+      alert("⚠️ Gate 1 KYC Completeness Safeguard: You must complete Aadhaar & Address KYC verification before applying for government services!");
+      return;
+    }
     setSelectedService(service);
     setShowApplyModal(true);
     setResultMsg(null);
@@ -163,6 +181,29 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
 
   return (
     <div style={{ background: "#ffffff", padding: "28px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
+      {/* Gate 1 KYC Completeness Safeguard Banner */}
+      {!isKycCompleted && (
+        <div style={{ background: "#fef2f2", border: "2px solid #fca5a5", padding: "16px 20px", borderRadius: "12px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <FaShieldAlt style={{ fontSize: "1.8rem", color: "#dc2626" }} />
+            <div>
+              <div style={{ fontWeight: "900", color: "#991b1b", fontSize: "1.05rem" }}>
+                🔒 GATE 1 SAFEGUARD ENFORCED: KYC VERIFICATION INCOMPLETE
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "#7f1d1d", marginTop: "2px" }}>
+                You must complete your Aadhaar &amp; Address KYC verification before submitting applications for government services.
+              </div>
+            </div>
+          </div>
+          <a
+            href="/register"
+            style={{ background: "#dc2626", color: "white", padding: "10px 18px", borderRadius: "8px", fontWeight: "900", fontSize: "0.85rem", textDecoration: "none", display: "inline-block" }}
+          >
+            Complete KYC Verification Now →
+          </a>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
         <div>

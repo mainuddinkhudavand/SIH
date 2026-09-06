@@ -1,46 +1,34 @@
 import express from 'express';
 import auth from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
+import { saveKyc, getKycStatus, toggleConsent } from '../controllers/kycController.js';
 
 const router = express.Router();
 
-// Complete KYC
-router.post('/kyc', auth, async (req, res) => {
-  const { aadhaarNumber, address } = req.body;
-  if (!aadhaarNumber || !address) return res.status(400).json({ message: 'Missing required KYC fields' });
-  
+// 🆔 Complete / Save KYC
+router.post('/kyc', auth, saveKyc);
+
+// 📋 Get KYC & Consent Status
+router.get('/kyc-status', auth, getKycStatus);
+
+// 🔒 Toggle Consent Status
+router.post('/consent', auth, toggleConsent);
+
+// 📜 Get User Audit Trail Ledger
+router.get('/audit-trail', auth, async (req, res) => {
   try {
-    if (req.user && typeof req.user.save === 'function') {
-      req.user.aadhaarNumber = aadhaarNumber;
-      req.user.address = address;
-      req.user.kycCompleted = true;
-      await req.user.save();
-    }
-    
-    return res.json({
-      message: 'KYC completed successfully',
-      user: {
-        _id: req.user?._id || "64b0f9999999999999999999",
-        name: req.user?.name || "Pavan",
-        email: req.user?.email || "pavan@govconnect.gov.in",
-        aadhaarNumber,
-        address,
-        kycCompleted: true
-      }
-    });
+    const userId = req.user?._id || req.user?.id;
+    const AuditLog = (await import('../models/AuditLog.js')).default;
+    const logs = await AuditLog.find({
+      $or: [
+        { performedBy: userId },
+        { resourceId: req.user?.citizenId }
+      ]
+    }).sort({ createdAt: -1 }).limit(50);
+
+    return res.json({ success: true, logs });
   } catch (err) {
-    console.warn("KYC Save Fallback Handled:", err.message);
-    return res.json({
-      message: 'KYC completed successfully',
-      user: {
-        _id: "64b0f9999999999999999999",
-        name: "Pavan",
-        email: "pavan@govconnect.gov.in",
-        aadhaarNumber,
-        address,
-        kycCompleted: true
-      }
-    });
+    return res.status(500).json({ success: false, message: "Error fetching audit trail" });
   }
 });
 

@@ -6,7 +6,7 @@
 
 /* Header */
 .header {
-  background-color: #2e4d2c;
+  background: linear-gradient(135deg, #081c15 0%, #1b4332 50%, #081c15 100%);
   color: #fff;
   padding: 1rem 2rem;
   display: flex;

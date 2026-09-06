@@ -45,8 +45,8 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-left">
         <Link to="/" className="logo-link" onClick={closeMenu}>
-          <img src={Logo} alt="E-Gram Panchayat Digital Governance" className="logo-img" />
-          <span className="project-title">E-Gram Panchayat Portal</span>
+          <img src={Logo} alt="E-Gov-Connect Platform" className="logo-img" />
+          <span className="project-title">E-Gov-Connect</span>
         </Link>
       </div>
 

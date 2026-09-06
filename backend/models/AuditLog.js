@@ -23,10 +23,19 @@ const AuditLogSchema = new mongoose.Schema(
     },
     resourceType: {
       type: String,
-      required: true // "Application", "Certificate", "Grievance", "SectorService", "Consent"
+      default: "Application"
+    },
+    entity: {
+      type: String
     },
     resourceId: {
       type: String
+    },
+    details: {
+      type: String
+    },
+    performedBy: {
+      type: mongoose.Schema.Types.Mixed
     },
     changesSnapshot: {
       type: mongoose.Schema.Types.Mixed

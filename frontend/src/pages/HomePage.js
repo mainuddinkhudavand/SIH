@@ -38,7 +38,7 @@ const HomePage = () => {
             FEDERATED 4-OFFICE E-GOVERNANCE ECOSYSTEM
           </span>
           <h1 style={{ color: "#ffffff", fontSize: "2.8rem", fontWeight: "900", margin: "0 0 12px 0", letterSpacing: "-1px" }}>
-            E-Gram Panchayat Governance Platform
+            E-Gov-Connect Governance Platform
           </h1>
           <p style={{ color: "#d8f3dc", fontSize: "1.15rem", maxWidth: "850px", margin: "0 auto 32px auto", lineHeight: "1.6" }}>
             Unified citizen portal with dynamic forms, automated multi-office sequential routing across Municipality, Tehsildar, Revenue, and Talati, live dues clearance, and digitally signed certificate issuance.
@@ -158,7 +158,7 @@ const HomePage = () => {
 
       {/* Footer */}
       <footer style={{ background: "#081c15", color: "#d8f3dc", padding: "30px 20px", textAlign: "center", fontSize: "0.9rem", borderTop: "1px solid #1b4332" }}>
-        <p style={{ margin: "0 0 10px 0" }}>© 2026 E-Gram Panchayat Federated Governance Platform. All rights reserved.</p>
+        <p style={{ margin: "0 0 10px 0" }}>© 2026 E-Gov-Connect Federated Governance Platform. All rights reserved.</p>
         <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
           <Link to="/citizen" style={{ color: "#52b788", textDecoration: "none" }}>Citizen Portal</Link>
           <Link to="/officer/municipality" style={{ color: "#38bdf8", textDecoration: "none" }}>Municipality Office</Link>
