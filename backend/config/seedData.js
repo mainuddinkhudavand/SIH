@@ -4,15 +4,48 @@ import Application from "../models/Application.js";
 import MdmRecord from "../models/MdmRecord.js";
 import ConsentRecord from "../models/ConsentRecord.js";
 import AuditLog from "../models/AuditLog.js";
+import { CITIZENS_MASTER_DATASET } from "../utils/routingEngine.js";
 
 export async function seedInitialData() {
   try {
+    const citizenPassword = await bcrypt.hash("Citizen@123", 10);
+    const existingCitizenCount = await User.countDocuments({ role: "citizen" });
+
+    // Seed 1,000 citizens into User collection if missing
+    if (existingCitizenCount < 500) {
+      console.log(`🌱 Seeding ${CITIZENS_MASTER_DATASET.length} Master Dataset Citizen accounts into MongoDB...`);
+
+      const citizenDocs = CITIZENS_MASTER_DATASET.map((c) => ({
+        citizenId: c.citizenId,
+        name: c.fullName,
+        email: c.email || `citizen.${c.citizenId.toLowerCase()}@govconnect.in`,
+        phone: c.phone || "9876543210",
+        aadhaarNumber: c.aadhaarId,
+        password: citizenPassword,
+        role: "citizen",
+        isVerified: true,
+        kycCompleted: true,
+        isVerifiedAsset: c.isVerifiedAsset,
+        address: {
+          street: c.address,
+          town: `Village ${c.villageCode || 101}`,
+          district: "Central District",
+          state: "Maharashtra",
+          pin: "400001"
+        }
+      }));
+
+      await User.insertMany(citizenDocs, { ordered: false }).catch((e) =>
+        console.log("Bulk insert notice (some users pre-existed):", e.message)
+      );
+      console.log(`✅ ${CITIZENS_MASTER_DATASET.length} Citizen accounts initialized with password 'Citizen@123'.`);
+    }
+
     const userCount = await User.countDocuments();
-    if (userCount === 0) {
+    if (userCount <= 1000) {
       console.log("🌱 Initializing realistic cross-linked demo seeding into MongoDB...");
 
       const adminPassword = await bcrypt.hash("Admin@123", 10);
-      const citizenPassword = await bcrypt.hash("Citizen@123", 10);
       const officialPassword = await bcrypt.hash("Official@123", 10);
 
       // 1. Create State Admin User
@@ -25,7 +58,7 @@ export async function seedInitialData() {
         isVerified: true,
         kycCompleted: true,
         address: { district: "Central District", state: "State Govt", pin: "110001" }
-      });
+      }).catch(() => null);
 
       // 2. Create Official Verification User
       await User.create({
@@ -37,7 +70,7 @@ export async function seedInitialData() {
         isVerified: true,
         kycCompleted: true,
         address: { district: "Central District", state: "State Govt", pin: "110001" }
-      });
+      }).catch(() => null);
 
       // 3. Create Cross-Linked Citizens
       const pavan = await User.create({
