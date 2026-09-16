@@ -1,22 +1,20 @@
 import React, { useState } from "react";
-import { FaSearch, FaDatabase, FaCheckDouble, FaFileInvoiceDollar, FaHome, FaBuilding, FaLandmark } from "react-icons/fa";
+import { FaSearch, FaDatabase, FaCheckDouble, FaEye, FaEyeSlash } from "react-icons/fa";
 import API from "../services/api";
 
 export default function MasterVerificationSearchBar({ officeName = "Office", themeColor = "#0284c7" }) {
   const [masterQuery, setMasterQuery] = useState("");
   const [masterResults, setMasterResults] = useState([]);
   const [masterSearching, setMasterSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleMasterSearch = async (overrideQuery) => {
     const q = overrideQuery !== undefined ? overrideQuery : masterQuery;
-    if (!q || !q.trim()) {
-      setMasterResults([]);
-      return;
-    }
 
     setMasterSearching(true);
+    setHasSearched(true);
     try {
-      const res = await API.get(`/interop/master-search?q=${encodeURIComponent(q.trim())}&office=${encodeURIComponent(officeName)}`).catch(() => null);
+      const res = await API.get(`/interop/master-search?q=${encodeURIComponent((q || "").trim())}&office=${encodeURIComponent(officeName)}`).catch(() => null);
       if (res?.data?.results) {
         setMasterResults(res.data.results);
       }
@@ -25,6 +23,11 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
     } finally {
       setMasterSearching(false);
     }
+  };
+
+  const handleHideRecords = () => {
+    setHasSearched(false);
+    setMasterResults([]);
   };
 
   const sampleChips = ["Pavan Kumar", "SRV-1001", "KHT-1001", "PROP-MH-1001", "9876-5432-1000", "SRV-1004"];
@@ -40,7 +43,7 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
             🔍 {officeName} Officer Cross-Verification Bar (1,000 Member Master Dataset)
           </h3>
           <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#64748b" }}>
-            Search official 1,000 member records by Survey #, Khata #, Aadhaar #, Property ID, or Name before approving.
+            Search official 1,000 member records by Survey #, Khata #, Aadhaar #, Property ID, or Name. Click 'View Records' to reveal matching master data.
           </p>
         </div>
       </div>
@@ -52,9 +55,12 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
             type="text"
             placeholder={`Search 1,000 Master DB records in ${officeName} (e.g. SRV-1001, KHT-1001, PROP-MH-1001, 9876-5432-1000, Name)...`}
             value={masterQuery}
-            onChange={(e) => {
-              setMasterQuery(e.target.value);
-              handleMasterSearch(e.target.value);
+            onChange={(e) => setMasterQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleMasterSearch();
+              }
             }}
             style={{ width: "100%", padding: "10px 12px 10px 38px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none", boxSizing: "border-box" }}
           />
@@ -62,10 +68,19 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
 
         <button
           onClick={() => handleMasterSearch()}
-          style={{ background: themeColor, color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.88rem" }}
+          style={{ background: themeColor, color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", fontSize: "0.88rem", display: "flex", alignItems: "center", gap: "6px" }}
         >
-          {masterSearching ? "Searching..." : "Verify Record"}
+          <FaEye /> {masterSearching ? "Loading Records..." : "View Records"}
         </button>
+
+        {hasSearched && (
+          <button
+            onClick={handleHideRecords}
+            style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.88rem", display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            <FaEyeSlash /> Hide Records
+          </button>
+        )}
       </div>
 
       {/* Quick Sample Chips */}
@@ -85,11 +100,18 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
         ))}
       </div>
 
-      {/* Search Results Display */}
-      {masterResults.length > 0 && (
+      {/* Search Results Display - Only shown after clicking View Records */}
+      {hasSearched && (
         <div style={{ marginTop: "16px", display: "grid", gap: "14px" }}>
-          <div style={{ fontSize: "0.85rem", fontWeight: "800", color: themeColor }}>
-            Found {masterResults.length} matching records from 1,000 member master dataset:
+          <div style={{ fontSize: "0.85rem", fontWeight: "800", color: themeColor, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>
+              {masterResults.length > 0
+                ? `Found ${masterResults.length} matching records from 1,000 member master dataset:`
+                : `No matching records found for '${masterQuery}'.`}
+            </span>
+            <span style={{ fontSize: "0.75rem", background: `${themeColor}15`, color: themeColor, padding: "2px 8px", borderRadius: "4px" }}>
+              Press 'Hide Records' to collapse list
+            </span>
           </div>
 
           {masterResults.map((citizen) => (

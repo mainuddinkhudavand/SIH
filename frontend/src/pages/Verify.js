@@ -28,20 +28,18 @@ export default function Verify() {
   const [searchExecuted, setSearchExecuted] = useState(false);
 
   useEffect(() => {
-    // Auto load demo record on initial load for instant presentation
-    handleSearch("Pavan Kumar");
+    // Initial state: list hidden until user clicks View Records
   }, []);
 
   const handleSearch = async (overrideTerm) => {
     const searchTerm = overrideTerm !== undefined ? overrideTerm : query;
-    if (!searchTerm || !searchTerm.trim()) return;
 
     setSearching(true);
     setSearchExecuted(true);
     setMasterResults([]);
     setTrackedRecord(null);
 
-    const term = searchTerm.trim();
+    const term = (searchTerm || "").trim();
 
     // 1. Search Master Dataset via Backend API
     try {
@@ -139,7 +137,7 @@ export default function Verify() {
               disabled={searching}
               style={{ background: "#0284c7", color: "white", border: "none", padding: "14px 28px", borderRadius: "12px", fontWeight: "800", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "10px", boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)" }}
             >
-              <FaSearch /> {searching ? "Searching..." : "Execute Verification Search"}
+              <FaSearch /> {searching ? "Searching..." : "View Records"}
             </button>
           </form>
 

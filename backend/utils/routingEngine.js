@@ -353,7 +353,9 @@ import { generateMasterDataset } from "./masterDatasetGenerator.js";
 export const CITIZENS_MASTER_DATASET = generateMasterDataset(1000);
 
 export const searchMasterDataset = (searchTerm) => {
-  if (!searchTerm || !searchTerm.trim()) return [];
+  if (!searchTerm || !searchTerm.trim()) {
+    return CITIZENS_MASTER_DATASET.slice(0, 10);
+  }
   const term = searchTerm.trim().toLowerCase();
 
   return CITIZENS_MASTER_DATASET.filter((c) => {
