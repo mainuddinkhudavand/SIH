@@ -76,11 +76,16 @@ export default function Profile() {
     );
   };
 
-  // Edit Profile States
+  // Edit Profile States (Resident Details & Address ONLY)
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("Pavan Kumar");
   const [editEmail, setEditEmail] = useState("citizen@example.com");
-  const [editPhone, setEditPhone] = useState("+91 98765 43210");
+  const [editPhone, setEditPhone] = useState("9876543210"); // 10-digit phone
+  const [editStreet, setEditStreet] = useState("Plot #14, Sector 4, Ward 4");
+  const [editTown, setEditTown] = useState("Civic Zone Gram Panchayat");
+  const [editDistrict, setEditDistrict] = useState("Central District");
+  const [editState, setEditState] = useState("Maharashtra");
+  const [editPin, setEditPin] = useState("400001");
 
   // Asset Declaration Form States
   const [assetUsage, setAssetUsage] = useState("Land / Agriculture");
@@ -113,11 +118,16 @@ export default function Profile() {
         setUser((prev) => ({
           ...prev,
           ...data,
-          aadhaarNumber: data.aadhaarNumber || prev.aadhaarNumber
+          aadhaarNumber: (data.aadhaarNumber || prev.aadhaarNumber || "987654321000").replace(/\D/g, "").slice(0, 12)
         }));
         setEditName(data.name || "Pavan Kumar");
         setEditEmail(data.email || "citizen@example.com");
-        setEditPhone(data.phone || "+91 98765 43210");
+        setEditPhone((data.phone || "9876543210").replace(/\D/g, "").slice(0, 10));
+        setEditStreet(data.address?.street || "Plot #14, Sector 4, Ward 4");
+        setEditTown(data.address?.town || "Civic Zone Gram Panchayat");
+        setEditDistrict(data.address?.district || "Central District");
+        setEditState(data.address?.state || "Maharashtra");
+        setEditPin(data.address?.pin || "400001");
       }
     } catch (err) {
       console.warn("Profile API fetch warning (using local resident profile):", err);
@@ -158,20 +168,49 @@ export default function Profile() {
   const handleSaveDetails = async (e) => {
     e.preventDefault();
     setToastMessage("");
+
+    // Phone 10-Digit Validation
+    const cleanPhone = editPhone.replace(/\D/g, "");
+    if (cleanPhone.length !== 10) {
+      setToastMessage("⚠️ Mobile Number must be exactly 10 digits (0-9).");
+      return;
+    }
+
+    const updatedAddress = {
+      street: editStreet,
+      town: editTown,
+      district: editDistrict,
+      state: editState,
+      pin: editPin
+    };
+
     try {
       await API.put("/user/profile", {
         name: editName,
         email: editEmail,
-        phone: editPhone
+        phone: cleanPhone,
+        address: updatedAddress
       }).catch(() => null);
 
-      setUser((prev) => ({ ...prev, name: editName, email: editEmail, phone: editPhone }));
+      setUser((prev) => ({
+        ...prev,
+        name: editName,
+        email: editEmail,
+        phone: cleanPhone,
+        address: updatedAddress
+      }));
       setIsEditing(false);
-      setToastMessage("Resident profile details updated successfully!");
+      setToastMessage("✅ Resident Details & Address updated successfully!");
     } catch (err) {
-      setUser((prev) => ({ ...prev, name: editName, email: editEmail, phone: editPhone }));
+      setUser((prev) => ({
+        ...prev,
+        name: editName,
+        email: editEmail,
+        phone: cleanPhone,
+        address: updatedAddress
+      }));
       setIsEditing(false);
-      setToastMessage("Resident profile details updated in local mode!");
+      setToastMessage("✅ Resident Details & Address updated in local mode!");
     }
   };
 
@@ -429,7 +468,7 @@ export default function Profile() {
 
             {isEditing ? (
               <form onSubmit={handleSaveDetails}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px", marginBottom: "24px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Full Resident Name</label>
                     <input
@@ -452,28 +491,93 @@ export default function Profile() {
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Phone Number</label>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Mobile Number (10 Digits Max)</label>
                     <input
+                      type="text"
+                      maxLength={10}
                       value={editPhone}
-                      onChange={(e) => setEditPhone(e.target.value)}
+                      onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      placeholder="e.g. 9876543210"
+                      required
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "0.95rem", fontWeight: "700" }}
+                    />
+                    <span style={{ fontSize: "0.72rem", color: "#64748b" }}>Digits: {editPhone.length}/10</span>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Aadhaar Number (12 Digits - eKYC Locked)</label>
+                    <input
+                      value={`${user.aadhaarNumber || "987654321000"} (12-Digit Verified)`}
+                      disabled
+                      maxLength={12}
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#64748b", boxSizing: "border-box", fontSize: "0.95rem", fontWeight: "700" }}
+                    />
+                    <span style={{ fontSize: "0.72rem", color: "#059669" }}>✓ Locked after UIDAI eKYC verification</span>
+                  </div>
+                </div>
+
+                {/* Editable Address Section */}
+                <h4 style={{ margin: "20px 0 12px 0", color: "#1b4332", fontSize: "1rem", fontWeight: "800", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <FaMapMarkerAlt style={{ color: "#2d6a4f" }} /> Edit Resident Address
+                </h4>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Street / Plot / Landmark</label>
+                    <input
+                      value={editStreet}
+                      onChange={(e) => setEditStreet(e.target.value)}
                       required
                       style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "0.95rem" }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Aadhaar Number (Encrypted)</label>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Town / Village</label>
                     <input
-                      value={maskedAadhaar}
-                      disabled
-                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#64748b", boxSizing: "border-box", fontSize: "0.95rem" }}
+                      value={editTown}
+                      onChange={(e) => setEditTown(e.target.value)}
+                      required
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "0.95rem" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>District</label>
+                    <input
+                      value={editDistrict}
+                      onChange={(e) => setEditDistrict(e.target.value)}
+                      required
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "0.95rem" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>State</label>
+                    <input
+                      value={editState}
+                      onChange={(e) => setEditState(e.target.value)}
+                      required
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "0.95rem" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Pincode (6 Digits)</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={editPin}
+                      onChange={(e) => setEditPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      required
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "0.95rem" }}
                     />
                   </div>
                 </div>
 
                 <div style={{ display: "flex", gap: "10px" }}>
-                  <button type="submit" style={{ background: "#2d6a4f", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <FaSave /> Save Changes
+                  <button type="submit" style={{ background: "#2d6a4f", color: "white", border: "none", padding: "10px 24px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <FaSave /> Save Resident Details &amp; Address
                   </button>
                   <button
                     type="button"
@@ -497,51 +601,53 @@ export default function Profile() {
                 </div>
 
                 <div style={{ minWidth: 0 }}>
-                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Phone Number</span>
-                  <div style={{ fontSize: "1rem", fontWeight: "800", color: "#1b4332", marginTop: "2px", wordBreak: "break-word" }}>{user.phone || "N/A"}</div>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Mobile Phone (10-Digit)</span>
+                  <div style={{ fontSize: "1rem", fontWeight: "800", color: "#1b4332", marginTop: "2px", wordBreak: "break-word" }}>{user.phone || "9876543210"}</div>
                 </div>
 
                 <div style={{ minWidth: 0 }}>
-                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Aadhaar Proof</span>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Aadhaar Proof (12-Digit)</span>
                   <div style={{ fontSize: "1rem", fontWeight: "800", color: "#1b4332", marginTop: "2px" }}>{maskedAadhaar}</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Address */}
-          <div>
-            <h3 style={{ margin: "0 0 16px 0", color: "#1b4332", fontSize: "1.15rem", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaMapMarkerAlt style={{ color: "#2d6a4f" }} /> Gram Panchayat Jurisdiction Address
-            </h3>
+          {/* Address Display (when not editing) */}
+          {!isEditing && (
+            <div>
+              <h3 style={{ margin: "0 0 16px 0", color: "#1b4332", fontSize: "1.15rem", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
+                <FaMapMarkerAlt style={{ color: "#2d6a4f" }} /> Gram Panchayat Jurisdiction Address
+              </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", background: "#f4f9f4", padding: "20px", borderRadius: "14px", border: "1px solid #d8f3dc" }}>
-              <div>
-                <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Street / Landmark</span>
-                <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.street || "Plot #14, Sector 4"}</div>
-              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", background: "#f4f9f4", padding: "20px", borderRadius: "14px", border: "1px solid #d8f3dc" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Street / Landmark</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.street || "Plot #14, Sector 4"}</div>
+                </div>
 
-              <div>
-                <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Town / Village</span>
-                <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.town || "Civic Zone"}</div>
-              </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Town / Village</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.town || "Civic Zone"}</div>
+                </div>
 
-              <div>
-                <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>District</span>
-                <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.district || "Central District"}</div>
-              </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>District</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.district || "Central District"}</div>
+                </div>
 
-              <div>
-                <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>State</span>
-                <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.state || "Maharashtra"}</div>
-              </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>State</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.state || "Maharashtra"}</div>
+                </div>
 
-              <div>
-                <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Pincode</span>
-                <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.pin || "400001"}</div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Pincode</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.pin || "400001"}</div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
