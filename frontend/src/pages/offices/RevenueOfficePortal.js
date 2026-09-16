@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import API from "../../services/api";
+import MasterVerificationSearchBar from "../../components/MasterVerificationSearchBar";
 import {
   getOfficeApplicationsFromStore,
   updateApplicationInStore,
@@ -162,10 +163,6 @@ export default function RevenueOfficePortal() {
                 District Revenue Inspectorate &amp; Land Tax Department. Property Tax, Land Revenue Cess, NA Conversion, and Agricultural Certificates.
               </p>
             </div>
-
-            <Link to="/official" style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "10px 18px", borderRadius: "8px", textDecoration: "none", fontWeight: "800", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <FaArrowLeft /> Switch All Offices View
-            </Link>
           </div>
         </div>
 
@@ -174,6 +171,9 @@ export default function RevenueOfficePortal() {
             <FaCheckCircle style={{ fontSize: "1.2rem" }} /> {statusMsg.text}
           </div>
         )}
+
+        {/* 🔍 Embedded Master Dataset Search Bar for Revenue Officers */}
+        <MasterVerificationSearchBar officeName="Revenue" themeColor="#047857" />
 
         {/* Master Scope Box */}
         <div style={{ background: "#ffffff", borderRadius: "14px", padding: "20px", border: "1px solid #cbd5e1", marginBottom: "24px" }}>

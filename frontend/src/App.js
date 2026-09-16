@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Chatbot from "./components/Chatbot";
 import { ToastProvider } from "./context/ToastContext"; 
 import Profile from "./pages/Profile";
+import Verify from "./pages/Verify";
 
 // 🏛️ Primary Citizen & Official Portals
 import CitizenPortal from "./pages/citizen/CitizenPortal";
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/officer/talati" element={<TalatiOfficePortal />} />
 
           {/* Utility Routes */}
+          <Route path="/verify" element={<Verify />} />
           <Route path="/kyc" element={<Private><KYC /></Private>} />
           <Route path="/profile" element={<Private><Profile /></Private>} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

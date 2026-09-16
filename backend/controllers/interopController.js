@@ -1,9 +1,11 @@
+import fs from "fs";
+import path from "path";
 import AuditLog from "../models/AuditLog.js";
 import ConsentRecord from "../models/ConsentRecord.js";
 import MdmRecord from "../models/MdmRecord.js";
 import Application from "../models/Application.js";
 import User from "../models/User.js";
-import { CITIZENS_MASTER_DATASET } from "../utils/routingEngine.js";
+import { CITIZENS_MASTER_DATASET, searchMasterDataset } from "../utils/routingEngine.js";
 
 // GovConnect Interoperability Platform Controller
 
@@ -196,6 +198,47 @@ export const getPlatformMetrics = async (req, res) => {
           talati: talatiApps
         }
       }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 4. Master Dataset Search API for Official Verification
+export const searchMasterRecords = async (req, res) => {
+  try {
+    const { q, office } = req.query;
+    const results = searchMasterDataset(q || "");
+
+    return res.json({
+      success: true,
+      count: results.length,
+      totalDatasetSize: CITIZENS_MASTER_DATASET.length,
+      query: q || "",
+      requestingOffice: office || "General Official",
+      results
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 5. Download / Fetch Full 1,000 Member Master Dataset API
+export const downloadMasterDataset = async (req, res) => {
+  try {
+    const { format } = req.query;
+
+    if (format === "csv") {
+      const csvPath = path.join(process.cwd(), "backend", "data", "master_dataset_1000_members.csv");
+      if (fs.existsSync(csvPath)) {
+        return res.download(csvPath, "master_dataset_1000_members.csv");
+      }
+    }
+
+    return res.json({
+      success: true,
+      totalCount: CITIZENS_MASTER_DATASET.length,
+      dataset: CITIZENS_MASTER_DATASET
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import API from "../../services/api";
+import MasterVerificationSearchBar from "../../components/MasterVerificationSearchBar";
 import {
   getOfficeApplicationsFromStore,
   updateApplicationInStore,
@@ -170,10 +171,6 @@ export default function MunicipalityOfficePortal() {
                 Municipal Corporation &amp; Public Works Administration Workspace. Real-time queue, separated approved &amp; rejected services.
               </p>
             </div>
-
-            <Link to="/official" style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "10px 18px", borderRadius: "8px", textDecoration: "none", fontWeight: "800", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <FaArrowLeft /> Switch All Offices View
-            </Link>
           </div>
         </div>
 
@@ -182,6 +179,9 @@ export default function MunicipalityOfficePortal() {
             <FaCheckCircle style={{ fontSize: "1.2rem" }} /> {statusMsg.text}
           </div>
         )}
+
+        {/* 🔍 Embedded Master Dataset Search Bar for Municipal Officers */}
+        <MasterVerificationSearchBar officeName="Municipality" themeColor="#0284c7" />
 
         {/* Master Dataset Scope Box */}
         <div style={{ background: "#ffffff", borderRadius: "14px", padding: "20px", border: "1px solid #cbd5e1", marginBottom: "24px" }}>

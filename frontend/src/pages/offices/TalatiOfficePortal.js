@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import API from "../../services/api";
+import MasterVerificationSearchBar from "../../components/MasterVerificationSearchBar";
 import {
   getOfficeApplicationsFromStore,
   updateApplicationInStore,
@@ -162,10 +163,6 @@ export default function TalatiOfficePortal() {
                 Village Accountant &amp; Land Revenue Registrar Workspace. Digital sign 7/12 extracts, Heirship certificates, and Mutation registers.
               </p>
             </div>
-
-            <Link to="/official" style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "10px 18px", borderRadius: "8px", textDecoration: "none", fontWeight: "800", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <FaArrowLeft /> Switch All Offices View
-            </Link>
           </div>
         </div>
 
@@ -174,6 +171,9 @@ export default function TalatiOfficePortal() {
             <FaCheckCircle style={{ fontSize: "1.2rem" }} /> {statusMsg.text}
           </div>
         )}
+
+        {/* 🔍 Embedded Master Dataset Search Bar for Talati Officers */}
+        <MasterVerificationSearchBar officeName="Talati" themeColor="#b45309" />
 
         {/* Master Scope Box */}
         <div style={{ background: "#ffffff", borderRadius: "14px", padding: "20px", border: "1px solid #cbd5e1", marginBottom: "24px" }}>
