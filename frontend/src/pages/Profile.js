@@ -25,7 +25,10 @@ import {
   FaBuilding,
   FaTractor,
   FaReceipt,
-  FaCertificate
+  FaCertificate,
+  FaFileInvoiceDollar,
+  FaHome,
+  FaLandmark
 } from "react-icons/fa";
 import {
   getAllApplicationsFromStore,
@@ -75,6 +78,10 @@ export default function Profile() {
       })
     );
   };
+
+  // Modals state for Resident eKYC and Verified Asset details
+  const [showKycModal, setShowKycModal] = useState(false);
+  const [showAssetModal, setShowAssetModal] = useState(false);
 
   // Edit Profile States (Resident Details & Address ONLY)
   const [isEditing, setIsEditing] = useState(false);
@@ -329,14 +336,22 @@ export default function Profile() {
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                 <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: "800", color: "#e0ffe0" }}>{user.name || "Pavan Kumar"}</h1>
                 
-                <span style={{ background: "#059669", color: "white", padding: "4px 12px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "800", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                <button
+                  onClick={() => setShowKycModal(true)}
+                  style={{ background: "#059669", color: "white", border: "none", padding: "6px 14px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "800", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer", boxShadow: "0 4px 10px rgba(5, 150, 105, 0.4)" }}
+                  title="Click to view Verified Resident eKYC Info"
+                >
                   <FaCheckCircle /> Verified Resident
-                </span>
+                </button>
 
                 {isVerifiedAssetResident && (
-                  <span style={{ background: "#2563eb", color: "white", padding: "4px 14px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "900", display: "inline-flex", alignItems: "center", gap: "5px", boxShadow: "0 4px 10px rgba(37, 99, 235, 0.4)" }}>
+                  <button
+                    onClick={() => setShowAssetModal(true)}
+                    style={{ background: "#2563eb", color: "white", border: "none", padding: "6px 14px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "900", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer", boxShadow: "0 4px 10px rgba(37, 99, 235, 0.4)" }}
+                    title="Click to view 4-Department Verified Asset Breakdown"
+                  >
                     <FaCheckDouble /> VERIFIED ASSET BADGE
-                  </span>
+                  </button>
                 )}
               </div>
 
@@ -356,15 +371,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
-          {!isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{ background: "#ffffff", color: "#1b4332", border: "none", padding: "10px 20px", borderRadius: "12px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
-            >
-              <FaEdit /> Edit Profile
-            </button>
-          )}
         </div>
       </div>
 
@@ -462,9 +468,20 @@ export default function Profile() {
         <div style={{ background: "#ffffff", padding: "28px", borderRadius: "20px", border: "1px solid #d8f3dc", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)" }}>
           {/* Contact Information */}
           <div style={{ marginBottom: "28px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#1b4332", fontSize: "1.15rem", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaAddressCard style={{ color: "#2d6a4f" }} /> Contact &amp; Personal Identity Details
-            </h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+              <h3 style={{ margin: 0, color: "#1b4332", fontSize: "1.15rem", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
+                <FaAddressCard style={{ color: "#2d6a4f" }} /> Contact &amp; Personal Identity Details
+              </h3>
+
+              {!isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  style={{ background: "#1b4332", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem", boxShadow: "0 2px 8px rgba(27, 67, 50, 0.2)" }}
+                >
+                  <FaEdit /> Edit Resident Details &amp; Address
+                </button>
+              )}
+            </div>
 
             {isEditing ? (
               <form onSubmit={handleSaveDetails}>
@@ -922,6 +939,228 @@ export default function Profile() {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 MODAL 1: VERIFIED RESIDENT EKYC INFO MODAL */}
+      {showKycModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, padding: "20px" }}>
+          <div style={{ background: "#ffffff", width: "100%", maxWidth: "650px", borderRadius: "20px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", overflow: "hidden", border: "2px solid #059669" }}>
+            
+            {/* Modal Header */}
+            <div style={{ background: "linear-gradient(135deg, #064e3b 0%, #047857 100%)", color: "white", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <FaUserCheck style={{ fontSize: "1.5rem", color: "#6ee7b7" }} />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "900", color: "#ffffff" }}>
+                    Verified Resident eKYC &amp; Identity Record
+                  </h3>
+                  <span style={{ fontSize: "0.78rem", color: "#a7f3d0" }}>
+                    Official UIDAI eKYC Gateway &amp; State Master Registry Token
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setShowKycModal(false)} style={{ background: "none", border: "none", color: "white", fontSize: "1.4rem", cursor: "pointer" }}>
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* Modal Content Body */}
+            <div style={{ padding: "24px", display: "grid", gap: "16px" }}>
+              
+              <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "14px", borderRadius: "12px", display: "flex", alignItems: "center", gap: "12px" }}>
+                <FaCheckCircle style={{ color: "#16a34a", fontSize: "1.8rem" }} />
+                <div>
+                  <strong style={{ color: "#166534", fontSize: "0.95rem" }}>✔ eKYC VERIFIED RESIDENT IDENTITY</strong>
+                  <div style={{ fontSize: "0.8rem", color: "#15803d" }}>
+                    100% Identity Match across Aadhaar eKYC (12-Digit) &amp; Civil Registration Systems.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", background: "#f8fafc", padding: "16px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>FULL RESIDENT NAME</span>
+                  <div style={{ fontSize: "1.05rem", fontWeight: "900", color: "#0f172a" }}>{user.name}</div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>CITIZEN ID PASS</span>
+                  <div style={{ fontSize: "1rem", fontWeight: "800", color: "#0284c7" }}><code>{user.citizenId || "CIT-IND-9001"}</code></div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>AADHAAR ID (12-DIGIT)</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a" }}>
+                    <FaIdCard style={{ color: "#059669", marginRight: "6px" }} />
+                    {user.aadhaarNumber || "987654321000"} <span style={{ color: "#16a34a" }}>(✔ Verified)</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>MOBILE NUMBER (10-DIGIT)</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a" }}>
+                    <FaPhone style={{ color: "#059669", marginRight: "6px" }} />
+                    {user.phone || "9876543210"} <span style={{ color: "#16a34a" }}>(✔ OTP Verified)</span>
+                  </div>
+                </div>
+
+                <div style={{ gridColumn: "span 2" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>EMAIL ADDRESS</span>
+                  <div style={{ fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>
+                    <FaEnvelope style={{ color: "#0284c7", marginRight: "6px" }} />
+                    {user.email || "citizen@govconnect.in"}
+                  </div>
+                </div>
+
+                <div style={{ gridColumn: "span 2" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>RESIDENTIAL ADDRESS</span>
+                  <div style={{ fontSize: "0.9rem", fontWeight: "700", color: "#0f172a", marginTop: "2px" }}>
+                    <FaMapMarkerAlt style={{ color: "#dc2626", marginRight: "6px" }} />
+                    {user.address?.street || "Plot #14, Sector 4"}, {user.address?.town || "Civic Zone"}, {user.address?.district || "Central District"}, {user.address?.state || "Maharashtra"} - {user.address?.pin || "400001"}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: "#f1f5f9", padding: "12px", borderRadius: "10px", fontSize: "0.78rem", color: "#475569", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>🔒 Digital Token: <code>EKYC-UIDAI-{user.citizenId || "CIT-IND-9001"}-9984</code></span>
+                <span style={{ background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "6px", fontWeight: "800" }}>Confidence: 99.8%</span>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ background: "#f8fafc", padding: "14px 24px", textAlign: "right", borderTop: "1px solid #e2e8f0" }}>
+              <button onClick={() => setShowKycModal(false)} style={{ background: "#059669", color: "white", border: "none", padding: "8px 20px", borderRadius: "8px", fontWeight: "800", cursor: "pointer" }}>
+                Close eKYC Info
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 🔵 MODAL 2: VERIFIED ASSET BREAKDOWN MODAL */}
+      {showAssetModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, padding: "20px" }}>
+          <div style={{ background: "#ffffff", width: "100%", maxWidth: "800px", borderRadius: "20px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", overflow: "hidden", border: "2px solid #2563eb", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            
+            {/* Modal Header */}
+            <div style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)", color: "white", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <FaCheckDouble style={{ fontSize: "1.6rem", color: "#93c5fd" }} />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "900", color: "#ffffff" }}>
+                    🛡️ 4-Department Verified Asset Breakdown &amp; Cross-KYC
+                  </h3>
+                  <span style={{ fontSize: "0.78rem", color: "#bfdbfe" }}>
+                    Citizen: {user.name} ({user.citizenId || "CIT-IND-9001"})
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setShowAssetModal(false)} style={{ background: "none", border: "none", color: "white", fontSize: "1.4rem", cursor: "pointer" }}>
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* Modal Content Body */}
+            <div style={{ padding: "24px", overflowY: "auto", display: "grid", gap: "16px" }}>
+              
+              <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "14px", borderRadius: "12px", display: "flex", alignItems: "center", gap: "12px" }}>
+                <FaShieldAlt style={{ color: "#2563eb", fontSize: "1.8rem" }} />
+                <div>
+                  <strong style={{ color: "#1e40af", fontSize: "0.95rem" }}>✔ VERIFIED ASSET BADGE CONFIRMED ACROSS ALL 4 DEPARTMENTS</strong>
+                  <div style={{ fontSize: "0.8rem", color: "#1d4ed8" }}>
+                    Federated cross-verification completed for Land, Village Khata, Municipal Property &amp; Tehsildar Income records.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+                
+                {/* 1. Revenue Department Asset */}
+                <div style={{ background: "#f0fdf4", border: "2px solid #16a34a", padding: "18px", borderRadius: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "900", color: "#047857", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <FaFileInvoiceDollar /> 1. Revenue Department KYC
+                    </h4>
+                    <span style={{ background: "#16a34a", color: "white", padding: "2px 10px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: "900" }}>
+                      ✔ VERIFIED
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#064e3b", display: "grid", gap: "6px" }}>
+                    <div>Survey / Gut Number: <strong>SRV-1001</strong></div>
+                    <div>Total Land Area: <strong>3.5 Acres</strong></div>
+                    <div>Classification: Agricultural A-Class</div>
+                    <div>Revenue Tax Status: <strong style={{ color: "#16a34a" }}>✔ Paid &amp; Up to Date (₹0 Dues)</strong></div>
+                    <div>Title Deed / Encumbrance: <strong style={{ color: "#16a34a" }}>✔ Clear Title Deed Verified</strong></div>
+                  </div>
+                </div>
+
+                {/* 2. Talati Office Asset */}
+                <div style={{ background: "#fffbeb", border: "2px solid #d97706", padding: "18px", borderRadius: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "900", color: "#b45309", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <FaHome /> 2. Talati Village Register KYC
+                    </h4>
+                    <span style={{ background: "#d97706", color: "white", padding: "2px 10px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: "900" }}>
+                      ✔ VERIFIED
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#78350f", display: "grid", gap: "6px" }}>
+                    <div>7/12 Khata Number: <strong>KHT-1001</strong></div>
+                    <div>8A Summary Extract: <strong style={{ color: "#b45309" }}>✔ Verified Holding Extract</strong></div>
+                    <div>Ration Card Status: <strong style={{ color: "#16a34a" }}>✔ BPL Active Ration Card</strong></div>
+                    <div>Ferfar Mutation Entry: <strong style={{ color: "#16a34a" }}>✔ Crop &amp; Water Rights Certified</strong></div>
+                  </div>
+                </div>
+
+                {/* 3. Municipal Property Asset */}
+                <div style={{ background: "#f0f9ff", border: "2px solid #0284c7", padding: "18px", borderRadius: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "900", color: "#0284c7", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <FaBuilding /> 3. Municipal Corporation KYC
+                    </h4>
+                    <span style={{ background: "#0284c7", color: "white", padding: "2px 10px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: "900" }}>
+                      ✔ VERIFIED
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#0c4a6e", display: "grid", gap: "6px" }}>
+                    <div>Property Tax ID: <strong>PROP-MH-1001</strong></div>
+                    <div>Built-Up Plot Area: <strong>1,200 Sq Ft</strong></div>
+                    <div>Municipal Tax Status: <strong style={{ color: "#16a34a" }}>✔ Paid &amp; Cleared</strong></div>
+                    <div>Water Connection &amp; Plan: <strong style={{ color: "#16a34a" }}>✔ Sanctioned Building Plan</strong></div>
+                  </div>
+                </div>
+
+                {/* 4. Tehsildar Sub-Division Asset */}
+                <div style={{ background: "#faf5ff", border: "2px solid #7e22ce", padding: "18px", borderRadius: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "900", color: "#7e22ce", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <FaLandmark /> 4. Tehsildar Sub-Division KYC
+                    </h4>
+                    <span style={{ background: "#7e22ce", color: "white", padding: "2px 10px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: "900" }}>
+                      ✔ VERIFIED
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#581c87", display: "grid", gap: "6px" }}>
+                    <div>Certified Annual Income: <strong>₹85,000</strong></div>
+                    <div>Income Category: <strong style={{ color: "#7e22ce" }}>✔ Low Income Group (LIG)</strong></div>
+                    <div>Solvency Amount Verified: <strong style={{ color: "#16a34a" }}>✔ ₹2,50,000 Verified</strong></div>
+                    <div>Caste &amp; Ancestral Proof: <strong style={{ color: "#16a34a" }}>✔ Verified Ancestral Record</strong></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ background: "#f8fafc", padding: "14px 24px", textAlign: "right", borderTop: "1px solid #e2e8f0" }}>
+              <button onClick={() => setShowAssetModal(false)} style={{ background: "#2563eb", color: "white", border: "none", padding: "8px 20px", borderRadius: "8px", fontWeight: "800", cursor: "pointer" }}>
+                Close Asset Breakdown
+              </button>
+            </div>
+
           </div>
         </div>
       )}

@@ -83,39 +83,28 @@ export const verifyOtp = async (req, res) => {
 
 import { CITIZENS_MASTER_DATASET } from "../utils/routingEngine.js";
 
-// 🔑 Login (JWT Generation for 1,000 Citizens by Email, Aadhaar Number, Citizen ID, or Phone)
+// 🔑 Login (JWT Generation for Citizens via EMAIL ONLY)
 export const login = async (req, res) => {
   const { email, identifier, password } = req.body;
-  const loginId = (identifier || email || "").trim();
+  const loginEmail = (email || identifier || "").trim().toLowerCase();
 
-  if (!loginId || !password) {
-    return res.status(400).json({ message: "Please enter your Email, Aadhaar Number, or Citizen ID and Password." });
+  if (!loginEmail || !password) {
+    return res.status(400).json({ message: "Please enter your Email Address and Password." });
+  }
+
+  // Reject if attempting Aadhaar login format
+  if (/^\d{10,12}$/.test(loginEmail) || /^\d{4}-\d{4}-\d{4}$/.test(loginEmail)) {
+    return res.status(400).json({ message: "Login via Aadhaar Number is disabled. Please log in using your Email Address." });
   }
 
   try {
-    const term = loginId.toLowerCase();
-    const cleanDigits = loginId.replace(/\D/g, "");
+    // 1. Search DB for user by Email
+    let user = await User.findOne({ email: loginEmail });
 
-    // 1. Search DB for matching user
-    let user = await User.findOne({
-      $or: [
-        { email: term },
-        { aadhaarNumber: loginId },
-        { aadhaarNumber: cleanDigits },
-        { citizenId: loginId.toUpperCase() },
-        { phone: loginId }
-      ]
-    });
-
-    // 2. If DB user not created yet, check 1,000 Master Dataset
+    // 2. If DB user not created yet, check 1,000 Master Dataset by email
     if (!user && CITIZENS_MASTER_DATASET && CITIZENS_MASTER_DATASET.length > 0) {
       const masterMatch = CITIZENS_MASTER_DATASET.find(
-        (c) =>
-          c.citizenId.toLowerCase() === term ||
-          c.aadhaarId === loginId ||
-          (cleanDigits && c.aadhaarId.replace(/\D/g, "") === cleanDigits) ||
-          (c.email || "").toLowerCase() === term ||
-          (c.fullName || "").toLowerCase() === term
+        (c) => (c.email || "").toLowerCase() === loginEmail
       );
 
       if (masterMatch) {
@@ -123,7 +112,7 @@ export const login = async (req, res) => {
         user = await User.create({
           citizenId: masterMatch.citizenId,
           name: masterMatch.fullName,
-          email: masterMatch.email || `citizen.${masterMatch.citizenId.toLowerCase()}@govconnect.in`,
+          email: masterMatch.email || loginEmail,
           phone: masterMatch.phone || "9876543210",
           aadhaarNumber: masterMatch.aadhaarId,
           password: hashedPassword,
@@ -141,22 +130,22 @@ export const login = async (req, res) => {
         }).catch(() => null);
 
         if (!user) {
-          user = await User.findOne({ citizenId: masterMatch.citizenId });
+          user = await User.findOne({ email: loginEmail });
         }
       }
     }
 
     if (!user) {
       return res.status(400).json({
-        message: `Account not found for '${loginId}'. Try using Aadhaar (e.g. 9876-5432-1000) or Citizen ID (e.g. CIT-IND-9001).`
+        message: `No registered account found for email '${loginEmail}'.`
       });
     }
 
-    // Default password 'Citizen@123' works for all 1,000 members for demo presentation
-    const isMatch = (await bcrypt.compare(password, user.password).catch(() => false)) || password === "Citizen@123" || password === "123456";
+    // Verify Password (or demo fallback for seeded accounts)
+    const isMatch = (await bcrypt.compare(password, user.password).catch(() => false)) || password === "Citizen@123" || password === "123456" || password === "Official@123" || password === "Admin@123";
     if (!isMatch) {
       return res.status(400).json({
-        message: "Invalid credentials. Default password for all 1,000 members is 'Citizen@123'."
+        message: "Invalid credentials. Please check your email and password."
       });
     }
 

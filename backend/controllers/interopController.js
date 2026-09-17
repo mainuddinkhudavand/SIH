@@ -223,16 +223,44 @@ export const searchMasterRecords = async (req, res) => {
   }
 };
 
-// 5. Download / Fetch Full 1,000 Member Master Dataset API
+// 5. Download / Fetch Full 1,000 Member Master Dataset & Credentials API
 export const downloadMasterDataset = async (req, res) => {
   try {
     const { format } = req.query;
 
+    const dataDir = path.join(process.cwd(), "backend", "data");
+
+    if (format === "excel-simple" || format === "simple") {
+      const csvPath = path.join(dataDir, "1000_citizens_name_email_password.csv");
+      if (fs.existsSync(csvPath)) {
+        return res.download(csvPath, "1000_citizens_name_email_password.csv");
+      }
+    }
+
+    if (format === "credentials-csv") {
+      const csvPath = path.join(dataDir, "master_dataset_1000_members_credentials.csv");
+      if (fs.existsSync(csvPath)) {
+        return res.download(csvPath, "master_dataset_1000_members_credentials.csv");
+      }
+    }
+
+    if (format === "credentials-json") {
+      const jsonPath = path.join(dataDir, "master_dataset_1000_members_credentials.json");
+      if (fs.existsSync(jsonPath)) {
+        return res.download(jsonPath, "master_dataset_1000_members_credentials.json");
+      }
+    }
+
     if (format === "csv") {
-      const csvPath = path.join(process.cwd(), "backend", "data", "master_dataset_1000_members.csv");
+      const csvPath = path.join(dataDir, "master_dataset_1000_members.csv");
       if (fs.existsSync(csvPath)) {
         return res.download(csvPath, "master_dataset_1000_members.csv");
       }
+    }
+
+    const jsonPath = path.join(dataDir, "master_dataset_1000_members.json");
+    if (format === "json" && fs.existsSync(jsonPath)) {
+      return res.download(jsonPath, "master_dataset_1000_members.json");
     }
 
     return res.json({
