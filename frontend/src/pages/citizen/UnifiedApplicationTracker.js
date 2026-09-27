@@ -654,138 +654,36 @@ export default function UnifiedApplicationTracker() {
           </div>
         )}
 
-        {/* PAYMENT MODAL WITH DETAILED BANK / UPI / CARD INPUTS */}
+        {/* DUES CLEARANCE SIMULATION MODAL */}
         {showPayModal && application && (
-          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-            <div style={{ background: "#ffffff", borderRadius: "20px", maxWidth: "560px", width: "100%", padding: "28px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+            <div style={{ background: "#ffffff", borderRadius: "20px", maxWidth: "520px", width: "100%", padding: "28px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", border: "2px solid #0284c7" }}>
               
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-                <h3 style={{ margin: 0, fontSize: "1.3rem", fontWeight: "900", color: "#0f172a" }}>
-                  💳 Dues Payment Gateway
+                <h3 style={{ margin: 0, fontSize: "1.3rem", fontWeight: "900", color: "#0c4a6e" }}>
+                  🏛️ Government e-Challan Dues Clearance
                 </h3>
                 <button onClick={() => setShowPayModal(false)} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#64748b" }}>✕</button>
               </div>
 
-              <div style={{ background: "#f8fafc", padding: "14px", borderRadius: "10px", marginBottom: "20px", fontSize: "0.9rem" }}>
-                <div><strong>Application:</strong> {application.title} ({application.applicationId})</div>
-                <div style={{ color: "#ca8a04", fontWeight: "900", marginTop: "4px" }}>
+              <div style={{ background: "#f0f9ff", padding: "16px", borderRadius: "12px", marginBottom: "20px", border: "1px solid #bae6fd", fontSize: "0.9rem" }}>
+                <div><strong>Application Ref:</strong> {application.title} ({application.applicationId})</div>
+                <div><strong>Jurisdiction:</strong> {application.location?.city || "Hubli"}, {application.location?.district || "Dharwad"}</div>
+                <div style={{ color: "#0369a1", fontWeight: "900", marginTop: "8px", fontSize: "1.1rem" }}>
                   Total Dues Payable: ₹{application.pendingDues?.amount}
                 </div>
               </div>
 
-              {/* Payment Mode Selector Tabs */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "20px" }}>
-                {["UPI", "NetBanking", "Card"].map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setPayMethod(mode)}
-                    style={{
-                      padding: "10px",
-                      borderRadius: "8px",
-                      border: "2px solid",
-                      borderColor: payMethod === mode ? "#0284c7" : "#cbd5e1",
-                      background: payMethod === mode ? "#e0f2fe" : "#ffffff",
-                      color: payMethod === mode ? "#0369a1" : "#475569",
-                      fontWeight: "800",
-                      cursor: "pointer",
-                      fontSize: "0.85rem"
-                    }}
-                  >
-                    {mode === "UPI" && "📱 UPI"}
-                    {mode === "NetBanking" && "🏛️ NetBanking"}
-                    {mode === "Card" && "💳 Debit/Credit Card"}
-                  </button>
-                ))}
-              </div>
-
-              {/* Mode Specific Input Forms */}
-              {payMethod === "UPI" && (
-                <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Select UPI App:</label>
-                    <select value={upiApp} onChange={(e) => setUpiApp(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontWeight: "700" }}>
-                      <option value="PhonePe">PhonePe UPI</option>
-                      <option value="Google Pay">Google Pay (GPay)</option>
-                      <option value="Paytm UPI">Paytm UPI</option>
-                      <option value="BHIM UPI">BHIM Government UPI</option>
-                      <option value="Amazon Pay UPI">Amazon Pay UPI</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>VPA / UPI ID:</label>
-                    <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="e.g. 9876543210@ybl or username@okicici" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>UPI Security PIN (4 or 6 Digits):</label>
-                    <input type="password" value={upiPin} onChange={(e) => setUpiPin(e.target.value)} maxLength={6} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                  </div>
-                </div>
-              )}
-
-              {payMethod === "NetBanking" && (
-                <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Select Bank Name:</label>
-                    <select value={bankName} onChange={(e) => setBankName(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontWeight: "700" }}>
-                      <option value="State Bank of India">State Bank of India (SBI)</option>
-                      <option value="HDFC Bank">HDFC Bank</option>
-                      <option value="ICICI Bank">ICICI Bank</option>
-                      <option value="Bank of Baroda">Bank of Baroda</option>
-                      <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
-                      <option value="Axis Bank">Axis Bank</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Bank Account Number:</label>
-                    <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Account Holder Name:</label>
-                      <input type="text" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Bank IFSC Code:</label>
-                      <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {payMethod === "Card" && (
-                <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Card Network:</label>
-                    <select value={cardType} onChange={(e) => setCardType(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontWeight: "700" }}>
-                      <option value="RuPay Card">RuPay Debit Card (Zero Fee)</option>
-                      <option value="Visa Card">Visa Debit/Credit Card</option>
-                      <option value="Mastercard">Mastercard Debit/Credit Card</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>16-Digit Card Number:</label>
-                    <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} maxLength={19} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>Expiry (MM/YY):</label>
-                      <input type="text" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", color: "#475569", marginBottom: "4px" }}>CVV (3 Digits):</label>
-                      <input type="password" value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} maxLength={4} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }} />
-                    </div>
-                  </div>
-                </div>
-              )}
+              <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: "1.5", marginBottom: "20px" }}>
+                Authorized e-Challan simulation for municipal &amp; land revenue tax clearance. Click below to unblock stage verification.
+              </p>
 
               <button
                 onClick={handleProcessDuesPayment}
                 disabled={processingPay}
                 style={{ width: "100%", background: "#16a34a", color: "white", border: "none", padding: "14px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "1rem" }}
               >
-                {processingPay ? "Processing Secure Payment..." : `Authorize & Pay ₹${application.pendingDues?.amount}`}
+                {processingPay ? "Authorizing e-Challan Clearance..." : `Confirm & Clear Dues (₹${application.pendingDues?.amount})`}
               </button>
 
             </div>

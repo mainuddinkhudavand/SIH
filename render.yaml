@@ -11,7 +11,7 @@ services:
         value: production
       - key: PORT
         value: 10000
-      - key: MONGO_URI
-        value: mongodb+srv://demo:demo123@cluster0.mongodb.net/govconnect?retryWrites=true&w=majority
       - key: JWT_SECRET
         generateValue: true
+      - key: MONGO_URI
+        sync: false
