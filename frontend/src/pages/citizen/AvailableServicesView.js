@@ -104,22 +104,62 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   const [selectedService, setSelectedService] = useState(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    fullName: "Pavan Kumar",
-    phone: "+91 98765 43210",
-    email: "pavan.citizen@egram.gov.in",
-    address: "House #14, Sector 3, Gram Panchayat Jurisdiction",
-    aadhaarId: "9876-5432-1000",
-    surveyNumber: "SRV-101",
-    propertyId: "PROP-MH-401",
-    wardCode: "WARD-04",
-    annualIncome: "85000",
-    casteCategory: "OBC",
-    deceasedName: "",
-    businessName: "",
-    reason: "Official requirement for education subsidy"
-  });
+  const getInitialUserFormData = () => {
+    try {
+      const uStr = localStorage.getItem("user");
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        const rawAadhaar = String(u.aadhaarNumber || "987654321000").replace(/\D/g, "");
+        const formattedAadhaar = rawAadhaar.length === 12
+          ? `${rawAadhaar.slice(0, 4)}-${rawAadhaar.slice(4, 8)}-${rawAadhaar.slice(8, 12)}`
+          : "9876-5432-1000";
+
+        let formattedAddress = "";
+        if (u.address) {
+          formattedAddress = [u.address.street, u.address.town || u.city, u.address.district, u.address.state]
+            .filter(Boolean).join(", ");
+        } else if (u.city) {
+          formattedAddress = `${u.city}, ${u.district || ""}, ${u.state || ""}`;
+        } else {
+          formattedAddress = "Gram Panchayat Jurisdiction";
+        }
+
+        return {
+          fullName: u.name || "Resident Citizen",
+          phone: u.phone || "+91 98765 43210",
+          email: u.email || "citizen@egram.gov.in",
+          address: formattedAddress,
+          aadhaarId: formattedAadhaar,
+          surveyNumber: "SRV-101",
+          propertyId: "PROP-MH-401",
+          wardCode: "WARD-04",
+          annualIncome: "85000",
+          casteCategory: "OBC",
+          deceasedName: "",
+          businessName: "",
+          reason: "Official requirement for government scheme"
+        };
+      }
+    } catch (e) {}
+    return {
+      fullName: "Resident Citizen",
+      phone: "+91 98765 43210",
+      email: "citizen@egram.gov.in",
+      address: "Gram Panchayat Jurisdiction",
+      aadhaarId: "9876-5432-1000",
+      surveyNumber: "SRV-101",
+      propertyId: "PROP-MH-401",
+      wardCode: "WARD-04",
+      annualIncome: "85000",
+      casteCategory: "OBC",
+      deceasedName: "",
+      businessName: "",
+      reason: "Official requirement for government scheme"
+    };
+  };
+
+  // Dynamic Form State from logged-in user profile
+  const [formData, setFormData] = useState(getInitialUserFormData);
 
   // Document Upload State
   const [aadhaarFileName, setAadhaarFileName] = useState("Aadhaar_Identity_Verification_Slip.pdf");

@@ -111,26 +111,55 @@ export default function Register() {
       }
 
       const emailKey = form.email.toLowerCase().trim();
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const citizenId = `CIT-IND-${Math.floor(100000 + Math.random() * 900000)}`;
+      const aadhaarNumber = `${Math.floor(1000 + Math.random() * 9000)}${Math.floor(1000 + Math.random() * 9000)}${Math.floor(1000 + Math.random() * 9000)}`;
+
       const tempUserObj = {
-        email: emailKey,
         name: form.name,
+        email: emailKey,
         phone: form.phone,
+        citizenId: citizenId,
+        aadhaarNumber: aadhaarNumber,
         role: form.role,
         state: form.state,
         district: form.district,
         city: form.city,
-        officeName: form.officeName,
-        designation: form.designation,
+        officeName: form.officeName || `${form.role.toUpperCase()} Sub-Division Office`,
+        designation: form.designation || `${form.role.toUpperCase()} Officer`,
+        address: {
+          street: `Plot #${Math.floor(10 + Math.random() * 90)}, Ward #${Math.floor(1 + Math.random() * 20)}`,
+          town: form.city,
+          district: form.district,
+          state: form.state,
+          pin: form.city === "Hubli" ? "580020" : "400001"
+        },
+        kycCompleted: true,
         faceRegistered: true,
-        kycCompleted: true
+        isVerifiedAsset: true,
+        createdAt: new Date().toISOString()
       };
 
       localStorage.setItem(`registered_${emailKey}`, "true");
+      localStorage.setItem(`registeredFace_${emailKey}`, "true");
       localStorage.setItem(`registeredUser_${emailKey}`, JSON.stringify(tempUserObj));
+      localStorage.setItem(`kycCompleted_${emailKey}`, "true");
+
+      // Add to master dataset
+      try {
+        const masterRegistry = JSON.parse(localStorage.getItem("masterUserRegistry") || "[]");
+        const existingIdx = masterRegistry.findIndex(u => u.email === emailKey);
+        if (existingIdx >= 0) {
+          masterRegistry[existingIdx] = tempUserObj;
+        } else {
+          masterRegistry.push(tempUserObj);
+        }
+        localStorage.setItem("masterUserRegistry", JSON.stringify(masterRegistry));
+      } catch (e) {}
 
       setUserId(registeredUserId);
-      setOtp("");
-      setSuccessMsg(`📧 6-Digit Verification OTP sent to ${form.email}. Please enter the OTP code below & position your face inside target circle to complete registration.`);
+      setOtp(generatedOtp); // Auto-fill 6-digit OTP for instant mobile verification
+      setSuccessMsg(`📧 Verification OTP code sent to ${form.email}. 🔑 OTP: [ ${generatedOtp} ]. Position face inside circle & click Verify.`);
       
       // Auto-start camera for Face Recognition Setup
       setTimeout(() => startRegCamera(), 300);
@@ -177,18 +206,31 @@ export default function Register() {
         setIsScanningFace(false);
 
         const emailKey = form.email.toLowerCase().trim();
-        const userObj = res?.data?.user || {
-          email: emailKey,
+        const savedUserStr = localStorage.getItem(`registeredUser_${emailKey}`);
+        const savedUserObj = savedUserStr ? JSON.parse(savedUserStr) : null;
+
+        const userObj = res?.data?.user || savedUserObj || {
           name: form.name,
+          email: emailKey,
           phone: form.phone,
+          citizenId: `CIT-IND-${Math.floor(100000 + Math.random() * 900000)}`,
+          aadhaarNumber: `9876${Math.floor(10000000 + Math.random() * 90000000)}`,
           role: form.role,
           state: form.state,
           district: form.district,
           city: form.city,
           officeName: form.officeName,
           designation: form.designation,
+          address: {
+            street: `Plot #${Math.floor(10 + Math.random() * 90)}, Ward #${Math.floor(1 + Math.random() * 20)}`,
+            town: form.city,
+            district: form.district,
+            state: form.state,
+            pin: "580020"
+          },
           faceRegistered: true,
-          kycCompleted: true
+          kycCompleted: true,
+          isVerifiedAsset: true
         };
 
         const token = res?.data?.token || `REG_TOKEN_${Date.now()}`;
@@ -197,10 +239,11 @@ export default function Register() {
         localStorage.setItem("faceRegistered", "true");
         localStorage.setItem("kycCompleted", "true");
         localStorage.setItem(`registered_${emailKey}`, "true");
+        localStorage.setItem(`registeredFace_${emailKey}`, "true");
         localStorage.setItem(`registeredUser_${emailKey}`, JSON.stringify(userObj));
         localStorage.setItem(`kycCompleted_${emailKey}`, "true");
 
-        setSuccessMsg(`✅ Account Registered Successfully! Profile created for ${form.city} Jurisdiction. Redirecting to ${form.role.toUpperCase()} Login...`);
+        setSuccessMsg(`✅ Unique Resident Account Registered Successfully! Custom profile created for ${form.name} (${form.city}). Redirecting to Login...`);
         setTimeout(() => {
           navigate(`/login?role=${form.role}`);
         }, 1500);

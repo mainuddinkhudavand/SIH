@@ -40,22 +40,35 @@ import {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: "Pavan Kumar",
-    email: "citizen@example.com",
-    phone: "+91 98765 43210",
-    citizenId: "CIT-IND-9001",
-    aadhaarNumber: "987654321000",
-    kycCompleted: true,
-    isVerifiedAsset: true,
-    address: {
-      street: "Plot #14, Sector 4, Ward 4",
-      town: "Civic Zone Gram Panchayat",
-      district: "Central District",
-      state: "Maharashtra",
-      pin: "400001"
-    }
-  });
+
+  const getStoredUserProfile = () => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const p = JSON.parse(stored);
+        if (p && p.name) return p;
+      }
+    } catch (e) {}
+    return {
+      name: "Registered Citizen",
+      email: "citizen@example.com",
+      phone: "9876543210",
+      citizenId: "CIT-IND-9001",
+      aadhaarNumber: "987654321000",
+      kycCompleted: true,
+      isVerifiedAsset: true,
+      address: {
+        street: "Plot #14, Sector 4, Ward 4",
+        town: "Hubli",
+        district: "Dharwad",
+        state: "Karnataka",
+        pin: "580020"
+      }
+    };
+  };
+
+  const initialProfile = getStoredUserProfile();
+  const [user, setUser] = useState(initialProfile);
 
   const [activeTab, setActiveTab] = useState("details"); // "details", "certificates", "asset-declaration", "dpdp-consents"
   const [applications, setApplications] = useState([]);
@@ -88,14 +101,14 @@ export default function Profile() {
 
   // Edit Profile States (Resident Details & Address ONLY)
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState("Pavan Kumar");
-  const [editEmail, setEditEmail] = useState("citizen@example.com");
-  const [editPhone, setEditPhone] = useState("9876543210"); // 10-digit phone
-  const [editStreet, setEditStreet] = useState("Plot #14, Sector 4, Ward 4");
-  const [editTown, setEditTown] = useState("Civic Zone Gram Panchayat");
-  const [editDistrict, setEditDistrict] = useState("Central District");
-  const [editState, setEditState] = useState("Maharashtra");
-  const [editPin, setEditPin] = useState("400001");
+  const [editName, setEditName] = useState(initialProfile.name || "Registered Citizen");
+  const [editEmail, setEditEmail] = useState(initialProfile.email || "citizen@example.com");
+  const [editPhone, setEditPhone] = useState(initialProfile.phone || "9876543210");
+  const [editStreet, setEditStreet] = useState(initialProfile.address?.street || "Plot #14, Sector 4, Ward 4");
+  const [editTown, setEditTown] = useState(initialProfile.address?.town || initialProfile.city || "Hubli");
+  const [editDistrict, setEditDistrict] = useState(initialProfile.address?.district || initialProfile.district || "Dharwad");
+  const [editState, setEditState] = useState(initialProfile.address?.state || initialProfile.state || "Karnataka");
+  const [editPin, setEditPin] = useState(initialProfile.address?.pin || "580020");
 
   // Asset Declaration Form States
   const [assetUsage, setAssetUsage] = useState("Land / Agriculture");
@@ -122,16 +135,11 @@ export default function Profile() {
       setLoading(true);
       loadLocalApps();
 
-      let localUser = {};
-      try {
-        localUser = JSON.parse(localStorage.getItem("user") || "{}");
-      } catch (e) {}
-
+      let localUser = getStoredUserProfile();
       const res = await API.get("/user/profile").catch(() => null);
       const data = res?.data?.user || res?.data?.data || res?.data;
 
       const mergedUser = {
-        ...user,
         ...localUser,
         ...(data && data.name ? data : {})
       };
@@ -139,7 +147,7 @@ export default function Profile() {
       if (mergedUser.email) {
         mergedUser.aadhaarNumber = (mergedUser.aadhaarNumber || "987654321000").replace(/\D/g, "").slice(0, 12);
         setUser(mergedUser);
-        setEditName(mergedUser.name || "Pavan Kumar");
+        setEditName(mergedUser.name || "Registered Citizen");
         setEditEmail(mergedUser.email || "citizen@example.com");
         setEditPhone((mergedUser.phone || "9876543210").replace(/\D/g, "").slice(0, 10));
         setEditStreet(mergedUser.address?.street || "Plot #14, Sector 4, Ward 4");
