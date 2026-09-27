@@ -384,6 +384,17 @@ export default function Profile() {
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    // Mobile Browser Fallback: Open print-ready window directly
+    try {
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(htmlContent);
+        win.document.close();
+      }
+    } catch (e) {
+      console.warn("Mobile popup note:", e);
+    }
   };
 
   const rawAadhaar = String(user.aadhaarNumber || "987654321000");
