@@ -88,7 +88,7 @@ export default function KYC() {
     <div className="register-container">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
         <button
-          onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav("/"))}
+          onClick={() => (window.history.length > 1 ? nav(-1) : nav("/"))}
           style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
         >
           <FaArrowLeft /> Back

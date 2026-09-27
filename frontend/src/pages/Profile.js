@@ -307,36 +307,115 @@ export default function Profile() {
     approvedApps.some((a) => (a.title || "").toLowerCase().includes("asset") || (a.title || "").toLowerCase().includes("land"));
 
   const nameInitial = user.name ? user.name.charAt(0).toUpperCase() : "P";
+  const handleDownloadCertificate = (app) => {
+    const cert = app?.issuedCertificate || {
+      certificateId: `CERT-${app?.applicationId || app?._id || Math.floor(100000 + Math.random() * 900000)}`,
+      issuedAt: app?.approvalDate || new Date().toISOString(),
+      digitalSignature: `SIG-DIGI-OFFICIAL-EGRAM-${app?.applicationId || Date.now()}`,
+      qrCodeData: `https://egram.gov.in/verify/${app?.applicationId || app?._id}`
+    };
+
+    const applicantName = app?.applicantDetails?.fullName || user?.name || "Resident Citizen";
+    const certTitle = app?.title || app?.serviceType || "Government Official Certificate";
+    const issueDate = new Date(cert.issuedAt).toLocaleDateString("en-IN", { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${certTitle} - ${cert.certificateId}</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; padding: 20px; color: #0f172a; }
+    .cert-card { max-width: 700px; margin: 0 auto; background: #ffffff; border: 12px solid #1b4332; border-radius: 16px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; }
+    .header { text-align: center; border-bottom: 3px double #1b4332; padding-bottom: 20px; margin-bottom: 24px; }
+    .header h1 { color: #1b4332; margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; }
+    .header p { color: #475569; margin: 4px 0 0 0; font-size: 0.9rem; font-weight: 700; }
+    .badge { background: #dcfce7; color: #166534; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; display: inline-block; margin-top: 10px; border: 1px solid #86efac; }
+    .body-content { line-height: 1.8; font-size: 1.05rem; margin: 30px 0; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 18px; border-radius: 12px; margin-top: 24px; font-size: 0.9rem; }
+    .footer-seal { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
+    .signature { text-align: right; }
+    .sig-line { font-family: 'Courier New', monospace; font-weight: bold; color: #166534; font-size: 0.85rem; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="cert-card">
+    <div class="header">
+      <div style="font-size: 2.5rem; margin-bottom: 6px;">🏛️</div>
+      <h1>Government of E-Governance Public Portal</h1>
+      <p>OFFICIAL DIGITAL CERTIFICATE OF ISSUANCE</p>
+      <div class="badge">Certificate ID: ${cert.certificateId}</div>
+    </div>
+    <div class="body-content">
+      <p>This is to certify that <strong>${applicantName}</strong> has been officially granted and issued <strong>${certTitle}</strong> by the competent jurisdiction authority.</p>
+      <div class="meta-grid">
+        <div><strong>Application ID:</strong> ${app?.applicationId || app?._id}</div>
+        <div><strong>Date of Issuance:</strong> ${issueDate}</div>
+        <div><strong>Primary Jurisdiction:</strong> ${app?.primaryOffice || "Municipal Executive Authority"}</div>
+        <div><strong>Status:</strong> Approved & Authenticated</div>
+      </div>
+    </div>
+    <div class="footer-seal">
+      <div>
+        <div style="font-weight: 800; color: #1b4332;">E-GOV VERIFIED QR SEAL</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Scan or verify at govconnect.in</div>
+      </div>
+      <div class="signature">
+        <div style="font-weight: 800; color: #1b4332;">EXECUTED WITH BIOMETRIC DIGITAL SIGNATURE</div>
+        <div class="sig-line">${cert.digitalSignature}</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.onload = function() { window.print(); };
+  </script>
+</body>
+</html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${cert.certificateId || 'Certificate'}_${app?.applicationId || 'GovConnect'}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const rawAadhaar = String(user.aadhaarNumber || "987654321000");
   const maskedAadhaar = `XXXX-XXXX-${rawAadhaar.slice(-4)}`;
 
   return (
-    <div style={{ maxWidth: "1050px", margin: "2rem auto", padding: "0 16px", fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ maxWidth: "1050px", margin: "1rem auto", padding: "0 12px", fontFamily: "'Inter', sans-serif" }}>
       
       {/* 💳 Digital Citizen Pass / Profile Header Banner */}
-      <div style={{ background: "linear-gradient(135deg, #081c15 0%, #1b4332 50%, #2d6a4f 100%)", borderRadius: "24px", padding: "32px 24px", color: "white", position: "relative", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)", marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
-          
-          <div style={{ position: "absolute", top: "20px", right: "24px", display: "flex", gap: "10px" }}>
-            <button
-              onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
-              style={{ background: "rgba(255, 255, 255, 0.2)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <FaArrowLeft /> Back
-            </button>
-            <button
-              onClick={() => {
-                localStorage.clear();
-                window.dispatchEvent(new Event("storage"));
-                navigate("/login");
-              }}
-              style={{ background: "#ef4444", color: "#ffffff", border: "none", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <FaSignOutAlt /> Logout
-            </button>
-          </div>
-          
-          <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+      <div style={{ background: "linear-gradient(135deg, #081c15 0%, #1b4332 50%, #2d6a4f 100%)", borderRadius: "20px", padding: "20px 16px", color: "white", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)", marginBottom: "20px" }}>
+        
+        {/* Header Action Buttons in Flex Layout (Mobile Responsive) */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+          <button
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
+            style={{ background: "rgba(255, 255, 255, 0.2)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
+          >
+            <FaArrowLeft /> Back
+          </button>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.dispatchEvent(new Event("storage"));
+              navigate("/login");
+            }}
+            style={{ background: "#ef4444", color: "#ffffff", border: "none", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
+          >
+            <FaSignOutAlt /> Logout
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
             {/* Avatar Input & Trigger */}
             <input
               type="file"
@@ -403,7 +482,6 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* 📊 Navigation Tabs & Counter Badges */}
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "20px" }}>
@@ -773,14 +851,12 @@ export default function Profile() {
                         </p>
                       </div>
 
-                      <a
-                        href={cert.qrCodeData}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ background: "#16a34a", color: "white", padding: "10px 18px", borderRadius: "10px", textDecoration: "none", fontWeight: "800", fontSize: "0.88rem", display: "inline-flex", alignItems: "center", gap: "8px", boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)" }}
+                      <button
+                        onClick={() => handleDownloadCertificate(app)}
+                        style={{ background: "#16a34a", color: "white", border: "none", padding: "10px 18px", borderRadius: "10px", fontWeight: "800", fontSize: "0.88rem", display: "inline-flex", alignItems: "center", gap: "8px", boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)", cursor: "pointer" }}
                       >
                         <FaDownload /> Download PDF Certificate <FaQrcode />
-                      </a>
+                      </button>
                     </div>
 
                     <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #a7f3d0", fontSize: "0.8rem", color: "#065f46", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>

@@ -121,15 +121,44 @@ export default function OfficerVerificationModal({
     clearCanvas();
   };
 
-  // Canvas Drawing Methods
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  // Helper to get touch & mouse event coordinates safely on desktop and mobile
+  const getPos = (e, canvas) => {
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    let clientX = e.clientX;
+    let clientY = e.clientY;
+
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    }
+
+    if (clientX === undefined || clientY === undefined) {
+      return null;
+    }
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
+  // Canvas Drawing Methods (Mouse & Mobile Touch Support)
   const startDrawing = (e) => {
     if (timerExpired) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const pos = getPos(e, canvas);
+    if (!pos || isNaN(pos.x) || isNaN(pos.y)) return;
+
     const ctx = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
     ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.moveTo(pos.x, pos.y);
     setIsDrawing(true);
   };
 
@@ -137,20 +166,24 @@ export default function OfficerVerificationModal({
     if (!isDrawing || timerExpired) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const pos = getPos(e, canvas);
+    if (!pos || isNaN(pos.x) || isNaN(pos.y)) return;
+
     const ctx = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.strokeStyle = "#0f172a";
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
+    setHasDrawn(true);
   };
 
   const stopDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
     const canvas = canvasRef.current;
-    if (canvas) {
+    if (canvas && hasDrawn) {
       setSignatureData(canvas.toDataURL("image/png"));
     }
   };
@@ -161,6 +194,7 @@ export default function OfficerVerificationModal({
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       setSignatureData(null);
+      setHasDrawn(false);
     }
   };
 
@@ -487,7 +521,10 @@ export default function OfficerVerificationModal({
                       onMouseMove={draw}
                       onMouseUp={stopDrawing}
                       onMouseLeave={stopDrawing}
-                      style={{ display: "block", cursor: "crosshair", width: "100%", borderRadius: "10px" }}
+                      onTouchStart={startDrawing}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDrawing}
+                      style={{ display: "block", cursor: "crosshair", width: "100%", borderRadius: "10px", touchAction: "none" }}
                     />
                     {!signatureData && (
                       <div

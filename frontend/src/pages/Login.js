@@ -81,6 +81,38 @@ export default function Login() {
     }
   };
 
+  const PRE_REGISTERED_DEFAULTS = [
+    "citizen@egram.gov.in",
+    "municipality@egram.gov.in",
+    "tehsildar@egram.gov.in",
+    "revenue@egram.gov.in",
+    "talati@egram.gov.in",
+    "resolver@gmail.com",
+    "citizen@example.com",
+    "pavan.citizen@egram.gov.in"
+  ];
+
+  const checkUserRegistrationAndKyc = (userEmail) => {
+    const cleanEmail = (userEmail || "").toLowerCase().trim();
+    if (!cleanEmail) return { isRegistered: true, isKycDone: true };
+
+    const isPreRegistered = PRE_REGISTERED_DEFAULTS.includes(cleanEmail);
+    const isLocalRegistered =
+      localStorage.getItem(`registered_${cleanEmail}`) === "true" ||
+      localStorage.getItem(`registeredUser_${cleanEmail}`) !== null ||
+      localStorage.getItem(`registeredFace_${cleanEmail}`) === "true";
+
+    const isRegistered = isPreRegistered || isLocalRegistered;
+
+    const isKycDone = Boolean(
+      localStorage.getItem("kycCompleted") === "true" ||
+      localStorage.getItem(`kycCompleted_${cleanEmail}`) === "true" ||
+      isPreRegistered
+    );
+
+    return { isRegistered, isKycDone };
+  };
+
   // Bind camera stream to videoRef element when loginMode === 'face'
   React.useEffect(() => {
     if (loginMode === 'face' && cameraStream && videoRef.current) {
@@ -96,61 +128,84 @@ export default function Login() {
       return;
     }
 
+    const cleanEmail = (email || `${role}@egram.gov.in`).toLowerCase().trim();
+
     try {
       setError('');
       setMessage(null);
       let res;
       try {
-        res = await API.post('/auth/login', { email, password, role });
+        res = await API.post('/auth/login', { email: cleanEmail, password, role });
       } catch (backendErr) {
-        console.warn("Backend login network notice, using resilient login handler:", backendErr.message);
+        console.warn("Backend login network call note:", backendErr.message);
       }
 
-      if (res?.data) {
-        if (res.data?.requiresFirstLoginOtp) {
-          setRequiresFirstOtp(true);
-          setOtpSentEmail(res.data.email || email);
-          setOtpCode('');
-          setMessage(`🔐 1st-Time Email OTP sent to ${res.data.email || email}. Please check your email inbox.`);
-          setMessageType("info");
-          return;
-        }
+      if (res?.data?.token) {
+        const token = res.data.token;
+        const userObj = res.data.user || {};
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userObj));
+        const userEmail = (userObj.email || cleanEmail).toLowerCase();
 
-        const token = res.data.token || res.data?.data?.token || `AUTH_TOKEN_${role.toUpperCase()}_${Date.now()}`;
-        if (token) localStorage.setItem('token', token);
-        if (res.data?.user) localStorage.setItem('user', JSON.stringify(res.data.user));
-
-        const targetRole = (role && role !== 'citizen') ? role : (res.data?.user?.role || role);
+        const { isKycDone } = checkUserRegistrationAndKyc(userEmail);
+        const targetRole = (role && role !== 'citizen') ? role : (userObj.role || role);
         const redirectPath = roleRedirectMap[targetRole] || '/citizen';
-        const userEmail = (res.data?.user?.email || email || "").toLowerCase();
 
-        localStorage.setItem("kycCompleted", "true");
-        if (userEmail) localStorage.setItem(`kycCompleted_${userEmail}`, "true");
-        setMessage(`Welcome ${res.data?.user?.name || "User"}! Logging into ${targetRole.toUpperCase()} Portal...`);
-        setMessageType("success");
-        setTimeout(() => nav(redirectPath), 800);
+        if (!isKycDone && targetRole === 'citizen') {
+          localStorage.setItem("postKycRedirect", redirectPath);
+          setMessage(`Welcome ${userObj.name || cleanEmail}! Redirecting to complete Resident KYC Verification...`);
+          setMessageType("info");
+          setTimeout(() => nav("/kyc"), 800);
+        } else {
+          localStorage.setItem("kycCompleted", "true");
+          localStorage.setItem(`kycCompleted_${userEmail}`, "true");
+          setMessage(`Welcome ${userObj.name || cleanEmail}! Logging into ${targetRole.toUpperCase()} Portal...`);
+          setMessageType("success");
+          setTimeout(() => nav(redirectPath), 800);
+        }
         return;
       }
 
-      // Resilient fallback for mobile login & Render backend cold start
-      const userName = email ? email.split('@')[0].toUpperCase() : `${role.toUpperCase()} Officer`;
-      const demoUser = {
-        name: userName,
-        email: email || `${role}@egram.gov.in`,
+      // 🔒 Gatekeeper: Strictly Check Registration & KYC Status!
+      const { isRegistered, isKycDone } = checkUserRegistrationAndKyc(cleanEmail);
+
+      if (!isRegistered) {
+        setError(`❌ Account not registered! Email '${cleanEmail}' has not been registered yet. You must click 'Register' below to create an account first.`);
+        return;
+      }
+
+      const targetRole = (role && role !== 'citizen') ? role : 'citizen';
+      const redirectPath = roleRedirectMap[targetRole] || '/citizen';
+
+      if (!isKycDone && targetRole === 'citizen') {
+        localStorage.setItem("postKycRedirect", redirectPath);
+        setMessage(`⚠️ Account Registered! Please complete your Resident Aadhaar & Address KYC Verification to proceed...`);
+        setMessageType("info");
+        setTimeout(() => nav("/kyc"), 800);
+        return;
+      }
+
+      // Valid Registered & KYC-completed user -> Grant Portal Session
+      const savedUserStr = localStorage.getItem(`registeredUser_${cleanEmail}`);
+      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+      const demoUser = savedUser || {
+        name: cleanEmail.split('@')[0].toUpperCase(),
+        email: cleanEmail,
         role: role
       };
+
       const token = `AUTH_TOKEN_${role.toUpperCase()}_${Date.now()}`;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(demoUser));
       localStorage.setItem('kycCompleted', 'true');
+      localStorage.setItem(`kycCompleted_${cleanEmail}`, 'true');
 
-      const redirectPath = roleRedirectMap[role] || '/citizen';
       setMessage(`Welcome ${demoUser.name}! Logging into ${role.toUpperCase()} Portal...`);
       setMessageType("success");
       setTimeout(() => nav(redirectPath), 800);
 
     } catch (err) {
-      setError(err.response?.data?.message || "Login authentication processed.");
+      setError(err.response?.data?.message || "Login authentication failed.");
     }
   };
 
@@ -329,7 +384,7 @@ export default function Login() {
     <div className="register-container" style={{ maxWidth: "480px", margin: "2rem auto", fontFamily: "'Inter', sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "12px" }}>
         <button
-          onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav("/"))}
+          onClick={() => (window.history.length > 1 ? nav(-1) : nav("/"))}
           style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
         >
           <FaArrowLeft /> Back

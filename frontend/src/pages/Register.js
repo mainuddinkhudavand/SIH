@@ -163,9 +163,13 @@ export default function Register() {
           faceRegistered: true,
           kycCompleted: true
         };
+        const emailKey = form.email.toLowerCase().trim();
         localStorage.setItem("user", JSON.stringify(userObj));
         localStorage.setItem("faceRegistered", "true");
-        localStorage.setItem(`registeredFace_${form.email.toLowerCase()}`, "true");
+        localStorage.setItem("kycCompleted", "true");
+        localStorage.setItem(`registered_${emailKey}`, "true");
+        localStorage.setItem(`registeredUser_${emailKey}`, JSON.stringify(userObj));
+        localStorage.setItem(`kycCompleted_${emailKey}`, "true");
 
         setSuccessMsg(`✅ Account Registered Successfully! Office Profile created for ${form.city} Jurisdiction. Redirecting to ${form.role.toUpperCase()} Login...`);
         setTimeout(() => {

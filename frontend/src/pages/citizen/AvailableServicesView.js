@@ -14,9 +14,92 @@ import {
 import API from "../../services/api";
 import { createNewApplicationInStore } from "../../services/applicationStore";
 
+const DEFAULT_MASTER_SERVICES = [
+  {
+    serviceId: "water-connection",
+    title: "New Municipal Water Connection & Pipeline Sanitization",
+    category: "Civic Utilities",
+    department: "Municipality Water Works",
+    governmentFee: 200,
+    description: "Direct pipeline connection request for domestic and commercial water distribution.",
+    officeChain: ["Municipality"],
+    deliveryTime: "3-5 Working Days"
+  },
+  {
+    serviceId: "building-plan-sanction",
+    title: "Building Plan Sanction & Zoning NOC Clearance",
+    category: "Civic Utilities",
+    department: "Municipal Urban Planning",
+    governmentFee: 750,
+    description: "Architectural blueprint audit and zoning clearance from Talati land check to Municipal sanction.",
+    officeChain: ["Talati", "Municipality"],
+    deliveryTime: "7-10 Working Days"
+  },
+  {
+    serviceId: "income-certificate",
+    title: "Annual Family Income Certificate Issuance",
+    category: "Certificates",
+    department: "Revenue & Revenue Circle",
+    governmentFee: 30,
+    description: "Official income status certification for educational scholarships, subsidies, and government schemes.",
+    officeChain: ["Talati", "Tehsildar"],
+    deliveryTime: "2-4 Working Days"
+  },
+  {
+    serviceId: "caste-certificate",
+    title: "Caste & Tribe Certification Verification",
+    category: "Certificates",
+    department: "Social Justice & Tehsildar Office",
+    governmentFee: 50,
+    description: "Ancestral land and school leaving record verification for official caste certificate issuance.",
+    officeChain: ["Talati", "Tehsildar"],
+    deliveryTime: "5-7 Working Days"
+  },
+  {
+    serviceId: "domicile-certificate",
+    title: "Permanent Domicile & Residence Certificate",
+    category: "Certificates",
+    department: "Tehsildar Executive Sub-Division",
+    governmentFee: 50,
+    description: "Multi-office verification across Talati, Revenue, and Tehsildar for state residence proof.",
+    officeChain: ["Talati", "Revenue", "Tehsildar"],
+    deliveryTime: "3-5 Working Days"
+  },
+  {
+    serviceId: "land-extract-712",
+    title: "7/12 & 8A Land Rights Extract Verification",
+    category: "Land Records",
+    department: "Talati Village Office",
+    governmentFee: 15,
+    description: "Certified digital 7/12 land ownership extract with village registry signature seal.",
+    officeChain: ["Talati"],
+    deliveryTime: "1-2 Working Days"
+  },
+  {
+    serviceId: "property-tax-assessment",
+    title: "Property Tax Valuation & Mutation Record Update",
+    category: "Civic Utilities",
+    department: "Revenue & Municipal Taxation",
+    governmentFee: 150,
+    description: "Annual municipal tax assessment and revenue record mutation certificate.",
+    officeChain: ["Revenue"],
+    deliveryTime: "3-5 Working Days"
+  },
+  {
+    serviceId: "trade-license",
+    title: "Commercial Trade & Business License Issue",
+    category: "Village Services",
+    department: "Municipality Commercial Licensing",
+    governmentFee: 500,
+    description: "Sanitary and fire safety trade license for retail, commercial, and food establishments.",
+    officeChain: ["Municipality"],
+    deliveryTime: "4-6 Working Days"
+  }
+];
+
 export default function AvailableServicesView({ onApplicationSubmitted }) {
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState(DEFAULT_MASTER_SERVICES);
+  const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedService, setSelectedService] = useState(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -85,7 +168,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   const fetchServicesCatalog = async () => {
     try {
       const res = await API.get("/applications/services");
-      if (res.data?.services) {
+      if (res.data?.services && res.data.services.length > 0) {
         setServices(res.data.services);
       }
     } catch (err) {

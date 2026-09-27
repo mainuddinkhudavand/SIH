@@ -180,7 +180,7 @@ export default function CitizenPortal() {
 
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <button
-                onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
+                onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
                 style={{ background: "rgba(255, 255, 255, 0.2)", color: "white", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
                 <FaArrowLeft /> Back

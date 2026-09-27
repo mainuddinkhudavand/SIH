@@ -206,7 +206,7 @@ export default function ResolverPortal() {
 
             <div style={{ display: "flex", gap: "8px" }}>
               <button
-                onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
+                onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
                 style={{ background: "rgba(255, 255, 255, 0.2)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "10px 16px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
                 <FaArrowLeft /> Back
