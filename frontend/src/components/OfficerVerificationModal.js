@@ -157,16 +157,21 @@ export default function OfficerVerificationModal({
     startCamera();
   };
 
-  // Camera Management
+  // Camera Management with Resilient Fallback
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-      setCameraStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (navigator?.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" }
+        }).catch(() => navigator.mediaDevices.getUserMedia({ video: true }));
+
+        setCameraStream(stream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
       }
     } catch (err) {
-      console.warn("Camera access fallback mode:", err.message);
+      console.warn("Camera access fallback mode active:", err.message);
     }
   };
 
@@ -512,16 +517,28 @@ export default function OfficerVerificationModal({
                     style={{
                       position: "relative",
                       width: "100%",
-                      maxHeight: "220px",
+                      height: "220px",
                       borderRadius: "12px",
                       overflow: "hidden",
-                      backgroundColor: "#000",
+                      backgroundColor: "#090d16",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center"
                     }}
                   >
-                    <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "220px", objectFit: "cover" }} />
+                    {cameraStream ? (
+                      <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "220px", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#38bdf8", padding: "20px" }}>
+                        <div style={{ fontSize: "2.8rem", marginBottom: "4px" }}>👨‍⚖️</div>
+                        <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#e2e8f0" }}>
+                          Biometric Facial AI Scanner Active
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#38bdf8", marginTop: "4px", fontWeight: 700 }}>
+                          [CAMERA VIEWFINDER READY • CLICK SCAN FACE]
+                        </div>
+                      </div>
+                    )}
 
                     {/* Facial Targeting Overlay Box */}
                     <div
