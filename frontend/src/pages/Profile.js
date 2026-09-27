@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import { getMediaUrl } from "../utils/url";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FaUserCheck,
@@ -28,7 +28,9 @@ import {
   FaCertificate,
   FaFileInvoiceDollar,
   FaHome,
-  FaLandmark
+  FaLandmark,
+  FaArrowLeft,
+  FaSignOutAlt
 } from "react-icons/fa";
 import {
   getAllApplicationsFromStore,
@@ -37,6 +39,7 @@ import {
 } from "../services/applicationStore";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [user, setUser] = useState({
     name: "Pavan Kumar",
     email: "citizen@example.com",
@@ -119,22 +122,31 @@ export default function Profile() {
       setLoading(true);
       loadLocalApps();
 
+      let localUser = {};
+      try {
+        localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      } catch (e) {}
+
       const res = await API.get("/user/profile").catch(() => null);
       const data = res?.data?.user || res?.data?.data || res?.data;
-      if (data && data.name) {
-        setUser((prev) => ({
-          ...prev,
-          ...data,
-          aadhaarNumber: (data.aadhaarNumber || prev.aadhaarNumber || "987654321000").replace(/\D/g, "").slice(0, 12)
-        }));
-        setEditName(data.name || "Pavan Kumar");
-        setEditEmail(data.email || "citizen@example.com");
-        setEditPhone((data.phone || "9876543210").replace(/\D/g, "").slice(0, 10));
-        setEditStreet(data.address?.street || "Plot #14, Sector 4, Ward 4");
-        setEditTown(data.address?.town || "Civic Zone Gram Panchayat");
-        setEditDistrict(data.address?.district || "Central District");
-        setEditState(data.address?.state || "Maharashtra");
-        setEditPin(data.address?.pin || "400001");
+
+      const mergedUser = {
+        ...user,
+        ...localUser,
+        ...(data && data.name ? data : {})
+      };
+
+      if (mergedUser.email) {
+        mergedUser.aadhaarNumber = (mergedUser.aadhaarNumber || "987654321000").replace(/\D/g, "").slice(0, 12);
+        setUser(mergedUser);
+        setEditName(mergedUser.name || "Pavan Kumar");
+        setEditEmail(mergedUser.email || "citizen@example.com");
+        setEditPhone((mergedUser.phone || "9876543210").replace(/\D/g, "").slice(0, 10));
+        setEditStreet(mergedUser.address?.street || "Plot #14, Sector 4, Ward 4");
+        setEditTown(mergedUser.address?.town || mergedUser.city || "Hubli");
+        setEditDistrict(mergedUser.address?.district || mergedUser.district || "Dharwad");
+        setEditState(mergedUser.address?.state || mergedUser.state || "Karnataka");
+        setEditPin(mergedUser.address?.pin || "580020");
       }
     } catch (err) {
       console.warn("Profile API fetch warning (using local resident profile):", err);
@@ -304,6 +316,25 @@ export default function Profile() {
       {/* 💳 Digital Citizen Pass / Profile Header Banner */}
       <div style={{ background: "linear-gradient(135deg, #081c15 0%, #1b4332 50%, #2d6a4f 100%)", borderRadius: "24px", padding: "32px 24px", color: "white", position: "relative", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)", marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
+          
+          <div style={{ position: "absolute", top: "20px", right: "24px", display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
+              style={{ background: "rgba(255, 255, 255, 0.2)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <FaArrowLeft /> Back
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.dispatchEvent(new Event("storage"));
+                navigate("/login");
+              }}
+              style={{ background: "#ef4444", color: "#ffffff", border: "none", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
           
           <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
             {/* Avatar Input & Trigger */}
@@ -661,6 +692,41 @@ export default function Profile() {
                 <div>
                   <span style={{ fontSize: "0.75rem", color: "#2d6a4f", fontWeight: "700", textTransform: "uppercase" }}>Pincode</span>
                   <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "#1b4332", marginTop: "2px" }}>{user.address?.pin || "400001"}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Official Profile & Jurisdiction Card (Shown for Office Portal Officers) */}
+          {user.role && user.role !== "citizen" && (
+            <div style={{ marginTop: "24px", background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)", padding: "24px", borderRadius: "16px", border: "2px solid #86efac", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+              <h3 style={{ margin: "0 0 14px 0", color: "#166534", fontSize: "1.15rem", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
+                <FaBuilding style={{ color: "#15803d" }} /> 🏛️ Official Designation &amp; Office Jurisdiction Profile
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: "800", textTransform: "uppercase" }}>Official Designation</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>{user.designation || `${user.role.toUpperCase()} Officer`}</div>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: "800", textTransform: "uppercase" }}>Office Sub-Division</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>{user.officeName || `${user.role.toUpperCase()} Sub-Division Office`}</div>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: "800", textTransform: "uppercase" }}>Assigned State</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>{user.state || "Karnataka"}</div>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: "800", textTransform: "uppercase" }}>Assigned District</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>{user.district || "Dharwad"}</div>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: "800", textTransform: "uppercase" }}>Assigned City Jurisdiction</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>{user.city || "Hubli"}</div>
                 </div>
               </div>
             </div>

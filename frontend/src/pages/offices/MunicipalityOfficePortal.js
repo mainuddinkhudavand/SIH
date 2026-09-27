@@ -14,9 +14,10 @@ import {
   FaUniversity,
   FaUserCheck,
   FaCalendarAlt,
-  FaPrint
+  FaPrint,
+  FaSignOutAlt
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../../services/api";
 import MasterVerificationSearchBar from "../../components/MasterVerificationSearchBar";
 import {
@@ -24,14 +25,72 @@ import {
   updateApplicationInStore,
   subscribeToAppStore
 } from "../../services/applicationStore";
+import OfficerVerificationModal from "../../components/OfficerVerificationModal";
+import { locationData } from "../../constants/locationData";
 
 export default function MunicipalityOfficePortal() {
+  const navigate = useNavigate();
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState("pending"); // "pending", "approved", "rejected", "split", "all"
   const [remarks, setRemarks] = useState({});
   const [statusMsg, setStatusMsg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // 📍 Location Jurisdiction State (Default: Karnataka, Dharwad, Hubli)
+  const [selectedState, setSelectedState] = useState("Karnataka");
+  const [selectedDistrict, setSelectedDistrict] = useState("Dharwad");
+  const [selectedCity, setSelectedCity] = useState("Hubli");
+
+  const handleStateChange = (newState) => {
+    setSelectedState(newState);
+    const districts = Object.keys(locationData[newState] || {});
+    const firstDist = districts[0] || "";
+    setSelectedDistrict(firstDist);
+    const cities = locationData[newState]?.[firstDist] || [];
+    setSelectedCity(cities[0] || "");
+  };
+
+  const handleDistrictChange = (newDistrict) => {
+    setSelectedDistrict(newDistrict);
+    const cities = locationData[selectedState]?.[newDistrict] || [];
+    setSelectedCity(cities[0] || "");
+  };
+
+  // 1-Minute Verification Modal state
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [selectedAppForVerification, setSelectedAppForVerification] = useState(null);
+
+  useEffect(() => {
+    // Read Logged Officer Profile from Local Storage
+    const userStr = localStorage.getItem("user");
+    const u = userStr ? JSON.parse(userStr) : null;
+
+    const offName = u?.name || "Officer Vikram Rao (Municipal)";
+    const offEmail = u?.email || "municipality.hubli@egram.gov.in";
+    const offMobile = u?.phone || "+91 98765 43213";
+    const offState = u?.state || selectedState;
+    const offDistrict = u?.district || selectedDistrict;
+    const offCity = u?.city || selectedCity;
+    const offPremises = u?.officeName || "Municipal Corporation Headquarters";
+
+    if (u?.state) setSelectedState(u.state);
+    if (u?.district) setSelectedDistrict(u.district);
+    if (u?.city) setSelectedCity(u.city);
+
+    // Sync Officer Profile in Resolver Registry
+    API.post("/resolver/officers", {
+      officerName: offName,
+      role: "municipality",
+      officeName: offPremises,
+      state: offState,
+      district: offDistrict,
+      city: offCity,
+      email: offEmail,
+      mobile: offMobile,
+      officeAddress: `${offPremises}, ${offCity}, ${offDistrict}, ${offState}`
+    }).catch(() => null);
+  }, []);
 
   useEffect(() => {
     loadMunicipalityQueue();
@@ -42,17 +101,17 @@ export default function MunicipalityOfficePortal() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [selectedCity]);
 
   const loadMunicipalityQueue = async () => {
     setLoading(true);
     try {
       // Load local persistent store applications first for instant sync
-      const localApps = getOfficeApplicationsFromStore("Municipality");
+      const localApps = getOfficeApplicationsFromStore("Municipality", selectedCity);
       setQueue(localApps);
 
       // Attempt background backend fetch
-      const res = await API.get("/applications/office-queue/Municipality");
+      const res = await API.get(`/applications/office-queue/Municipality?city=${selectedCity}`);
       if (res.data?.applications && res.data.applications.length > 0) {
         setQueue(res.data.applications);
       }
@@ -64,6 +123,15 @@ export default function MunicipalityOfficePortal() {
   };
 
   const handleAction = async (target, action) => {
+    if (action === "approve") {
+      setSelectedAppForVerification({ target, action });
+      setIsVerificationModalOpen(true);
+      return;
+    }
+    await executeVerifiedAction(target, action);
+  };
+
+  const executeVerifiedAction = async (target, action, digitalSignature = null) => {
     const appId = typeof target === "object" ? (target.applicationId || target._id) : target;
     const note = remarks[appId] || (typeof target === "object" ? remarks[target._id] : "") || "";
     setStatusMsg(null);
@@ -76,7 +144,8 @@ export default function MunicipalityOfficePortal() {
       action,
       officerRemarks,
       verifiedBy,
-      officeName: "Municipality"
+      officeName: "Municipality",
+      digitalSignature
     });
 
     // 2. Call backend API for real-time database update
@@ -84,7 +153,8 @@ export default function MunicipalityOfficePortal() {
       await API.put(`/applications/${appId}/verify-stage`, {
         action,
         officerRemarks,
-        verifiedBy
+        verifiedBy,
+        digitalSignature
       });
     } catch (err) {
       console.warn("Backend stage verification sync notice:", err.message);
@@ -99,7 +169,7 @@ export default function MunicipalityOfficePortal() {
 
     setStatusMsg({
       type: "success",
-      text: `Municipal Action Executed! Application ${appId} status updated to '${statusText}'.`
+      text: `Municipal Action Completed! Application ${appId} status updated to '${statusText}'.`
     });
   };
 
@@ -115,8 +185,21 @@ export default function MunicipalityOfficePortal() {
     "Hoarding & Vendor NOC"
   ];
 
+  const cityFilteredQueue = queue.filter((a) => {
+    const appCity = (a.location?.city || a.applicantDetails?.city || a.applicantDetails?.town || "Hubli").toLowerCase();
+    const target = selectedCity.toLowerCase();
+    return appCity === target || 
+      (appCity.includes("hubl") && target.includes("hubl")) ||
+      (appCity.includes("dharwad") && target.includes("dharwad")) ||
+      (appCity.includes("belagavi") && target.includes("belagavi")) ||
+      (appCity.includes("mysuru") && target.includes("mysuru")) ||
+      (appCity.includes("bengaluru") && target.includes("bengaluru")) ||
+      (appCity.includes("mumbai") && target.includes("mumbai")) ||
+      (appCity.includes("pune") && target.includes("pune"));
+  });
+
   // Filtering applications by search and status
-  const filteredSearch = queue.filter((item) => {
+  const filteredSearch = cityFilteredQueue.filter((item) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -163,13 +246,61 @@ export default function MunicipalityOfficePortal() {
                 <span style={{ background: "#7dd3fc", color: "#0c4a6e", padding: "4px 12px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>
                   OFFICE 1 OF 4 — STANDALONE MUNICIPAL PORTAL
                 </span>
+                <span style={{ background: "#dcfce7", color: "#166534", padding: "4px 12px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "900" }}>
+                  📍 Assigned: {selectedCity} City ({selectedDistrict}, {selectedState})
+                </span>
               </div>
               <h1 style={{ margin: "8px 0 4px 0", fontSize: "2rem", fontWeight: "900", color: "#ffffff" }}>
                 🏢 Municipality Office Portal
               </h1>
               <p style={{ margin: 0, color: "#e0f2fe", fontSize: "0.95rem" }}>
-                Municipal Corporation &amp; Public Works Administration Workspace. Real-time queue, separated approved &amp; rejected services.
+                Municipal Corporation Workspace. Filtered queue for <strong>{selectedCity} City</strong> in <strong>{selectedDistrict} District, {selectedState} State</strong>.
               </p>
+            </div>
+
+            {/* LOCATION JURISDICTION SELECTOR & ACTIONS */}
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ backgroundColor: "rgba(255, 255, 255, 0.15)", padding: "10px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.3)" }}>
+                <span style={{ display: "block", fontSize: "0.72rem", fontWeight: "800", textTransform: "uppercase", color: "#e0f2fe", marginBottom: "4px" }}>
+                  📍 Officer Jurisdiction Location
+                </span>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <select value={selectedState} onChange={e => handleStateChange(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "none", fontSize: "0.82rem", fontWeight: "bold" }}>
+                    {Object.keys(locationData).map(st => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
+                  <select value={selectedDistrict} onChange={e => handleDistrictChange(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "none", fontSize: "0.82rem", fontWeight: "bold" }}>
+                    {Object.keys(locationData[selectedState] || {}).map(dist => (
+                      <option key={dist} value={dist}>{dist}</option>
+                    ))}
+                  </select>
+                  <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "none", fontSize: "0.82rem", fontWeight: "bold" }}>
+                    {(locationData[selectedState]?.[selectedDistrict] || []).map(ct => (
+                      <option key={ct} value={ct}>{ct}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
+                  style={{ background: "rgba(255, 255, 255, 0.2)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "8px 16px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <FaArrowLeft /> Back
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.clear();
+                    window.dispatchEvent(new Event("storage"));
+                    navigate("/login?role=municipality");
+                  }}
+                  style={{ background: "#ef4444", color: "#ffffff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <FaSignOutAlt /> Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -363,6 +494,25 @@ export default function MunicipalityOfficePortal() {
 
         </div>
       </div>
+
+      {/* 1-Minute Sequential Verification Modal (Digital Signature + Face Scan) */}
+      <OfficerVerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        officeName="Municipal Executive Office"
+        officerName="Municipal Duty Officer"
+        applicationId={selectedAppForVerification?.target?.applicationId || selectedAppForVerification?.target?._id || selectedAppForVerification?.target}
+        onSuccess={({ digitalSignature }) => {
+          setIsVerificationModalOpen(false);
+          if (selectedAppForVerification) {
+            executeVerifiedAction(
+              selectedAppForVerification.target,
+              selectedAppForVerification.action,
+              digitalSignature
+            );
+          }
+        }}
+      />
     </div>
   );
 }

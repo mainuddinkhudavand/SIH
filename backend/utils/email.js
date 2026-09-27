@@ -1,10 +1,15 @@
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.join(process.cwd(), "backend", ".env") });
+dotenv.config();
 
 function getTransporter() {
   const smtpHost = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
   const smtpPort = Number(process.env.SMTP_PORT || "587");
-  const smtpUser = (process.env.SMTP_USER || "sridhar83452816@gmail.com").trim();
-  const smtpPass = (process.env.SMTP_PASS || "").trim();
+  const smtpUser = (process.env.SMTP_USER || "mainuddinkhudavand531@gmail.com").trim();
+  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "").trim();
 
   return {
     transporter: nodemailer.createTransport({
@@ -111,5 +116,68 @@ export const sendComplaintStatusEmail = async (to, complaintTitle, status, notes
       </p>
     </div>
   `;
+  return await sendEmail(to, subject, html);
+};
+
+/**
+ * Sends Stage Verification OTP & Office Transition Alert Email
+ */
+export const sendStageVerificationOtpEmail = async ({
+  to,
+  otp,
+  applicationId,
+  serviceTitle,
+  actingOffice,
+  action,
+  nextOffice,
+  officerRemarks,
+  verifiedBy
+}) => {
+  if (!to) return null;
+
+  const actionText = action === "approve"
+    ? (nextOffice ? `Approved by ${actingOffice} & Forwarded to ${nextOffice}` : `Final Clearance by ${actingOffice} - Certificate Issued`)
+    : action === "discrepancy"
+    ? `Discrepancy Flagged by ${actingOffice}`
+    : `Application Rejected by ${actingOffice}`;
+
+  const statusColor = action === "approve" ? "#16a34a" : action === "discrepancy" ? "#d97706" : "#dc2626";
+
+  const subject = `🔔 Application Stage Alert [${applicationId}]: ${actingOffice} ${action.toUpperCase()} (OTP: ${otp})`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; background: #ffffff;">
+      <div style="background-color: #0f172a; padding: 18px; border-radius: 8px 8px 0 0; text-align: center; color: #ffffff;">
+        <h2 style="margin: 0; font-size: 1.3rem;">🏛️ State E-Governance & Revenue Portal</h2>
+        <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #94a3b8;">Stage Verification & Inter-Office Tracking Alert</p>
+      </div>
+      <div style="padding: 20px 0;">
+        <p style="font-size: 1rem; color: #334155; margin-top: 0;">Dear Citizen,</p>
+        <p style="font-size: 1rem; color: #334155;">
+          Your official application <strong>#${applicationId}</strong> for <strong>${serviceTitle || 'E-Governance Service'}</strong> has undergone stage review by <strong>${actingOffice}</strong>.
+        </p>
+
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 0.95rem; color: #475569;"><strong>Reviewing Office:</strong> ${actingOffice} (${verifiedBy || actingOffice + ' Officer'})</p>
+          <p style="margin: 0 0 8px 0; font-size: 0.95rem; color: ${statusColor}; font-weight: bold;"><strong>Stage Status:</strong> ${actionText}</p>
+          ${nextOffice ? `<p style="margin: 0 0 8px 0; font-size: 0.95rem; color: #0284c7;"><strong>Passed To Next Office:</strong> ${nextOffice}</p>` : ''}
+          ${officerRemarks ? `<p style="margin: 0; font-size: 0.95rem; color: #334155;"><strong>Officer Remarks:</strong> ${officerRemarks}</p>` : ''}
+        </div>
+
+        <div style="text-align: center; margin: 24px 0; background: #f0f9ff; border: 2px dashed #0284c7; border-radius: 10px; padding: 18px;">
+          <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: #0369a1; font-weight: bold; letter-spacing: 1px;">STAGE SECURITY VERIFICATION OTP</p>
+          <span style="font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; color: #0284c7;">
+            ${otp}
+          </span>
+          <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #64748b;">Keep this OTP for your official records and stage verification tracking on your portal.</p>
+        </div>
+
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: 24px;">
+          You can track real-time status updates and download official certificates from your <a href="http://localhost:3000/citizen-portal" style="color: #0284c7; text-decoration: underline;">Citizen Dashboard</a>.
+        </p>
+      </div>
+    </div>
+  `;
+
   return await sendEmail(to, subject, html);
 };

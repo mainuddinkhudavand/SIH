@@ -67,6 +67,11 @@ const ApplicationSchema = new mongoose.Schema(
       businessName: { type: String },
       reason: { type: String }
     },
+    location: {
+      state: { type: String, default: "Karnataka" },
+      district: { type: String, default: "Dharwad" },
+      city: { type: String, default: "Hubli" }
+    },
     documents: [
       {
         docType: { type: String },

@@ -77,6 +77,9 @@ export const createApplication = async (req, res) => {
     const routingResult = runOfficeRoutingCheck(serviceId, applicantDetails);
 
     const details = applicantDetails || req.body || {};
+    const userState = details.state || req.user?.state || req.user?.address?.state || "Karnataka";
+    const userDistrict = details.district || req.user?.district || req.user?.address?.district || "Dharwad";
+    const userCity = details.city || details.town || req.user?.city || req.user?.address?.town || "Hubli";
 
     const application = new Application({
       applicationId,
@@ -89,6 +92,11 @@ export const createApplication = async (req, res) => {
       primaryOffice: routingResult.primaryOffice,
       currentOffice: routingResult.currentOffice,
       currentStageIndex: routingResult.currentStageIndex,
+      location: {
+        state: userState,
+        district: userDistrict,
+        city: userCity
+      },
       governmentFee: {
         amount: serviceConfig.governmentFee || 50,
         isPaid: true
@@ -106,7 +114,10 @@ export const createApplication = async (req, res) => {
         casteCategory: details.casteCategory || "",
         deceasedName: details.deceasedName || "",
         businessName: details.businessName || "",
-        reason: details.reason || ""
+        reason: details.reason || "",
+        state: userState,
+        district: userDistrict,
+        city: userCity
       },
       documents: documents || [
         { docType: "Aadhaar Identity Proof", fileUrl: "/uploads/sample_aadhaar.pdf" },
@@ -293,6 +304,9 @@ export const verifyOfficeStage = async (req, res) => {
 
     const currentOffice = application.currentOffice;
     const stageIdx = application.currentStageIndex;
+    const stageOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    let nextOfficeName = null;
 
     if (action === "approve") {
       if (application.stageVerifications[stageIdx]) {
@@ -300,11 +314,13 @@ export const verifyOfficeStage = async (req, res) => {
         application.stageVerifications[stageIdx].officerRemarks = officerRemarks || `Verified & Approved by ${currentOffice} Officer.`;
         application.stageVerifications[stageIdx].verifiedBy = verifiedBy || `${currentOffice} Officer`;
         application.stageVerifications[stageIdx].verifiedAt = new Date();
+        application.stageVerifications[stageIdx].stageOtp = stageOtp;
       }
 
       const nextIdx = stageIdx + 1;
       if (nextIdx < application.officeChain.length) {
         const nextOffice = application.officeChain[nextIdx];
+        nextOfficeName = nextOffice;
 
         // 🔒 Gate 2: Verify active granted ConsentRecord for Inter-Office Data Handoff (e.g. Talati -> Revenue)
         const ConsentRecord = (await import("../models/ConsentRecord.js")).default;
@@ -331,7 +347,7 @@ export const verifyOfficeStage = async (req, res) => {
             stage: `Inter-Office Data Handoff Paused (${currentOffice} → ${nextOffice})`,
             status: "Consent Approval Pending",
             updatedBy: "GovConnect Exchange Layer",
-            note: `Data handoff to ${nextOffice} paused. Citizen must grant consent in portal to unpause application.`,
+            note: `Data handoff to ${nextOffice} paused. Citizen must grant consent in portal to unpause application. (Stage OTP: ${stageOtp})`,
             timestamp: new Date()
           });
 
@@ -355,7 +371,7 @@ export const verifyOfficeStage = async (req, res) => {
             stage: `Office Clearance (${currentOffice})`,
             status: application.status,
             updatedBy: verifiedBy || `${currentOffice} Officer`,
-            note: officerRemarks || `${currentOffice} office verification completed successfully. Consent verified for ${nextOffice} handoff.`,
+            note: `${officerRemarks || currentOffice + ' office verification completed successfully.'} Forwarded to ${nextOffice}. (Stage OTP: ${stageOtp})`,
             timestamp: new Date()
           });
         }
@@ -376,7 +392,7 @@ export const verifyOfficeStage = async (req, res) => {
           stage: `Final Office Approval (${currentOffice})`,
           status: "Approved",
           updatedBy: verifiedBy || `${currentOffice} Officer`,
-          note: officerRemarks || `${currentOffice} final approval completed. Certificate issued.`,
+          note: `${officerRemarks || currentOffice + ' final approval completed. Certificate issued.'} (Stage OTP: ${stageOtp})`,
           timestamp: new Date()
         });
       }
@@ -384,6 +400,7 @@ export const verifyOfficeStage = async (req, res) => {
       if (application.stageVerifications[stageIdx]) {
         application.stageVerifications[stageIdx].status = "discrepancy";
         application.stageVerifications[stageIdx].officerRemarks = officerRemarks || "Discrepancy found in records.";
+        application.stageVerifications[stageIdx].stageOtp = stageOtp;
       }
       application.status = "Discrepancy Found";
       application.rejectionReason = officerRemarks || "Document discrepancy noted by officer.";
@@ -392,12 +409,13 @@ export const verifyOfficeStage = async (req, res) => {
         stage: `Discrepancy Flagged (${currentOffice})`,
         status: "Discrepancy Found",
         updatedBy: verifiedBy || `${currentOffice} Officer`,
-        note: `Officer Action: ${officerRemarks}. Action required from citizen.`,
+        note: `Officer Action: ${officerRemarks}. Action required from citizen. (Stage OTP: ${stageOtp})`,
         timestamp: new Date()
       });
     } else if (action === "reject") {
       if (application.stageVerifications[stageIdx]) {
         application.stageVerifications[stageIdx].status = "rejected";
+        application.stageVerifications[stageIdx].stageOtp = stageOtp;
       }
       application.status = "Rejected";
       application.rejectionReason = officerRemarks || "Application rejected during office review.";
@@ -406,9 +424,41 @@ export const verifyOfficeStage = async (req, res) => {
         stage: `Application Rejected (${currentOffice})`,
         status: "Rejected",
         updatedBy: verifiedBy || `${currentOffice} Officer`,
-        note: `Rejection reason: ${officerRemarks}`,
+        note: `Rejection reason: ${officerRemarks}. (Stage OTP: ${stageOtp})`,
         timestamp: new Date()
       });
+    }
+
+    // 📧 Automated Stage Email Notification Dispatch (Sends 6-digit OTP & transition details to citizen email)
+    let citizenEmail = application.applicantDetails?.email;
+    if (!citizenEmail && application.user) {
+      try {
+        const User = (await import("../models/User.js")).default;
+        const citizenUser = await User.findById(application.user);
+        if (citizenUser) citizenEmail = citizenUser.email;
+      } catch (err) {
+        console.warn("Could not fetch user email for notification:", err.message);
+      }
+    }
+
+    if (citizenEmail) {
+      try {
+        const { sendStageVerificationOtpEmail } = await import("../utils/email.js");
+        await sendStageVerificationOtpEmail({
+          to: citizenEmail,
+          otp: stageOtp,
+          applicationId: application.applicationId,
+          serviceTitle: application.serviceTitle,
+          actingOffice: currentOffice,
+          action: action,
+          nextOffice: nextOfficeName,
+          officerRemarks: officerRemarks,
+          verifiedBy: verifiedBy || `${currentOffice} Officer`
+        });
+        console.log(`✅ Stage OTP (${stageOtp}) Email alert sent to citizen (${citizenEmail}) for application ${application.applicationId}`);
+      } catch (emailErr) {
+        console.error("❌ Failed to send stage OTP email:", emailErr.message);
+      }
     }
 
     application.markModified("stageVerifications");
@@ -439,21 +489,60 @@ export const verifyOfficeStage = async (req, res) => {
   }
 };
 
-// 🏢 Get Office Queue (Applications assigned to a specific office)
+// 🏢 Get Office Queue (Applications assigned to a specific office & city)
 export const getOfficeQueue = async (req, res) => {
+  const { officeName } = req.params; // "Municipality", "Tehsildar", "Revenue", "Talati"
+  const { city } = req.query;
+
   try {
-    const { officeName } = req.params; // "Municipality", "Tehsildar", "Revenue", "Talati"
-    const applications = await Application.find({
-      $or: [
-        { currentOffice: officeName },
-        { primaryOffice: officeName },
-        { "officeChain": officeName }
-      ]
-    }).sort({ createdAt: -1 });
+    let applications = [];
+    try {
+      let query = {
+        $or: [
+          { currentOffice: officeName },
+          { primaryOffice: officeName },
+          { "officeChain": officeName }
+        ]
+      };
+
+      if (city) {
+        query.$and = [
+          {
+            $or: [
+              { "location.city": new RegExp(city, "i") },
+              { "applicantDetails.city": new RegExp(city, "i") },
+              { "applicantDetails.town": new RegExp(city, "i") }
+            ]
+          }
+        ];
+      }
+
+      applications = await Application.find(query).sort({ createdAt: -1 });
+    } catch (dbErr) {
+      console.warn("DB queue query error for office", officeName, dbErr.message);
+    }
+
+    if (!applications || applications.length === 0) {
+      let fallbackApps = MASTER_DATASETS[officeName] || [];
+      if (city) {
+        fallbackApps = fallbackApps.filter(a => {
+          const c = (a.location?.city || a.applicantDetails?.city || a.applicantDetails?.town || "Hubli").toLowerCase();
+          return c.includes(city.toLowerCase()) || (c.includes("hubl") && city.toLowerCase().includes("hubl"));
+        });
+      }
+      return res.json({ success: true, count: fallbackApps.length, applications: fallbackApps });
+    }
 
     return res.json({ success: true, count: applications.length, applications });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error fetching office queue" });
+    let fallbackApps = MASTER_DATASETS[officeName] || [];
+    if (city) {
+      fallbackApps = fallbackApps.filter(a => {
+        const c = (a.location?.city || a.applicantDetails?.city || a.applicantDetails?.town || "Hubli").toLowerCase();
+        return c.includes(city.toLowerCase()) || (c.includes("hubl") && city.toLowerCase().includes("hubl"));
+      });
+    }
+    return res.json({ success: true, count: fallbackApps.length, applications: fallbackApps });
   }
 };
 

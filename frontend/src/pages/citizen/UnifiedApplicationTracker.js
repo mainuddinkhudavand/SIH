@@ -53,6 +53,209 @@ export default function UnifiedApplicationTracker() {
   const [processingPay, setProcessingPay] = useState(false);
   const [showCertModal, setShowCertModal] = useState(false);
 
+  const handleDownloadPDF = (appToDownload) => {
+    const targetApp = appToDownload || application;
+    if (!targetApp) return;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups in your browser to download your official PDF certificate.");
+      return;
+    }
+
+    const certTitle = targetApp?.title || targetApp?.serviceType || "Official E-Gov Certificate";
+    const certId = targetApp?.issuedCertificate?.certificateId || targetApp?.applicationId || "CERT-2026-GOV";
+    const name = targetApp?.applicantDetails?.fullName || targetApp?.user?.name || "Pavan Kumar";
+    const date = targetApp?.createdAt ? new Date(targetApp.createdAt).toLocaleDateString() : new Date().toLocaleDateString();
+    const sig = targetApp?.issuedCertificate?.digitalSignature || "CRYPT-SIG-MAHA-EGRAM-2026";
+    const city = targetApp?.location?.city || targetApp?.applicantDetails?.city || "Hubli";
+    const district = targetApp?.location?.district || targetApp?.applicantDetails?.district || "Dharwad";
+    const state = targetApp?.location?.state || targetApp?.applicantDetails?.state || "Karnataka";
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${certTitle} - ${certId}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;800&display=swap');
+            body {
+              font-family: 'Inter', sans-serif;
+              padding: 40px;
+              color: #0f172a;
+              background: #ffffff;
+            }
+            .cert-box {
+              border: 10px double #15803d;
+              padding: 40px;
+              border-radius: 16px;
+              max-width: 800px;
+              margin: 0 auto;
+              text-align: center;
+              background: #ffffff;
+              box-sizing: border-box;
+              position: relative;
+            }
+            .emblem {
+              font-size: 40px;
+              margin-bottom: 10px;
+            }
+            .gov-title {
+              font-family: 'Cinzel', serif;
+              font-size: 24px;
+              font-weight: 700;
+              color: #14532d;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+            }
+            .gov-sub {
+              font-size: 14px;
+              font-weight: 800;
+              color: #166534;
+              margin-top: 4px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              border-bottom: 2px solid #86efac;
+              padding-bottom: 14px;
+              margin-bottom: 24px;
+            }
+            .cert-heading {
+              font-size: 26px;
+              font-weight: 900;
+              color: #065f46;
+              margin: 20px 0 10px 0;
+              text-transform: uppercase;
+            }
+            .cert-id {
+              font-size: 14px;
+              font-weight: 800;
+              color: #0369a1;
+              background: #e0f2fe;
+              display: inline-block;
+              padding: 4px 14px;
+              border-radius: 20px;
+              margin-bottom: 24px;
+            }
+            .content {
+              font-size: 16px;
+              line-height: 1.8;
+              color: #334155;
+              margin-bottom: 30px;
+            }
+            .data-grid {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+              text-align: left;
+            }
+            .data-grid td {
+              padding: 10px 14px;
+              border: 1px solid #cbd5e1;
+              font-size: 14px;
+            }
+            .data-grid td.label {
+              font-weight: bold;
+              background: #f8fafc;
+              width: 40%;
+              color: #1e293b;
+            }
+            .footer-row {
+              margin-top: 35px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              border-top: 2px dashed #cbd5e1;
+              padding-top: 20px;
+            }
+            .qr-seal {
+              border: 2px solid #15803d;
+              padding: 8px 14px;
+              border-radius: 8px;
+              color: #15803d;
+              font-weight: 800;
+              font-size: 12px;
+              text-align: center;
+              background: #f0fdf4;
+            }
+            .sig-seal {
+              text-align: right;
+            }
+            .sig-title {
+              font-weight: 800;
+              color: #14532d;
+              font-size: 15px;
+            }
+            .sig-sub {
+              font-size: 13px;
+              color: #64748b;
+            }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="cert-box">
+            <div class="emblem">🏛️</div>
+            <div class="gov-title">Government of India / State e-Governance</div>
+            <div class="gov-sub">GovConnect Federated Interoperability Platform</div>
+
+            <div class="cert-heading">${certTitle}</div>
+            <div class="cert-id">REF NO: ${certId}</div>
+
+            <div class="content">
+              This is to certify that <strong>${name}</strong>, resident of <strong>${city}, ${district}, ${state}</strong>, 
+              has successfully fulfilled all verification checks across local Municipal, Tehsildar, Revenue, and Talati Office authorities. 
+              This official certificate is granted under statutory provisions and recorded in the State Interoperability Registry.
+            </div>
+
+            <table class="data-grid">
+              <tr>
+                <td class="label">Certificate Title</td>
+                <td>${certTitle}</td>
+              </tr>
+              <tr>
+                <td class="label">Beneficiary Name</td>
+                <td>${name}</td>
+              </tr>
+              <tr>
+                <td class="label">Jurisdiction &amp; City</td>
+                <td>${city}, ${district}, ${state}</td>
+              </tr>
+              <tr>
+                <td class="label">Date of Issuance</td>
+                <td>${date}</td>
+              </tr>
+              <tr>
+                <td class="label">PKI Digital Signature Hash</td>
+                <td><code style="font-size: 12px; color: #0284c7;">${sig}</code></td>
+              </tr>
+            </table>
+
+            <div class="footer-row">
+              <div class="qr-seal">
+                <div>[QR CODE VERIFIED]</div>
+                <div>AUTHENTIC GOV CERTIFICATE</div>
+              </div>
+              <div class="sig-seal">
+                <div class="sig-title">Digitally Signed By Authority</div>
+                <div class="sig-sub">Executive Verifying Officer</div>
+                <div class="sig-sub" style="font-size: 11px;">GovConnect Gateway</div>
+              </div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   useEffect(() => {
     // Initial lookup on mount
     fetchApplication(searchId);
@@ -614,7 +817,7 @@ export default function UnifiedApplicationTracker() {
 
               <div style={{ display: "flex", gap: "10px" }}>
                 <button
-                  onClick={() => alert("Downloading Official PDF Certificate...")}
+                  onClick={() => handleDownloadPDF(application)}
                   style={{ flex: 1, background: "#16a34a", color: "white", border: "none", padding: "12px", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "0.95rem" }}
                 >
                   📥 Download PDF

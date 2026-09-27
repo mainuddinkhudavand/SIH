@@ -437,15 +437,36 @@ export const getAllApplicationsFromStore = () => {
   return sanitizedDefaults;
 };
 
-// Helper to filter applications for a specific office portal ("Municipality", "Tehsildar", "Revenue", "Talati")
-export const getOfficeApplicationsFromStore = (officeName) => {
+// Helper to filter applications for a specific office portal ("Municipality", "Tehsildar", "Revenue", "Talati") & target city
+export const getOfficeApplicationsFromStore = (officeName, targetCity) => {
   const allApps = getAllApplicationsFromStore();
-  return allApps.filter(
-    (app) =>
+  return allApps.filter((app) => {
+    const isOffice =
       app.currentOffice === officeName ||
       app.primaryOffice === officeName ||
-      (Array.isArray(app.officeChain) && app.officeChain.includes(officeName))
-  );
+      (Array.isArray(app.officeChain) && app.officeChain.includes(officeName));
+
+    if (!isOffice) return false;
+
+    if (targetCity) {
+      const appCity = (app.location?.city || app.applicantDetails?.city || app.applicantDetails?.town || "Hubli").toLowerCase();
+      const cityFilter = targetCity.toLowerCase();
+      const isMatch =
+        appCity === cityFilter ||
+        (appCity.includes("hubl") && cityFilter.includes("hubl")) ||
+        (appCity.includes("dharwad") && cityFilter.includes("dharwad")) ||
+        (appCity.includes("belagavi") && cityFilter.includes("belagavi")) ||
+        (appCity.includes("mysuru") && cityFilter.includes("mysuru")) ||
+        (appCity.includes("bengaluru") && cityFilter.includes("bengaluru")) ||
+        (appCity.includes("mumbai") && cityFilter.includes("mumbai")) ||
+        (appCity.includes("pune") && cityFilter.includes("pune")) ||
+        (appCity.includes("nagpur") && cityFilter.includes("nagpur")) ||
+        (appCity.includes("ahmedabad") && cityFilter.includes("ahmedabad"));
+      return isMatch;
+    }
+
+    return true;
+  });
 };
 
 // Helper to find a specific application by ID or custom applicationId
@@ -482,6 +503,7 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
     if (isMatch) {
       const stageIdx = item.currentStageIndex || 0;
       const officeChain = item.officeChain || [item.currentOffice || "Municipality"];
+      const stageOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
       let updatedVerifications = (item.stageVerifications || []).map((s, idx) => {
         if (idx === stageIdx || s.officeName === item.currentOffice) {
@@ -489,8 +511,9 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
             ...s,
             status: action === "approve" ? "cleared" : action === "discrepancy" ? "discrepancy" : "rejected",
             officerRemarks: officerRemarks || s.officerRemarks || `Officer Action: ${action ? action.toUpperCase() : "UPDATED"}`,
-            verifiedBy: verifiedBy,
-            verifiedAt: new Date().toISOString()
+            verifiedBy: verifiedBy || `${item.currentOffice || 'Office'} Officer`,
+            verifiedAt: new Date().toISOString(),
+            stageOtp: stageOtp
           };
         }
         return s;
@@ -503,12 +526,14 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
       let issuedCertificate = item.issuedCertificate;
       let rejectionReason = item.rejectionReason;
 
+      let timelineNote = "";
       if (action === "approve") {
         const nextIdx = stageIdx + 1;
         if (nextIdx < officeChain.length) {
           nextStageIdx = nextIdx;
           nextOffice = officeChain[nextIdx];
           nextStatus = `${nextOffice} Verification Pending`;
+          timelineNote = `${officerRemarks || item.currentOffice + ' stage verified.'} Passed to ${nextOffice}. (Stage OTP: ${stageOtp})`;
         } else {
           // Final office clearance -> Application fully Approved
           nextOffice = "Completed";
@@ -520,14 +545,28 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
             digitalSignature: `SIG-DIGI-OFFICIAL-EGRAM-${Date.now()}`,
             qrCodeData: `https://egram.gov.in/verify/${item.applicationId || targetId}`
           };
+          timelineNote = `${officerRemarks || item.currentOffice + ' final approval completed. Certificate issued.'} (Stage OTP: ${stageOtp})`;
         }
       } else if (action === "discrepancy") {
         nextStatus = "Discrepancy Found";
         rejectionReason = officerRemarks || "Discrepancy flagged by officer during verification.";
+        timelineNote = `Officer Action: ${officerRemarks || 'Discrepancy noted'}. Action required from citizen. (Stage OTP: ${stageOtp})`;
       } else if (action === "reject") {
         nextStatus = "Rejected";
         rejectionReason = officerRemarks || "Application rejected during office review.";
+        timelineNote = `Rejection reason: ${officerRemarks || 'Rejected during review'}. (Stage OTP: ${stageOtp})`;
       }
+
+      const updatedTimeline = [
+        ...(item.timeline || []),
+        ...(action ? [{
+          stage: action === "approve" ? `Office Clearance (${item.currentOffice})` : action === "discrepancy" ? `Discrepancy Flagged (${item.currentOffice})` : `Application Rejected (${item.currentOffice})`,
+          status: nextStatus,
+          updatedBy: verifiedBy || `${item.currentOffice || 'Office'} Officer`,
+          note: timelineNote,
+          timestamp: new Date().toISOString()
+        }] : [])
+      ];
 
       updatedApp = sanitizeApp({
         ...item,
@@ -536,6 +575,7 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
         currentOffice: action ? nextOffice : (updatePayload.currentOffice || item.currentOffice),
         currentStageIndex: nextStageIdx,
         stageVerifications: updatedVerifications,
+        timeline: updatedTimeline,
         approvalDate: approvalDate,
         issuedCertificate: issuedCertificate,
         rejectionReason: rejectionReason,
@@ -665,6 +705,13 @@ export const createNewApplicationInStore = (payload) => {
     }
   }
 
+  const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+  const appLocation = payload.location || {
+    state: payload.applicantDetails?.state || userObj.state || userObj.address?.state || "Karnataka",
+    district: payload.applicantDetails?.district || userObj.district || userObj.address?.district || "Dharwad",
+    city: payload.applicantDetails?.city || payload.applicantDetails?.town || userObj.city || userObj.address?.town || "Hubli"
+  };
+
   const newApp = sanitizeApp({
     _id: `app-local-${Date.now()}`,
     applicationId,
@@ -675,6 +722,7 @@ export const createNewApplicationInStore = (payload) => {
     currentOffice: officeChain[0],
     officeChain,
     currentStageIndex: 0,
+    location: appLocation,
     governmentFee: {
       amount: feeAmount,
       isPaid: true
@@ -686,6 +734,9 @@ export const createNewApplicationInStore = (payload) => {
       email: payload.applicantDetails?.email || "citizen@egram.gov.in",
       aadhaarId: payload.applicantDetails?.aadhaarId || "9876-5432-1000",
       address: payload.applicantDetails?.address || "Village Ward #2, Gram Panchayat Zone",
+      state: appLocation.state,
+      district: appLocation.district,
+      city: appLocation.city,
       ...payload.applicantDetails
     },
     documents: payload.documents || [

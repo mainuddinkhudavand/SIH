@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import "./styles/Register.css";
 
 export default function ForgotPassword() {
@@ -36,6 +37,12 @@ export default function ForgotPassword() {
   return (
     <div className="register-container" style={{ minHeight: "80vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <div className="register-card" style={{ width: "450px", padding: "2.5rem", background: "#ffffff", borderRadius: "24px", border: "1px solid #e2e8f0", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.05)" }}>
+        <button
+          onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
+          style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem", marginBottom: "16px" }}
+        >
+          <FaArrowLeft /> Back
+        </button>
         <h2 style={{ textAlign: "center", fontWeight: "800", color: "#0f172a", marginBottom: "0.5rem" }}>Forgot Password</h2>
         <p style={{ textAlign: "center", color: "#64748b", fontSize: "0.9rem", marginBottom: "2rem" }}>
           Enter your registered email and select your portal role to receive a password reset link.
@@ -43,21 +50,7 @@ export default function ForgotPassword() {
 
         {message && (
           <div style={{ background: "#dcfce7", color: "#166534", padding: "12px", borderRadius: "10px", border: "1px solid #bbf7d0", fontWeight: "bold", fontSize: "0.9rem", marginBottom: "1.5rem", textAlign: "center", wordBreak: "break-word" }}>
-            {message.includes("http://localhost:3000/reset-password") ? (
-              <div>
-                <p style={{ margin: "0 0 10px 0" }}>{message.split("http://localhost:3000/reset-password")[0]}</p>
-                <a 
-                  href={"http://localhost:3000/reset-password" + message.split("http://localhost:3000/reset-password")[1].replace(")", "")} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ display: "inline-block", backgroundColor: "#166534", color: "#ffffff", padding: "8px 12px", borderRadius: "6px", textDecoration: "none", marginTop: "5px" }}
-                >
-                  👉 Click Here to Reset Password
-                </a>
-              </div>
-            ) : (
-              message
-            )}
+            {message}
           </div>
         )}
 

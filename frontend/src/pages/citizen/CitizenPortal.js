@@ -6,7 +6,7 @@ import AvailableServicesView from "./AvailableServicesView";
 import ApplicationsModule from "./ApplicationsModule";
 import UnifiedApplicationTracker from "./UnifiedApplicationTracker";
 import Profile from "../Profile";
-import { FaChartPie, FaThList, FaFileAlt, FaSearch, FaUser, FaLock, FaUserCircle, FaExclamationCircle, FaBolt } from "react-icons/fa";
+import { FaChartPie, FaThList, FaFileAlt, FaSearch, FaUser, FaLock, FaUserCircle, FaExclamationCircle, FaBolt, FaArrowLeft, FaSignOutAlt } from "react-icons/fa";
 
 export default function CitizenPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,11 +38,12 @@ export default function CitizenPortal() {
       try {
         const res = await API.get("/user/profile");
         const user = res.data?.user || res.data?.data || res.data;
-        if (user && user.kycCompleted !== undefined) {
-          setIsKycCompleted(!!user.kycCompleted);
-        } else {
-          setIsKycCompleted(true);
-        }
+        const isDone = Boolean(
+          user?.kycCompleted ||
+          localStorage.getItem("kycCompleted") === "true" ||
+          (user?.email && localStorage.getItem(`kycCompleted_${user.email.toLowerCase()}`) === "true")
+        );
+        setIsKycCompleted(isDone);
       } catch (err) {
         console.warn("KYC Status Verification Note:", err);
         setIsKycCompleted(true);
@@ -127,80 +128,31 @@ export default function CitizenPortal() {
   }
 
   if (!isAuthenticated) {
+    navigate("/login?role=citizen");
+    return null;
+  }
+
+  const kycDone = isKycCompleted || localStorage.getItem("kycCompleted") === "true";
+  if (!kycDone) {
     return (
       <div style={{ background: "#f4f9f4", minHeight: "92vh", display: "flex", justifyContent: "center", alignItems: "center", padding: "20px" }}>
-        <div style={{ background: "#ffffff", padding: "36px", borderRadius: "16px", border: "1px solid #d8f3dc", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)", maxWidth: "420px", width: "100%" }}>
-          <div style={{ textAlign: "center", marginBottom: "24px" }}>
-            <div style={{ background: "#d8f3dc", color: "#1b4332", width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "1.75rem" }}>
-              <FaUserCircle />
-            </div>
-            <h2 style={{ margin: "0 0 6px 0", color: "#1b4332", fontSize: "1.6rem", fontWeight: "800" }}>Citizen Portal Login</h2>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>Access unified public services and certificate applications.</p>
+        <div style={{ background: "#ffffff", padding: "36px", borderRadius: "16px", border: "1px solid #fed7aa", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)", maxWidth: "450px", width: "100%", textAlign: "center" }}>
+          <div style={{ background: "#fff7ed", color: "#ea580c", width: "64px", height: "64px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto", fontSize: "2rem" }}>
+            <FaLock />
           </div>
-
-          {errorMsg && (
-            <div style={{ padding: "12px", borderRadius: "8px", background: "#fef2f2", color: "#991b1b", fontSize: "0.85rem", marginBottom: "16px", border: "1px solid #fecaca" }}>
-              {errorMsg}
-            </div>
-          )}
-
-          <form onSubmit={handleCitizenLogin}>
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Citizen Email or Phone</label>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="citizen@egram.gov.in"
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "24px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#2d6a4f", marginBottom: "6px" }}>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "8px",
-                border: "none",
-                background: "linear-gradient(135deg, #2d6a4f, #1b4332)",
-                color: "white",
-                fontWeight: "700",
-                fontSize: "1rem",
-                cursor: "pointer",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "8px"
-              }}
-            >
-              {loading ? "Authenticating..." : <><FaLock /> Access Citizen Portal</>}
-            </button>
-          </form>
-
-          <div style={{ marginTop: "20px", textAlign: "center", fontSize: "0.85rem", color: "#475569" }}>
-            Don't have an account?{" "}
-            <button
-              onClick={() => navigate("/register")}
-              style={{ background: "none", border: "none", color: "#2d6a4f", fontWeight: "800", cursor: "pointer", textDecoration: "underline" }}
-            >
-              Register &amp; Complete KYC
-            </button>
-          </div>
+          <h2 style={{ margin: "0 0 8px 0", color: "#9a3412", fontSize: "1.6rem", fontWeight: "800" }}>KYC Verification Required</h2>
+          <p style={{ color: "#475569", fontSize: "0.95rem", lineHeight: "1.5", marginBottom: "20px" }}>
+            You must complete your Aadhaar &amp; Address KYC verification before accessing Citizen Public Services.
+          </p>
+          <button
+            onClick={() => {
+              localStorage.setItem("postKycRedirect", "/citizen");
+              navigate("/kyc");
+            }}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "none", background: "#ea580c", color: "white", fontWeight: "700", fontSize: "0.95rem", cursor: "pointer" }}
+          >
+            Complete KYC Verification Now ➔
+          </button>
         </div>
       </div>
     );
@@ -226,12 +178,18 @@ export default function CitizenPortal() {
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button
+                onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/"))}
+                style={{ background: "rgba(255, 255, 255, 0.2)", color: "white", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px" }}
+              >
+                <FaArrowLeft /> Back
+              </button>
               <button
                 onClick={handleCitizenLogout}
-                style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" }}
+                style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
-                Sign Out
+                <FaSignOutAlt /> Logout
               </button>
             </div>
           </div>

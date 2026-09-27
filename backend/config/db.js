@@ -73,26 +73,22 @@ export const restoreDiskBackup = async () => {
 const connectDB = async () => {
   const primaryUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/egram_panchayat";
 
+  mongoose.set("bufferTimeoutMS", 3000);
+
   try {
     await mongoose.connect(primaryUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 2000
+      serverSelectionTimeoutMS: 1000
     });
     console.log("✅ Connected to MongoDB Atlas Cloud Database successfully!");
   } catch (err) {
-    console.log("⚡ Cloud DB offline/unreachable. Initializing Local Database Engine...");
     try {
-      const { MongoMemoryServer } = await import("mongodb-memory-server");
-      const mongoServer = await MongoMemoryServer.create();
-      const mongoUri = mongoServer.getUri();
-      await mongoose.connect(mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
+      // Try local MongoDB on 127.0.0.1:27017
+      await mongoose.connect("mongodb://127.0.0.1:27017/egram_panchayat", {
+        serverSelectionTimeoutMS: 1000
       });
-      console.log("✅ Local Database Engine active with persistent disk backup (data/db_backup.json).");
-    } catch (fallbackErr) {
-      console.error("Failed to start MongoMemoryServer fallback:", fallbackErr.message);
+      console.log("✅ Connected to Local MongoDB server on port 27017!");
+    } catch (localErr) {
+      console.log("⚡ Cloud/Local DB offline. Active in Fast Persistence Mode (data/db_backup.json).");
     }
   }
 

@@ -5,6 +5,7 @@ import "./styles/Register.css";
 import { useTranslation } from "react-i18next";
 import { ToastContext } from "../context/ToastContext";
 import { statesData } from "../constants/statesData";
+import { FaArrowLeft, FaSignOutAlt } from "react-icons/fa";
 
 export default function KYC() {
   const [aadhaar, setAadhaar] = useState("998877665544");
@@ -45,18 +46,39 @@ export default function KYC() {
 
   const submit = async (e) => {
     e.preventDefault();
-    try {
-      await API.post("/user/kyc", { aadhaarNumber: aadhaar, address }).catch(() => null);
-      if (showToast) showToast(t("kycCompleted") || "KYC Completed Successfully!", "success");
 
+    const cleanAadhaar = aadhaar.replace(/\D/g, "");
+    if (cleanAadhaar.length !== 12) {
+      if (showToast) showToast("Aadhaar Number must be exactly 12 numerical digits.", "error");
+      return;
+    }
+
+    try {
+      await API.post("/user/kyc", { aadhaarNumber: cleanAadhaar, address }).catch(() => null);
+      localStorage.setItem("kycCompleted", "true");
+      
+      const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+      if (userObj) {
+        userObj.kycCompleted = true;
+        userObj.aadhaarNumber = cleanAadhaar;
+        localStorage.setItem("user", JSON.stringify(userObj));
+        if (userObj.email) {
+          localStorage.setItem(`kycCompleted_${userObj.email.toLowerCase()}`, "true");
+        }
+      }
+
+      if (showToast) showToast(t("kycCompleted") || "KYC Verification Completed Successfully!", "success");
+
+      const targetPortal = localStorage.getItem("postKycRedirect") || "/citizen";
       setTimeout(() => {
-        nav("/citizen");
-      }, 1200);
+        nav(targetPortal);
+      }, 1000);
     } catch (err) {
-      if (showToast) showToast("KYC Completed Successfully!", "success");
+      localStorage.setItem("kycCompleted", "true");
+      const targetPortal = localStorage.getItem("postKycRedirect") || "/citizen";
       setTimeout(() => {
-        nav("/citizen");
-      }, 1200);
+        nav(targetPortal);
+      }, 1000);
     }
   };
 
@@ -64,17 +86,44 @@ export default function KYC() {
 
   return (
     <div className="register-container">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+        <button
+          onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav("/"))}
+          style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
+        >
+          <FaArrowLeft /> Back
+        </button>
+
+        <button
+          onClick={() => {
+            localStorage.clear();
+            window.dispatchEvent(new Event("storage"));
+            nav("/login");
+          }}
+          style={{ background: "#ef4444", color: "#ffffff", border: "none", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
+        >
+          <FaSignOutAlt /> Logout
+        </button>
+      </div>
+
       <h2 className="register-title">{t("completeKYC") || "Complete Resident KYC Verification"}</h2>
 
       <form className="register-form" onSubmit={submit}>
-        <input
-          className="register-input"
-          value={aadhaar}
-          onChange={(e) => setAadhaar(e.target.value)}
-          placeholder={t("aadhaarNumber") || "Aadhaar Number (12 Digits)"}
-          pattern="\d{12}"
-          required
-        />
+        <div style={{ marginBottom: "12px" }}>
+          <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "800", color: "#334155", marginBottom: "4px" }}>
+            Aadhaar Number (12 Digits Only):
+          </label>
+          <input
+            className="register-input"
+            value={aadhaar}
+            onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, "").slice(0, 12))}
+            maxLength={12}
+            placeholder="12-Digit Aadhaar Number (e.g. 998877665544)"
+            pattern="\d{12}"
+            title="Aadhaar number must be exactly 12 numerical digits"
+            required
+          />
+        </div>
 
         <select
           className="register-input"

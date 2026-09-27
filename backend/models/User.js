@@ -38,7 +38,7 @@ const UserSchema = new mongoose.Schema(
     // Role-Based Access Control
     role: {
       type: String,
-      enum: ["citizen", "official", "admin", "municipal_officer", "revenue_officer", "health_officer"],
+      enum: ["citizen", "official", "admin", "municipal_officer", "revenue_officer", "health_officer", "talati", "tehsildar", "revenue", "municipality", "resolver"],
       default: "citizen",
       required: true
     },
@@ -50,12 +50,21 @@ const UserSchema = new mongoose.Schema(
     },
 
     isVerified: { type: Boolean, default: false },
+    firstLoginCompleted: { type: Boolean, default: false },
     otp: String,
     otpExpires: Date,
     aadhaarNumber: String,
     address: AddressSchema,
+    state: { type: String, default: "Karnataka" },
+    district: { type: String, default: "Dharwad" },
+    city: { type: String, default: "Hubli" },
+    officeName: { type: String, default: "" },
+    designation: { type: String, default: "" },
     kycCompleted: { type: Boolean, default: false },
     profilePictureUrl: String,
+    faceDescriptor: { type: String, default: "" }, // Biometric Face Image/Vector Data
+    faceRegistered: { type: Boolean, default: false },
+    digitalSignature: { type: String, default: "" },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },

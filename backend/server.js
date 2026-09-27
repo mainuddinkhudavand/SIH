@@ -39,6 +39,9 @@ import municipalRoutes from "./routes/municipalRoutes.js";
 import revenueRoutes from "./routes/revenueRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 
+// ⚖️ Resolver Portal & Escalation Disciplinary Routes
+import resolverRoutes from "./routes/resolverRoutes.js";
+
 // Chatbot API
 import chatRoutes from "./routes/chat.js";
 
@@ -69,29 +72,48 @@ app.use("/api/governance", governanceRoutes);
 app.use("/api/workflows", workflowRoutes);
 app.use("/api/interop", interopRoutes);
 
-// 🏢 Dedicated Portal Endpoints (Municipal, Revenue, Health)
+// 🏢 Dedicated Portal Endpoints (Municipal, Revenue, Health, Resolver)
 app.use("/api/municipal", municipalRoutes);
 app.use("/api/revenue", revenueRoutes);
 app.use("/api/health", healthRoutes);
+app.use("/api/resolver", resolverRoutes);
 
 // Chatbot API
 app.use("/api/chat", chatRoutes);
 
-// Root Status Check Route
-app.get("/", (req, res) => {
-  res.json({
-    platform: "GovConnect Interoperability Platform",
-    status: "ONLINE",
-    pillars: [
-      "1. Citizen Portal (React Web App)",
-      "2. GovConnect Platform (API Gateway, SSO, Consent, Data Mapper, Workflow Engine, Event Manager, Audit Logs)",
-      "3. Municipal Portal",
-      "4. Revenue Portal",
-      "5. Health Portal",
-      "6. Admin Portal"
-    ]
+// 🌐 Serve Frontend Production Build on Render / Production environment
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const buildPath = path.join(__dirname, "../frontend/build");
+if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/") || req.path.startsWith("/uploads/")) {
+      return next();
+    }
+    res.sendFile(path.join(buildPath, "index.html"));
   });
-});
+} else {
+  // Root Status Check Route for standalone API dev
+  app.get("/", (req, res) => {
+    res.json({
+      platform: "GovConnect Interoperability Platform",
+      status: "ONLINE",
+      pillars: [
+        "1. Citizen Portal (React Web App)",
+        "2. GovConnect Platform (API Gateway, SSO, Consent, Data Mapper, Workflow Engine, Event Manager, Audit Logs)",
+        "3. Municipal Portal",
+        "4. Revenue Portal",
+        "5. Health Portal",
+        "6. Admin Portal"
+      ]
+    });
+  });
+}
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
