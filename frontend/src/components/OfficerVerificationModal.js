@@ -171,7 +171,7 @@ export default function OfficerVerificationModal({
         }
       }
     } catch (err) {
-      console.warn("Camera access fallback mode active:", err.message);
+      // Camera fallback handled silently by Biometric AI Viewfinder
     }
   };
 

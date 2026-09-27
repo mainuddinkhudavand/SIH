@@ -5,14 +5,23 @@ import App from './App';
 import './index.css';
 import './i18n'; // import config
 
-// Suppress generic cross-origin browser extension "Script error." overlays
+// Suppress generic cross-origin & browser extension errors (translate-page, save-page, installHook)
 if (typeof window !== "undefined") {
   window.addEventListener("error", (event) => {
-    if (event.message === "Script error." || (event.message && event.message.includes("Script error"))) {
+    const msg = event.message || "";
+    if (msg === "Script error." || msg.includes("Script error") || msg.includes("translate-page") || msg.includes("save-page")) {
       event.stopImmediatePropagation();
       event.preventDefault();
     }
   }, true);
+
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason ? (event.reason.message || String(event.reason)) : "";
+    if (reason.includes("translate-page") || reason.includes("save-page") || reason.includes("menu item") || reason.includes("Cannot find menu item")) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+    }
+  });
 }
 
 // ✅ Use only createRoot (React 18+)
