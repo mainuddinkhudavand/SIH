@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import { FaPaperPlane, FaCheckCircle, FaHourglassHalf, FaTimesCircle, FaPlus, FaTint, FaHome, FaHeartbeat, FaExclamationCircle, FaCertificate } from "react-icons/fa";
+import { getAllApplicationsFromStore, subscribeToAppStore } from "../../services/applicationStore";
 
 export default function ApplicationsModule() {
   const [applications, setApplications] = useState([]);
@@ -9,17 +10,44 @@ export default function ApplicationsModule() {
 
   useEffect(() => {
     fetchApplications();
+    const unsubscribe = subscribeToAppStore(() => {
+      fetchApplications();
+    });
+    return () => unsubscribe();
   }, []);
 
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/applications/my-applications");
-      const list = Array.isArray(res.data) ? res.data : (res.data?.applications || res.data?.data || []);
-      setApplications(list);
+      const storeApps = getAllApplicationsFromStore();
+      let apiApps = [];
+      try {
+        const res = await API.get("/applications/my-applications");
+        apiApps = Array.isArray(res.data) ? res.data : (res.data?.applications || res.data?.data || []);
+      } catch (err) {
+        console.warn("Backend API apps fetch note:", err.message);
+      }
+
+      // Merge storeApps and apiApps seamlessly, removing duplicates by ID
+      const appMap = new Map();
+      storeApps.forEach(app => {
+        const key = (app.applicationId || app._id || "").toString().toLowerCase();
+        if (key) appMap.set(key, app);
+      });
+      apiApps.forEach(app => {
+        const key = (app.applicationId || app._id || "").toString().toLowerCase();
+        if (key && !appMap.has(key)) {
+          appMap.set(key, app);
+        }
+      });
+
+      const mergedList = Array.from(appMap.values());
+      mergedList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+      setApplications(mergedList);
     } catch (err) {
       console.error("Failed to load applications:", err);
-      setApplications([]);
+      setApplications(getAllApplicationsFromStore());
     } finally {
       setLoading(false);
     }
