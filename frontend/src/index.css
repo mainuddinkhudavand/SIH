@@ -227,3 +227,25 @@ code {
     padding: 12px !important;
   }
 }
+
+@media (max-width: 640px) {
+  .app-modal-overlay {
+    padding: 8px !important;
+    align-items: flex-end !important;
+  }
+  .app-modal-content {
+    padding: 16px 12px !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 94vh !important;
+    width: 100% !important;
+  }
+  .app-form-grid-2, .app-form-grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .app-doc-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+}

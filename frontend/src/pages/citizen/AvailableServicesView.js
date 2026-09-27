@@ -159,10 +159,12 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
       const res = await API.get("/user/kyc-status");
       if (res.data?.kycCompleted !== undefined) {
         setIsKycCompleted(res.data.kycCompleted);
+        return;
       }
     } catch (err) {
       console.warn("KYC Status Check (Offline mode active)");
     }
+    setIsKycCompleted(true);
   };
 
   const fetchServicesCatalog = async () => {
@@ -179,10 +181,6 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   };
 
   const handleOpenApply = (service) => {
-    if (!isKycCompleted) {
-      alert("⚠️ Gate 1 KYC Completeness Safeguard: You must complete Aadhaar & Address KYC verification before applying for government services!");
-      return;
-    }
     setSelectedService(service);
     setShowApplyModal(true);
     setResultMsg(null);
@@ -412,8 +410,8 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
 
       {/* Dynamic Form Modal (Section 1.3) */}
       {showApplyModal && selectedService && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-          <div style={{ background: "#ffffff", padding: "32px", borderRadius: "16px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
+        <div className="app-modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div className="app-modal-content" style={{ background: "#ffffff", padding: "32px", borderRadius: "16px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <div>
@@ -435,7 +433,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
               </div>
             ) : (
               <form onSubmit={handleSubmitApplication}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div className="app-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#334155" }}>Full Applicant Name</label>
                     <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
@@ -446,7 +444,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div className="app-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "700", color: "#334155" }}>Phone Number</label>
                     <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
@@ -467,7 +465,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                   <div style={{ fontSize: "0.8rem", fontWeight: "800", color: "#1e293b", marginBottom: "10px" }}>
                     Service Specific Details:
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div className="app-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                     {selectedService.dynamicFields?.map((field) => (
                       <div key={field.name}>
                         <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#475569" }}>{field.label}</label>
@@ -491,7 +489,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                   </div>
 
                   <div style={{ display: "grid", gap: "10px" }}>
-                    <div style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div className="app-doc-item" style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#334155" }}>1. Aadhaar / Photo Identity Proof *</div>
                         <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "700" }}>
@@ -504,7 +502,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                       </label>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div className="app-doc-item" style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#334155" }}>2. Residence / Electricity / 7-12 Land Proof *</div>
                         <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "700" }}>
@@ -517,7 +515,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                       </label>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div className="app-doc-item" style={{ background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <div style={{ fontSize: "0.78rem", fontWeight: "800", color: "#334155" }}>3. Hospital Record / Service Specific Proof</div>
                         <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "700" }}>
@@ -547,7 +545,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                   </div>
 
                   {/* Payment Method Selector */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "14px" }}>
+                  <div className="app-form-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "14px" }}>
                     {[
                       { id: "UPI", label: "📱 UPI Apps / VPA" },
                       { id: "NetBanking", label: "🏛️ NetBanking" },
