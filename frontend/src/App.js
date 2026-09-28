@@ -26,7 +26,7 @@ import ResolverPortal from "./pages/ResolverPortal";
 
 const Private = ({ children }) => {
   const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/citizen" />;
+  return token ? children : <Navigate to="/login?role=citizen" replace />;
 };
 
 const ResolverPrivate = ({ children }) => {

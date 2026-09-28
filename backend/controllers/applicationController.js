@@ -575,30 +575,35 @@ export const getUserApplications = async (req, res) => {
 export const getApplicationById = async (req, res) => {
   try {
     const { id } = req.params;
-    const application = await Application.findOne({
-      $or: [
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-        { applicationId: id }
-      ]
-    }).populate("user", "name email phone");
+    if (!id) return res.status(404).json({ success: false, message: "ID parameter required" });
+
+    const isValidObjId = typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/);
+    const query = isValidObjId
+      ? { $or: [{ _id: id }, { applicationId: id }] }
+      : { applicationId: id };
+
+    const application = await Application.findOne(query).populate("user", "name email phone");
 
     if (!application) {
-      return res.status(404).json({ success: false, message: "Application not found" });
+      return res.status(404).json({ success: false, message: `Application or Certificate record '${id}' not found.` });
     }
 
-    const auditLogs = await AuditLog.find({
-      $or: [
-        { resourceId: application.applicationId },
-        { resourceId: application._id.toString() }
-      ]
-    }).sort({ createdAt: -1 });
+    let auditLogs = [];
+    try {
+      auditLogs = await AuditLog.find({
+        $or: [
+          { resourceId: application.applicationId },
+          { resourceId: application._id ? application._id.toString() : "none" }
+        ]
+      }).sort({ createdAt: -1 });
+    } catch (e) {}
 
     const appObj = application.toObject();
     appObj.auditLogs = auditLogs;
 
     return res.json(appObj);
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Server error fetching application details" });
+    return res.status(404).json({ success: false, message: `Application or Certificate record '${req.params.id}' not found.` });
   }
 };
 

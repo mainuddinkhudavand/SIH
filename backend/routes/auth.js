@@ -18,6 +18,27 @@ router.post("/sso", ssoCallback);
 router.post("/verify-first-login-otp", verifyFirstLoginOtp);
 router.post("/login-face", loginWithFace);
 
+// 📧 Dispatch OTP Email Endpoints
+router.post("/send-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email) return res.status(400).json({ message: "Email required" });
+  const otpCode = otp || Math.floor(100000 + Math.random() * 900000).toString();
+  try {
+    await sendOtpEmail(email.toLowerCase().trim(), otpCode);
+  } catch (e) {}
+  return res.json({ success: true, message: `OTP sent to ${email}`, otp: otpCode });
+});
+
+router.post("/send-first-login-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email) return res.status(400).json({ message: "Email required" });
+  const otpCode = otp || Math.floor(100000 + Math.random() * 900000).toString();
+  try {
+    await sendOtpEmail(email.toLowerCase().trim(), otpCode);
+  } catch (e) {}
+  return res.json({ success: true, message: `First login OTP sent to ${email}`, otp: otpCode });
+});
+
 // Register -> create user with Citizen ID, Business ID & Role
 router.post("/register", async (req, res) => {
   const { name, email, phone, password, role } = req.body;
