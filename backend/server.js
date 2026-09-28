@@ -127,8 +127,8 @@ app.use((err, req, res, next) => {
 const DEFAULT_PORT = parseInt(process.env.PORT || "5000", 10);
 
 const startServer = (portToTry) => {
-  const server = app.listen(portToTry, () => {
-    console.log(`🚀 GovConnect Interoperability Gateway active on http://localhost:${portToTry}`);
+  const server = app.listen(portToTry, "0.0.0.0", () => {
+    console.log(`🚀 GovConnect Interoperability Gateway active on http://0.0.0.0:${portToTry}`);
   });
 
   server.on("error", (err) => {

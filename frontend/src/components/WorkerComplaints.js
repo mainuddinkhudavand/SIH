@@ -3,7 +3,7 @@ import axios from "axios";
 
 export default function WorkerComplaints() {
   const [complaints, setComplaints] = useState([]);
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? "" : "http://localhost:5000");
 
   useEffect(() => {
     const fetchComplaints = async () => {

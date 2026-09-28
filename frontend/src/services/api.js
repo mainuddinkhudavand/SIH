@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-let baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+let baseURL = process.env.REACT_APP_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' 
+    ? '/api' 
+    : 'http://localhost:5000/api');
 
 if (baseURL && !baseURL.endsWith('/api') && !baseURL.endsWith('/api/')) {
   if (baseURL !== '/' && baseURL !== '') {

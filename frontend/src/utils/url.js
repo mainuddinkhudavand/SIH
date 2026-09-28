@@ -17,7 +17,9 @@ export const getMediaUrl = (path) => {
   let base =
     process.env.REACT_APP_BACKEND_URL ||
     process.env.REACT_APP_API_URL ||
-    "http://localhost:5000";
+    (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
+      ? window.location.origin
+      : "http://localhost:5000");
 
   // Remove trailing /api or /api/ if present
   base = base.replace(/\/api\/?$/, "").replace(/\/$/, "");

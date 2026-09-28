@@ -1,16 +1,18 @@
 services:
   - type: web
     name: e-gov-connect
-    env: node
+    runtime: node
     region: singapore
     plan: free
-    buildCommand: npm run setup && npm run build --prefix frontend
+    buildCommand: npm install && npm run setup && npm run build --prefix frontend
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: CI
+        value: "false"
       - key: JWT_SECRET
         generateValue: true
       - key: MONGO_URI
