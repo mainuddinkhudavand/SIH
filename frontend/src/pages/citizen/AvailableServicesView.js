@@ -397,7 +397,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                         borderRadius: "12px"
                       }}
                     >
-                      {isMulti ? "MULTI-OFFICE SEQUENTIAL" : `SINGLE OFFICE (${s.primaryOffice.toUpperCase()})`}
+                      {isMulti ? "MULTI-OFFICE SEQUENTIAL" : `SINGLE OFFICE (${(s.primaryOffice || "GENERAL").toUpperCase()})`}
                     </span>
                     <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#64748b" }}>
                       ID Prefix: {s.prefix || "APP"}

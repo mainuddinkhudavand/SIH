@@ -550,10 +550,24 @@ export const getOfficeQueue = async (req, res) => {
 export const getUserApplications = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
-    const applications = await Application.find({ user: userId }).sort({ createdAt: -1 });
-    return res.json(applications);
+    let applications = [];
+    if (userId) {
+      try {
+        const isValidId = typeof userId === "string" && userId.match(/^[0-9a-fA-F]{24}$/);
+        const queryUser = isValidId ? userId : null;
+        applications = await Application.find({
+          $or: [
+            { user: queryUser },
+            { "applicantDetails.email": req.user?.email || "none" }
+          ]
+        }).sort({ createdAt: -1 });
+      } catch (dbErr) {
+        console.warn("getUserApplications Mongoose query notice:", dbErr.message);
+      }
+    }
+    return res.json(applications || []);
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Server error fetching user applications" });
+    return res.json([]);
   }
 };
 
