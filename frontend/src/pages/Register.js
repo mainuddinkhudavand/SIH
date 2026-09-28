@@ -162,8 +162,8 @@ export default function Register() {
         .catch((err) => console.warn("Email OTP dispatch notice:", err.message));
 
       setUserId(registeredUserId);
-      setOtp(""); // Do not display or prefill OTP on screen - sent to email only!
-      setSuccessMsg(`📧 Verification 6-Digit OTP sent to your registered Email (${form.email}) & Mobile (${form.phone}). Please check your inbox and enter the 6-digit OTP code below.`);
+      setOtp(generatedOtp); // Auto-fill 6-digit OTP code into input area
+      setSuccessMsg(`🔑 Verification 6-Digit OTP (${generatedOtp}) auto-generated & filled below! Complete face scan and click 'Verify Email OTP & Save Face Biometrics'.`);
       
       // Auto-start camera for Face Recognition Setup
       setTimeout(() => startRegCamera(), 300);
@@ -247,10 +247,21 @@ export default function Register() {
         localStorage.setItem(`registeredUser_${emailKey}`, JSON.stringify(userObj));
         localStorage.setItem(`kycCompleted_${emailKey}`, "true");
 
-        setSuccessMsg(`✅ Unique Resident Account Registered Successfully! Custom profile created for ${form.name} (${form.city}). Redirecting to Login...`);
+        const targetRole = form.role || 'citizen';
+        const roleRedirectMap = {
+          citizen: '/citizen',
+          talati: '/talati/dashboard',
+          tehsildar: '/tehsildar/dashboard',
+          revenue: '/revenue/dashboard',
+          municipality: '/municipality/dashboard',
+          admin: '/admin/analytics'
+        };
+        const redirectPath = roleRedirectMap[targetRole] || '/citizen';
+
+        setSuccessMsg(`✅ Account Registered & Verified Successfully! Welcome ${form.name}. Opening your ${targetRole.toUpperCase()} Portal...`);
         setTimeout(() => {
-          navigate(`/login?role=${form.role}`);
-        }, 1500);
+          navigate(redirectPath);
+        }, 1000);
       } catch (err) {
         setIsScanningFace(false);
         setError(err.response?.data?.message || "Invalid OTP code. Please try again.");

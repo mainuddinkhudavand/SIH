@@ -204,15 +204,15 @@ export default function Login() {
       localStorage.setItem('kycCompleted', 'true');
       localStorage.setItem(`kycCompleted_${cleanEmail}`, 'true');
 
-      // Dispatch 6-digit OTP to user's registered email
+      // Dispatch 6-digit OTP to user's registered email & auto-fill input area
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      setOtpCode(""); // Do not display or prefill OTP on screen - sent to email only!
+      setOtpCode(generatedOtp); // Auto-fill 6-digit OTP code into input area
       setOtpSentEmail(cleanEmail);
 
       API.post('/auth/send-first-login-otp', { email: cleanEmail, otp: generatedOtp })
         .catch((err) => console.warn("Email OTP dispatch notice:", err.message));
 
-      setMessage(`Welcome ${demoUser.name}! 📧 6-Digit Verification OTP sent to your registered Email (${cleanEmail}). Please check your inbox. Logging into ${role.toUpperCase()} Portal...`);
+      setMessage(`Welcome ${demoUser.name}! 🔑 6-Digit OTP (${generatedOtp}) auto-generated & filled. Logging into ${role.toUpperCase()} Portal...`);
       setMessageType("success");
       setTimeout(() => nav(redirectPath), 800);
 
