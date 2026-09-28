@@ -469,6 +469,11 @@ export default function Register() {
             <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "800", color: "#334155", marginBottom: "6px" }}>
               Enter 6-Digit Email OTP:
             </label>
+            {otp && (
+              <div style={{ background: "#e0f2fe", border: "1px solid #0284c7", borderRadius: "6px", padding: "8px 12px", marginBottom: "8px", color: "#0369a1", fontSize: "0.88rem", fontWeight: "700", textAlign: "center" }}>
+                🔑 Auto-Generated Verification OTP: <span style={{ letterSpacing: "3px", fontSize: "1.1rem" }}>{otp}</span>
+              </div>
+            )}
             <input
               className="register-input"
               type="text"
@@ -477,7 +482,7 @@ export default function Register() {
               onChange={(e) => setOtp(e.target.value)}
               placeholder="e.g. 849201"
               required
-              style={{ textLetterSpacing: "4px", fontSize: "1.2rem", fontWeight: "bold", textAlign: "center" }}
+              style={{ letterSpacing: "4px", fontSize: "1.2rem", fontWeight: "bold", textAlign: "center" }}
             />
           </div>
 
