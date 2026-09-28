@@ -658,7 +658,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                           <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Google Pay UPI VPA ID</label>
                           <input
                             type="text"
-                            placeholder="e.g. pavan.citizen@okaxis"
+                            placeholder="e.g. citizen@okaxis"
                             value={paymentDetails.gpayId}
                             onChange={(e) => setPaymentDetails({ ...paymentDetails, gpayId: e.target.value })}
                             required
@@ -684,7 +684,7 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
                           <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Virtual Payment Address (VPA)</label>
                           <input
                             type="text"
-                            placeholder="e.g. pavan.citizen@upi"
+                            placeholder="e.g. citizen@upi"
                             value={paymentDetails.bhimVpa}
                             onChange={(e) => setPaymentDetails({ ...paymentDetails, bhimVpa: e.target.value })}
                             required

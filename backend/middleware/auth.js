@@ -7,11 +7,11 @@ const auth = async (req, res, next) => {
   // Default demo fallback user if no token or demo token passed
   const demoFallbackUser = {
     _id: "64b0f9999999999999999999",
-    name: "Pavan",
-    email: "pavan@govconnect.gov.in",
+    name: "Registered Citizen",
+    email: "citizen@egram.gov.in",
     phone: "9876543210",
     role: "citizen",
-    citizenId: "C101"
+    citizenId: "CITIZEN-101"
   };
 
   if (!token) {

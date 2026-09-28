@@ -20,7 +20,7 @@ API.interceptors.request.use(config => {
                 localStorage.getItem('departmentToken') || 
                 localStorage.getItem('managerToken') || 
                 localStorage.getItem('workerToken') ||
-                'DEMO_CITIZEN_TOKEN_PAVAN';
+                'DEMO_CITIZEN_TOKEN';
                 
   config.headers.Authorization = `Bearer ${token}`;
   return config;

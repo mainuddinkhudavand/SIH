@@ -463,7 +463,7 @@ export default function Profile() {
             {/* Resident Details & Verified Asset Badges */}
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: "800", color: "#e0ffe0" }}>{user.name || "Pavan Kumar"}</h1>
+                <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: "800", color: "#e0ffe0" }}>{user.name || "Registered Citizen"}</h1>
                 
                 <button
                   onClick={() => setShowKycModal(true)}

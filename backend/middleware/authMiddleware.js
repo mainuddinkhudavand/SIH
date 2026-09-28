@@ -18,8 +18,8 @@ export const protect = async (req, res, next) => {
         // Fallback demo user to prevent 'User not found' session interruptions
         req.user = {
           _id: decoded.id || "64b0f9999999999999999999",
-          name: "Pavan",
-          email: "pavan@govconnect.gov.in",
+          name: "Registered Citizen",
+          email: "citizen@egram.gov.in",
           phone: "9876543210",
           role: decoded.role || "citizen",
           citizenId: "C101",
@@ -32,8 +32,8 @@ export const protect = async (req, res, next) => {
       console.error("AuthMiddleware JWT Verification Fallback:", error.message);
       req.user = {
         _id: "64b0f9999999999999999999",
-        name: "Pavan",
-        email: "pavan@govconnect.gov.in",
+        name: "Registered Citizen",
+        email: "citizen@egram.gov.in",
         phone: "9876543210",
         role: "citizen",
         citizenId: "C101",

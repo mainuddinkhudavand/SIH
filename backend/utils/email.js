@@ -7,15 +7,18 @@ dotenv.config();
 
 function getTransporter() {
   const smtpHost = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
-  const smtpPort = Number(process.env.SMTP_PORT || "587");
-  const smtpUser = (process.env.SMTP_USER || "mainuddinkhudavand531@gmail.com").trim();
-  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "").trim();
+  const smtpPort = Number(process.env.SMTP_PORT || "465");
+  const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "mainuddinkhudavand531@gmail.com").trim();
+  const rawPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || "jkqgvculzefwirct";
+  const smtpPass = rawPass.replace(/\s+/g, "").trim();
+
+  const isSecure = smtpPort === 465;
 
   return {
     transporter: nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: false, // TLS
+      secure: isSecure,
       auth: {
         user: smtpUser,
         pass: smtpPass,
@@ -24,14 +27,15 @@ function getTransporter() {
         rejectUnauthorized: false
       }
     }),
-    fromEmail: (process.env.FROM_EMAIL || `Citizen Grievance System <${smtpUser}>`).trim(),
+    fromEmail: (process.env.FROM_EMAIL || `E-Governance Portal <${smtpUser}>`).trim(),
+    smtpUser,
     smtpPass
   };
 }
 
 export const sendEmail = async (to, subject, html) => {
   try {
-    const { transporter, fromEmail, smtpPass } = getTransporter();
+    const { transporter, fromEmail, smtpUser, smtpPass } = getTransporter();
 
     if (!smtpPass || smtpPass === "testpass") {
       console.log(`[EMAIL MOCK - NO APP PASS SET] To: ${to} | Subject: ${subject}`);
@@ -47,8 +51,23 @@ export const sendEmail = async (to, subject, html) => {
     console.log("✅ Real Gmail OTP / Notification Sent to:", to, "| Message ID:", info.messageId);
     return info;
   } catch (err) {
-    console.error("❌ Error sending real email via Gmail SMTP:", err.message);
-    return null;
+    console.error("❌ Primary SMTP failed, trying port 587 TLS fallback:", err.message);
+    try {
+      const { fromEmail, smtpUser, smtpPass } = getTransporter();
+      const fallbackTransporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false }
+      });
+      const info = await fallbackTransporter.sendMail({ from: fromEmail, to, subject, html });
+      console.log("✅ Fallback Gmail OTP Sent to:", to, "| Message ID:", info.messageId);
+      return info;
+    } catch (fallbackErr) {
+      console.error("❌ Fallback SMTP also failed:", fallbackErr.message);
+      return null;
+    }
   }
 };
 

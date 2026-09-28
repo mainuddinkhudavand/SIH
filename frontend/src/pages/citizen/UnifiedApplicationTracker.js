@@ -41,7 +41,7 @@ export default function UnifiedApplicationTracker() {
   // NetBanking State
   const [bankName, setBankName] = useState("State Bank of India");
   const [accountNumber, setAccountNumber] = useState("4589201938");
-  const [accountHolderName, setAccountHolderName] = useState("Pavan Kumar");
+  const [accountHolderName, setAccountHolderName] = useState("Registered Citizen");
   const [ifscCode, setIfscCode] = useState("SBIN0001420");
 
   // Card State
@@ -65,7 +65,7 @@ export default function UnifiedApplicationTracker() {
 
     const certTitle = targetApp?.title || targetApp?.serviceType || "Official E-Gov Certificate";
     const certId = targetApp?.issuedCertificate?.certificateId || targetApp?.applicationId || "CERT-2026-GOV";
-    const name = targetApp?.applicantDetails?.fullName || targetApp?.user?.name || "Pavan Kumar";
+    const name = targetApp?.applicantDetails?.fullName || targetApp?.user?.name || "Registered Citizen";
     const date = targetApp?.createdAt ? new Date(targetApp.createdAt).toLocaleDateString() : new Date().toLocaleDateString();
     const sig = targetApp?.issuedCertificate?.digitalSignature || "CRYPT-SIG-MAHA-EGRAM-2026";
     const city = targetApp?.location?.city || targetApp?.applicantDetails?.city || "Hubli";
@@ -324,7 +324,7 @@ export default function UnifiedApplicationTracker() {
         paymentMethod: `UPI (${upiApp})`,
         bankName: `UPI Provider: ${upiApp}`,
         accountNumber: upiId ? `VPA: ${upiId}` : "9876543210@ybl",
-        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Registered Citizen",
         ifscCode: "UPI Authorized",
         upiId: upiId || "9876543210@ybl"
       };
@@ -334,7 +334,7 @@ export default function UnifiedApplicationTracker() {
         paymentMethod: `Card (${cardType})`,
         bankName: cardType,
         accountNumber: maskedCard,
-        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Registered Citizen",
         ifscCode: `Expiry: ${cardExpiry || "08/29"}`,
         cardType
       };
@@ -343,7 +343,7 @@ export default function UnifiedApplicationTracker() {
         paymentMethod: "NetBanking",
         bankName: bankName || "State Bank of India",
         accountNumber: accountNumber ? `XXXX-${accountNumber.slice(-4)}` : "XXXX-4892",
-        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Pavan Kumar",
+        accountHolderName: accountHolderName || application.applicantDetails?.fullName || "Registered Citizen",
         ifscCode: ifscCode || "SBIN0001420"
       };
     }
@@ -709,7 +709,7 @@ export default function UnifiedApplicationTracker() {
               <div style={{ background: "#f8fafc", padding: "18px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "0.9rem", display: "grid", gap: "8px", marginBottom: "20px" }}>
                 <div><strong>Certificate Ref:</strong> {application.issuedCertificate?.certificateId || "CERT-OFFICIAL-2026"}</div>
                 <div><strong>Application Title:</strong> {application.title}</div>
-                <div><strong>Beneficiary / Citizen:</strong> {application.applicantDetails?.fullName || "Pavan Kumar"}</div>
+                <div><strong>Beneficiary / Citizen:</strong> {application.applicantDetails?.fullName || "Registered Citizen"}</div>
                 <div><strong>Digital Seal Signature:</strong> {application.issuedCertificate?.digitalSignature || "SIG-DIGI-OFFICIAL-EGRAM"}</div>
               </div>
 

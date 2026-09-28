@@ -37,15 +37,15 @@ export default function CertificatesModule() {
   const [upiSubProvider, setUpiSubProvider] = useState("PhonePe");
   const [paymentDetails, setPaymentDetails] = useState({
     phonepeId: "9876543210@ybl",
-    gpayId: "pavan.citizen@okaxis",
+    gpayId: "citizen@okaxis",
     paytmId: "9876543210@paytm",
-    bhimVpa: "pavan.citizen@upi",
+    bhimVpa: "citizen@upi",
     bankName: "State Bank of India",
     netbankingUser: "SBI-1092837412",
     ifscCode: "SBIN0001234",
     cardType: "RuPay",
     cardNumber: "4532-8921-1029-4411",
-    cardHolder: "PAVAN KUMAR",
+    cardHolder: "REGISTERED CITIZEN",
     cardExpiry: "12/28",
     cardCvv: "892"
   });
@@ -484,7 +484,7 @@ export default function CertificatesModule() {
                           <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Google Pay UPI VPA ID</label>
                           <input
                             type="text"
-                            placeholder="e.g. pavan.citizen@okaxis"
+                            placeholder="e.g. citizen@okaxis"
                             value={paymentDetails.gpayId}
                             onChange={(e) => setPaymentDetails({ ...paymentDetails, gpayId: e.target.value })}
                             required
@@ -510,7 +510,7 @@ export default function CertificatesModule() {
                           <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>Virtual Payment Address (VPA)</label>
                           <input
                             type="text"
-                            placeholder="e.g. pavan.citizen@upi"
+                            placeholder="e.g. citizen@upi"
                             value={paymentDetails.bhimVpa}
                             onChange={(e) => setPaymentDetails({ ...paymentDetails, bhimVpa: e.target.value })}
                             required

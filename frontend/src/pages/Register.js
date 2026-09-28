@@ -489,7 +489,7 @@ export default function Register() {
                 justifyContent: "center"
               }}
             >
-              <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "220px", objectFit: "cover" }} />
+              <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "220px", objectFit: "cover", transform: "scaleX(-1)" }} />
               <div
                 style={{
                   position: "absolute",

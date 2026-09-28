@@ -54,8 +54,8 @@ router.put('/profile', auth, upload.single('profilePicture'), async (req, res) =
       message: 'Profile updated successfully',
       user: {
         _id: req.user?._id || "64b0f9999999999999999999",
-        name: name || req.user?.name || "Pavan",
-        email: email || req.user?.email || "pavan@govconnect.gov.in",
+        name: name || req.user?.name || "Registered Citizen",
+        email: email || req.user?.email || "citizen@egram.gov.in",
         phone: phone || req.user?.phone || "+91 98765 43210",
         kycCompleted: true
       }
@@ -66,8 +66,8 @@ router.put('/profile', auth, upload.single('profilePicture'), async (req, res) =
       message: 'Profile updated successfully',
       user: {
         _id: "64b0f9999999999999999999",
-        name: name || "Pavan",
-        email: email || "pavan@govconnect.gov.in",
+        name: name || "Registered Citizen",
+        email: email || "citizen@egram.gov.in",
         phone: phone || "+91 98765 43210",
         kycCompleted: true
       }

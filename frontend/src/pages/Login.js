@@ -668,7 +668,7 @@ export default function Login() {
               marginBottom: "14px"
             }}
           >
-            <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "240px", objectFit: "cover" }} />
+            <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "240px", objectFit: "cover", transform: "scaleX(-1)" }} />
 
             {/* Target Circle Box Overlay */}
             <div
