@@ -53,7 +53,7 @@ const INITIAL_MASTER_APPLICATIONS = [
     serviceId: "birth-certificate",
     serviceType: "Certificates",
     governmentFee: { amount: 25, isPaid: true },
-    applicantDetails: { fullName: "Pavan Kumar", phone: "+91 98765 43210", aadhaarId: "9876-5432-1000", deceasedName: "Baby of Pavan", address: "Ward 4 Civil Hospital" },
+    applicantDetails: { fullName: "Sunil Kumar", phone: "+91 98765 43210", aadhaarId: "9876-5432-1000", deceasedName: "Baby of Sunil", address: "Ward 4 Civil Hospital" },
     status: "Municipal Verification Pending",
     primaryOffice: "Municipality",
     currentOffice: "Municipality",
@@ -598,6 +598,43 @@ export const updateApplicationInStore = (appId, updatePayload, notifyBackend = t
       officerRemarks,
       verifiedBy
     }).catch((err) => console.warn("Backend sync notice (offline mode active):", err.message));
+  }
+
+  // 📧 Dispatch Official Email Notification to Applicant Email after Each Stage Approval
+  if (updatedApp && action) {
+    const applicantEmail = (
+      updatedApp.applicantDetails?.email ||
+      updatedApp.applicantEmail ||
+      "citizen@egram.gov.in"
+    ).toLowerCase().trim();
+
+    const applicantName = updatedApp.applicantDetails?.fullName || updatedApp.applicantDetails?.name || "Citizen";
+    const appTitle = updatedApp.title || updatedApp.serviceType || "Government Application";
+    const appNum = updatedApp.applicationId || targetId;
+
+    const emailSubject = `📧 E-Gov Official Notification: Application #${appNum} Status Updated to '${updatedApp.status}'`;
+    const emailBody = `Dear ${applicantName},\n\nYour application #${appNum} for '${appTitle}' has been updated to '${updatedApp.status}' by ${verifiedBy}.\n\nOfficer Remarks: ${officerRemarks || 'Stage verification completed.'}\n\nPlease log in to your Citizen Portal to view full tracking details.\n\nE-Governance Public Authority`;
+
+    console.log(`[EMAIL DISPATCH] Sent approval notification email to: ${applicantEmail}`);
+
+    API.post("/notifications/send-email", {
+      to: applicantEmail,
+      subject: emailSubject,
+      message: emailBody,
+      applicationId: appNum,
+      status: updatedApp.status,
+      verifiedBy: verifiedBy
+    }).catch((err) => console.warn("Email API notification dispatch note:", err.message));
+
+    const notificationEntry = {
+      id: `NOTIF-${Date.now()}`,
+      to: applicantEmail,
+      subject: emailSubject,
+      sentAt: new Date().toISOString(),
+      type: "EMAIL_APPROVAL_NOTIFICATION"
+    };
+
+    updatedApp.notifications = [...(updatedApp.notifications || []), notificationEntry];
   }
 
   return updatedApp;

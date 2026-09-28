@@ -171,15 +171,15 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   const [upiSubProvider, setUpiSubProvider] = useState("PhonePe");
   const [paymentDetails, setPaymentDetails] = useState({
     phonepeId: "9876543210@ybl",
-    gpayId: "pavan.citizen@okaxis",
+    gpayId: "citizen.vpa@okaxis",
     paytmId: "9876543210@paytm",
-    bhimVpa: "pavan.citizen@upi",
+    bhimVpa: "citizen.vpa@upi",
     bankName: "State Bank of India",
     netbankingUser: "SBI-1092837412",
     ifscCode: "SBIN0001234",
     cardType: "RuPay",
     cardNumber: "4532-8921-1029-4411",
-    cardHolder: "PAVAN KUMAR",
+    cardHolder: "REGISTERED CITIZEN",
     cardExpiry: "12/28",
     cardCvv: "892"
   });

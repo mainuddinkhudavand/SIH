@@ -57,14 +57,23 @@ export default function KYC() {
       await API.post("/user/kyc", { aadhaarNumber: cleanAadhaar, address }).catch(() => null);
       localStorage.setItem("kycCompleted", "true");
       
-      const userObj = JSON.parse(localStorage.getItem("user") || "{}");
-      if (userObj) {
-        userObj.kycCompleted = true;
-        userObj.aadhaarNumber = cleanAadhaar;
-        localStorage.setItem("user", JSON.stringify(userObj));
-        if (userObj.email) {
-          localStorage.setItem(`kycCompleted_${userObj.email.toLowerCase()}`, "true");
-        }
+      let userObj = {};
+      try {
+        userObj = JSON.parse(localStorage.getItem("user") || "{}");
+      } catch (e) {}
+
+      userObj.kycCompleted = true;
+      userObj.aadhaarNumber = cleanAadhaar;
+      userObj.address = address;
+      userObj.state = address.state || userObj.state;
+      userObj.district = address.district || userObj.district;
+      userObj.city = address.town || userObj.city;
+
+      const userEmail = (userObj.email || "").toLowerCase().trim();
+      localStorage.setItem("user", JSON.stringify(userObj));
+      if (userEmail) {
+        localStorage.setItem(`kycCompleted_${userEmail}`, "true");
+        localStorage.setItem(`registeredUser_${userEmail}`, JSON.stringify(userObj));
       }
 
       if (showToast) showToast(t("kycCompleted") || "KYC Verification Completed Successfully!", "success");

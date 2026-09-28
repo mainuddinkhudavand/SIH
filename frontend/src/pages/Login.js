@@ -82,14 +82,11 @@ export default function Login() {
   };
 
   const PRE_REGISTERED_DEFAULTS = [
-    "citizen@egram.gov.in",
     "municipality@egram.gov.in",
     "tehsildar@egram.gov.in",
     "revenue@egram.gov.in",
     "talati@egram.gov.in",
-    "resolver@gmail.com",
-    "citizen@example.com",
-    "pavan.citizen@egram.gov.in"
+    "resolver@gmail.com"
   ];
 
   const checkUserRegistrationAndKyc = (userEmail) => {
@@ -207,12 +204,15 @@ export default function Login() {
       localStorage.setItem('kycCompleted', 'true');
       localStorage.setItem(`kycCompleted_${cleanEmail}`, 'true');
 
-      // Generate instant OTP display on mobile for 1st-time verification
+      // Dispatch 6-digit OTP to user's registered email
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      setOtpCode(generatedOtp);
+      setOtpCode(""); // Do not display or prefill OTP on screen - sent to email only!
       setOtpSentEmail(cleanEmail);
 
-      setMessage(`Welcome ${demoUser.name}! 🔑 1st-Time Email OTP: [ ${generatedOtp} ]. Logging into ${role.toUpperCase()} Portal...`);
+      API.post('/auth/send-first-login-otp', { email: cleanEmail, otp: generatedOtp })
+        .catch((err) => console.warn("Email OTP dispatch notice:", err.message));
+
+      setMessage(`Welcome ${demoUser.name}! 📧 6-Digit Verification OTP sent to your registered Email (${cleanEmail}). Please check your inbox. Logging into ${role.toUpperCase()} Portal...`);
       setMessageType("success");
       setTimeout(() => nav(redirectPath), 800);
 
@@ -342,37 +342,27 @@ export default function Login() {
     // 1. Enforce 90%+ Face Coverage Detection
     const faceCheck = checkFaceInCircle();
     if (!faceCheck.detected || faceCheck.percentage < 90) {
-      setError(`⚠️ Face positioning incomplete (${faceCheck.percentage}% covered). At least 90% face coverage inside the target frame is required to login.`);
+      setError(`⚠️ Face positioning incomplete (${faceCheck.percentage}% covered). At least 90% face coverage inside target circle is required.`);
       setIsScanningFace(false);
       return;
     }
 
-    // 2. Determine Active Email for Face Biometric Verification
-    let activeEmail = (email || "").toLowerCase().trim();
-    if (!activeEmail) {
-      try {
-        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        if (storedUser && storedUser.email) {
-          activeEmail = storedUser.email.toLowerCase().trim();
-        }
-      } catch (e) {}
-    }
+    // 2. Require explicit registered email input (No default fallback logins for unknown faces!)
+    const cleanEmail = (email || "").toLowerCase().trim();
 
-    if (!activeEmail) {
+    if (!cleanEmail) {
       setError(`❌ Access Denied: Face Not Registered! Please enter your registered email address above before initiating direct face recognition login.`);
       setIsScanningFace(false);
       return;
     }
 
-    // 3. Strictly Verify if Face & Account is Registered for this exact email
+    // 3. Strictly Verify if Face Biometrics have been registered for this exact email
     const isFaceReg =
-      localStorage.getItem(`registeredFace_${activeEmail}`) === "true" ||
-      localStorage.getItem(`registered_${activeEmail}`) === "true" ||
-      localStorage.getItem(`registeredUser_${activeEmail}`) !== null ||
-      PRE_REGISTERED_DEFAULTS.includes(activeEmail);
+      localStorage.getItem(`registeredFace_${cleanEmail}`) === "true" ||
+      localStorage.getItem(`registeredUser_${cleanEmail}`) !== null;
 
     if (!isFaceReg) {
-      setError(`❌ Access Denied: Face Not Registered! No registered face biometric profile found for '${activeEmail}'. Please click 'Register & Setup Face Biometrics' below first.`);
+      setError(`❌ Access Denied: Face Not Registered! No registered face biometric profile found for '${cleanEmail}'. Please click 'Register & Setup Face Biometrics' below to create your account first.`);
       setIsScanningFace(false);
       return;
     }
@@ -396,27 +386,27 @@ export default function Login() {
         try {
           res = await API.post('/auth/login-face', {
             role: activeRole,
-            email: activeEmail,
+            email: cleanEmail,
             faceDescriptor: `FACE_BIOMETRIC_DESCRIPTOR_VEC_${Date.now()}`
           });
         } catch (apiErr) {
           console.warn("Face login API note, granting resilient session:", apiErr.message);
         }
 
-        const savedUserStr = localStorage.getItem(`registeredUser_${activeEmail}`);
+        const savedUserStr = localStorage.getItem(`registeredUser_${cleanEmail}`);
         const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
 
         const token = res?.data?.token || `FACE_AUTH_TOKEN_${activeRole.toUpperCase()}_${Date.now()}`;
         const userObj = res?.data?.user || savedUser || {
-          name: activeEmail.split('@')[0].toUpperCase(),
-          email: activeEmail,
+          name: cleanEmail.split('@')[0].toUpperCase(),
+          email: cleanEmail,
           role: activeRole
         };
 
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userObj));
         localStorage.setItem('kycCompleted', 'true');
-        localStorage.setItem(`kycCompleted_${activeEmail}`, 'true');
+        localStorage.setItem(`kycCompleted_${cleanEmail}`, 'true');
 
         const userRole = (activeRole && activeRole !== 'citizen') ? activeRole : (userObj.role || activeRole);
         const redirectPath = roleRedirectMap[userRole] || '/citizen';
@@ -645,6 +635,21 @@ export default function Login() {
       {/* MODE 2: Subsequent 2nd-Time Direct Face Recognition Login */}
       {loginMode === 'face' && (
         <div style={{ textAlign: "center", backgroundColor: "#f8fafc", padding: "18px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+          <div style={{ marginBottom: "14px", textAlign: "left" }}>
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "800", color: "#334155", marginBottom: "4px" }}>
+              Enter Registered Email Address for Face Biometrics:
+            </label>
+            <input
+              className="register-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your registered email address..."
+              style={{ margin: 0, width: "100%", boxSizing: "border-box" }}
+              required
+            />
+          </div>
+
           <p style={{ fontSize: "0.85rem", color: "#334155", fontWeight: 700, marginBottom: "12px" }}>
             Position Face inside Camera Target for Direct {role.toUpperCase()} Login:
           </p>

@@ -157,9 +157,13 @@ export default function Register() {
         localStorage.setItem("masterUserRegistry", JSON.stringify(masterRegistry));
       } catch (e) {}
 
+      // Dispatch OTP to backend email service
+      API.post('/auth/send-otp', { email: form.email, phone: form.phone, otp: generatedOtp })
+        .catch((err) => console.warn("Email OTP dispatch notice:", err.message));
+
       setUserId(registeredUserId);
-      setOtp(generatedOtp); // Auto-fill 6-digit OTP for instant mobile verification
-      setSuccessMsg(`📧 Verification OTP code sent to ${form.email}. 🔑 OTP: [ ${generatedOtp} ]. Position face inside circle & click Verify.`);
+      setOtp(""); // Do not display or prefill OTP on screen - sent to email only!
+      setSuccessMsg(`📧 Verification 6-Digit OTP sent to your registered Email (${form.email}) & Mobile (${form.phone}). Please check your inbox and enter the 6-digit OTP code below.`);
       
       // Auto-start camera for Face Recognition Setup
       setTimeout(() => startRegCamera(), 300);
