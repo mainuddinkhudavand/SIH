@@ -400,7 +400,7 @@ export const MASTER_DATASETS = {
 
   // Talati Village Land Register (7/12)
   talatiLandRegister: [
-    { surveyNumber: "SRV-101", ownerName: "Pavan Kumar", aadhaarId: "9876-5432-1000", areaAcres: 3.5, crop: "Sugarcane", status: "Verified Clear" },
+    { surveyNumber: "SRV-101", ownerName: "Aarav Sharma", aadhaarId: "9876-5432-1000", areaAcres: 3.5, crop: "Sugarcane", status: "Verified Clear" },
     { surveyNumber: "SRV-102", ownerName: "Rajesh Patil", aadhaarId: "9876-5432-1001", areaAcres: 2.1, crop: "Cotton", status: "Verified Clear" },
     { surveyNumber: "SRV-103", ownerName: "Suresh Deshmukh", aadhaarId: "9876-5432-1002", areaAcres: 4.8, crop: "Soybean", status: "Dues Pending" },
     { surveyNumber: "SRV-104", ownerName: "Anita Sharma", aadhaarId: "9876-5432-1003", areaAcres: 1.5, crop: "Wheat", status: "Field Visit Scheduled" }
@@ -415,8 +415,8 @@ export const MASTER_DATASETS = {
 
   // Municipal Property Tax Records
   municipalPropertyMaster: [
-    { propertyId: "PROP-MH-401", ownerName: "Pavan Kumar", builtUpArea: 1200, taxValue: 12500, taxStatus: "Paid" },
-    { propertyId: "PROP-MH-402", ownerName: "Pavan Kumar", builtUpArea: 850, taxValue: 3400, taxStatus: "Pending", pendingAmount: 3400 }
+    { propertyId: "PROP-MH-401", ownerName: "Aarav Sharma", builtUpArea: 1200, taxValue: 12500, taxStatus: "Paid" },
+    { propertyId: "PROP-MH-402", ownerName: "Aarav Sharma", builtUpArea: 850, taxValue: 3400, taxStatus: "Pending", pendingAmount: 3400 }
   ]
 };
 

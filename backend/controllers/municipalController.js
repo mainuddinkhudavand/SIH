@@ -14,9 +14,9 @@ export const getMunicipalApplications = async (req, res) => {
         serviceType: "Water Connection",
         title: "New Water Connection Request",
         applicantDetails: {
-          fullName: "Pavan",
+          fullName: "Registered Citizen",
           phone: "+91 98765 43210",
-          email: "pavan@egram.gov.in",
+          email: "citizen@egram.gov.in",
           address: "House #14, Sector 4, Civic Zone"
         },
         status: "Pending",
@@ -24,7 +24,7 @@ export const getMunicipalApplications = async (req, res) => {
           {
             stage: "Submission",
             status: "Submitted at Citizen Portal",
-            updatedBy: "Pavan",
+            updatedBy: "Registered Citizen",
             note: "Routed via GovConnect Interoperability Platform to Municipality Portal"
           }
         ]

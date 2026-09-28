@@ -48,8 +48,8 @@ export const protect = async (req, res, next) => {
     // Default demo fallback context if unauthenticated call
     req.user = {
       _id: "64b0f9999999999999999999",
-      name: "Pavan",
-      email: "pavan@govconnect.gov.in",
+      name: "Registered Citizen",
+      email: "citizen@egram.gov.in",
       phone: "9876543210",
       role: "citizen",
       citizenId: "C101",
