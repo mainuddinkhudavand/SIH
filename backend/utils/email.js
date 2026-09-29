@@ -8,8 +8,8 @@ dotenv.config();
 function getTransporter() {
   const smtpHost = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
   const smtpPort = Number(process.env.SMTP_PORT || "465");
-  const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "mainuddinkhudavand531@gmail.com").trim();
-  const rawPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || "jkqgvculzefwirct";
+  const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "").trim();
+  const rawPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || "";
   const smtpPass = rawPass.replace(/\s+/g, "").trim();
 
   const isSecure = smtpPort === 465;
@@ -27,7 +27,7 @@ function getTransporter() {
         rejectUnauthorized: false
       }
     }),
-    fromEmail: (process.env.FROM_EMAIL || `E-Governance Portal <${smtpUser}>`).trim(),
+    fromEmail: (process.env.FROM_EMAIL || `E-Governance Portal <${smtpUser || "noreply@govconnect.in"}>`).trim(),
     smtpUser,
     smtpPass
   };
@@ -37,9 +37,9 @@ export const sendEmail = async (to, subject, html) => {
   try {
     const { transporter, fromEmail, smtpUser, smtpPass } = getTransporter();
 
-    if (!smtpPass || smtpPass === "testpass") {
-      console.log(`[EMAIL MOCK - NO APP PASS SET] To: ${to} | Subject: ${subject}`);
-      return { messageId: "mock_id_set_app_password" };
+    if (!smtpUser || !smtpPass || smtpPass === "testpass" || smtpPass === "your_email_app_password") {
+      console.log(`[EMAIL MOCK - NO REAL SMTP CREDENTIALS SET IN ENV] To: ${to} | Subject: ${subject}`);
+      return { messageId: "mock_id_set_env_vars" };
     }
 
     const info = await transporter.sendMail({
