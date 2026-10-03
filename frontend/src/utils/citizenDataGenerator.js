@@ -1,21 +1,10 @@
-// 🏛️ Dynamic Citizen Profile Attributes Generator (Sample CSV Schema Standard)
+// 🏛️ Dynamic Citizen Profile Attributes Generator for Frontend
 
 const USAGE_TYPES = [
   "Home / Plot",
   "Business Plot / Commercial",
   "Educational / Institutional",
   "Land / Agriculture"
-];
-
-const TOWNS_VILLAGES = [
-  "Shivaji Nagar Ward 2",
-  "Civic Zone Sector 4",
-  "Anand Nagar Ward 1",
-  "Green Valley Gram Panchayat",
-  "Panchayat Market Area",
-  "Subhash Ward 3",
-  "Krishi Nagar Zone 5",
-  "Gram Panchayat Zone A"
 ];
 
 const CASTE_CATEGORIES = ["OBC", "SC", "ST", "EWS", "General"];
@@ -109,7 +98,6 @@ export function generateDefaultCitizenAttributes(userData = {}) {
     rationCardType,
     isVerifiedAsset: true,
 
-    // 🏢 Office Nested Objects to guarantee display across all component reference styles
     revenue: {
       surveyNumber: surveyNumber,
       landAreaAcres: isAgri ? parseFloat(plotAreaSize) : 1.5,
