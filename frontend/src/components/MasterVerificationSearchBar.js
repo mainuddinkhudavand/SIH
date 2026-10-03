@@ -21,6 +21,16 @@ import {
 } from "react-icons/fa";
 import API from "../services/api";
 
+const formatAddress = (addr) => {
+  if (!addr) return "N/A";
+  if (typeof addr === "string") return addr;
+  if (typeof addr === "object") {
+    const parts = [addr.street, addr.town || addr.city, addr.district, addr.state, addr.pin].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "N/A";
+  }
+  return String(addr);
+};
+
 export default function MasterVerificationSearchBar({ officeName = "Office", themeColor = "#0284c7" }) {
   const [masterQuery, setMasterQuery] = useState("");
   const [masterResults, setMasterResults] = useState([]);
@@ -183,7 +193,7 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
                     {citizen.fullName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "0.82rem", color: "#475569" }}>
-                    Aadhaar: <strong>{citizen.aadhaarId}</strong> (12-Digit Verified) | Address: {citizen.address}
+                    Aadhaar: <strong>{citizen.aadhaarId || citizen.aadhaarNumber}</strong> (12-Digit Verified) | Address: {formatAddress(citizen.address || citizen.fullAddress)}
                   </p>
                 </div>
 
@@ -318,7 +328,7 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
                   <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "700" }}>RESIDENTIAL ADDRESS</span>
                   <div style={{ fontSize: "0.9rem", fontWeight: "700", color: "#0f172a", marginTop: "2px" }}>
                     <FaMapMarkerAlt style={{ color: "#dc2626", marginRight: "6px" }} />
-                    {selectedKycCitizen.address} | Ward: {selectedKycCitizen.wardCode || 4}, Village: {selectedKycCitizen.villageCode || 102}
+                    {formatAddress(selectedKycCitizen.address || selectedKycCitizen.fullAddress)} | Ward: {selectedKycCitizen.wardCode || "WARD-01"}, Village: {selectedKycCitizen.villageCode || "VIL-MAH-01"}
                   </div>
                 </div>
               </div>

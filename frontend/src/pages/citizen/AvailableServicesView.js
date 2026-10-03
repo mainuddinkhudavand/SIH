@@ -66,7 +66,37 @@ const DEFAULT_MASTER_SERVICES = [
     deliveryTime: "3-5 Working Days"
   },
   {
-    serviceId: "land-extract-712",
+    serviceId: "birth-certificate",
+    title: "Birth Certificate Registration & Digital Issuance",
+    category: "Certificates",
+    department: "Municipal Civil Registrar",
+    governmentFee: 25,
+    description: "Official birth registration and digital certificate issuance by Municipal Registrar.",
+    officeChain: ["Municipality"],
+    deliveryTime: "1-2 Working Days"
+  },
+  {
+    serviceId: "death-certificate",
+    title: "Death Certificate Registration & Issuance",
+    category: "Certificates",
+    department: "Municipal Civil Registrar",
+    governmentFee: 25,
+    description: "Official death record registration and digital certificate issuance.",
+    officeChain: ["Municipality"],
+    deliveryTime: "1-2 Working Days"
+  },
+  {
+    serviceId: "marriage-certificate",
+    title: "Marriage Registration & Legal Certificate Issuance",
+    category: "Certificates",
+    department: "Municipal Civil Registrar",
+    governmentFee: 50,
+    description: "Legal marriage registration and official digital certificate issuance.",
+    officeChain: ["Municipality"],
+    deliveryTime: "2-4 Working Days"
+  },
+  {
+    serviceId: "7-12-extract",
     title: "7/12 & 8A Land Rights Extract Verification",
     category: "Land Records",
     department: "Talati Village Office",
@@ -76,13 +106,23 @@ const DEFAULT_MASTER_SERVICES = [
     deliveryTime: "1-2 Working Days"
   },
   {
-    serviceId: "property-tax-assessment",
-    title: "Property Tax Valuation & Mutation Record Update",
+    serviceId: "8-a-extract",
+    title: "8-A Consolidated Land Holding Summary",
+    category: "Land Records",
+    department: "Talati Village Office",
+    governmentFee: 15,
+    description: "Consolidated holding summary of land parcels under a single landholder in the village.",
+    officeChain: ["Talati"],
+    deliveryTime: "1-2 Working Days"
+  },
+  {
+    serviceId: "property-tax-mutation",
+    title: "Property Tax Valuation & Ownership Mutation",
     category: "Civic Utilities",
     department: "Revenue & Municipal Taxation",
     governmentFee: 150,
     description: "Annual municipal tax assessment and revenue record mutation certificate.",
-    officeChain: ["Revenue"],
+    officeChain: ["Talati", "Revenue", "Municipality"],
     deliveryTime: "3-5 Working Days"
   },
   {
@@ -94,6 +134,66 @@ const DEFAULT_MASTER_SERVICES = [
     description: "Sanitary and fire safety trade license for retail, commercial, and food establishments.",
     officeChain: ["Municipality"],
     deliveryTime: "4-6 Working Days"
+  },
+  {
+    serviceId: "property-land-mutation",
+    title: "Property / Land Mutation Title Transfer",
+    category: "Land Records",
+    department: "Revenue Inspectorate & Talati Office",
+    governmentFee: 150,
+    description: "Land title transfer requiring Talati village land register update and Revenue linkage.",
+    officeChain: ["Talati", "Revenue", "Municipality"],
+    deliveryTime: "5-7 Working Days"
+  },
+  {
+    serviceId: "encumbrance-certificate",
+    title: "Encumbrance Certificate (Mortgage History Search)",
+    category: "Land Records",
+    department: "Revenue Department",
+    governmentFee: 100,
+    description: "Official record showing bank loans or registered mortgages on a land survey parcel.",
+    officeChain: ["Revenue"],
+    deliveryTime: "2-3 Working Days"
+  },
+  {
+    serviceId: "solvency-certificate",
+    title: "Financial Solvency & Property Evaluation Certificate",
+    category: "Certificates",
+    department: "Tehsildar Office",
+    governmentFee: 100,
+    description: "Financial solvency evaluation certificate by Tehsil administration.",
+    officeChain: ["Tehsildar"],
+    deliveryTime: "3-5 Working Days"
+  },
+  {
+    serviceId: "agriculturist-certificate",
+    title: "Agriculturist Farmer Status Certification",
+    category: "Certificates",
+    department: "Tehsildar & Talati Office",
+    governmentFee: 50,
+    description: "Certificate proving status as a farmer requiring Talati 7/12 extract check.",
+    officeChain: ["Talati", "Revenue", "Tehsildar"],
+    deliveryTime: "3-5 Working Days"
+  },
+  {
+    serviceId: "legal-heir-certificate",
+    title: "Legal Heir & Succession Rights Certificate",
+    category: "Certificates",
+    department: "Tehsildar Executive Sub-Division",
+    governmentFee: 100,
+    description: "Official document listing surviving legal heirs of a deceased resident.",
+    officeChain: ["Municipality", "Talati", "Tehsildar"],
+    deliveryTime: "5-7 Working Days"
+  },
+  {
+    serviceId: "crop-loss-verification",
+    title: "Crop Loss Damage Survey & Natural Relief Disbursement",
+    category: "Village Services",
+    department: "Talati & Tehsildar Relief Cell",
+    governmentFee: 50,
+    description: "On-field crop damage survey by Talati followed by Tehsildar relief disbursement approval.",
+    officeChain: ["Talati", "Tehsildar"],
+    deliveryTime: "3-5 Working Days"
   }
 ];
 

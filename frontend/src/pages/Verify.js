@@ -226,7 +226,7 @@ export default function Verify() {
                           {citizen.fullName}
                         </h3>
                         <p style={{ margin: 0, fontSize: "0.9rem", color: "#475569" }}>
-                          Address: <strong>{citizen.address}</strong> | Ward: {citizen.wardCode} | Village: {citizen.villageCode}
+                          Address: <strong>{typeof citizen.address === 'object' && citizen.address ? `${citizen.address.street || ''}, ${citizen.address.town || citizen.address.district || ''}` : (citizen.address || citizen.fullAddress || "N/A")}</strong> | Ward: {citizen.wardCode || "WARD-01"} | Village: {citizen.villageCode || "VIL-MAH-01"}
                         </p>
                       </div>
 

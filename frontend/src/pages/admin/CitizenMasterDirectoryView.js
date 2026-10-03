@@ -136,7 +136,7 @@ export default function CitizenMasterDirectoryView() {
                     <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontSize: "0.85rem", color: "#475569" }}>
                       <span><FaPhoneAlt /> {selectedCitizen.phone}</span>
                       <span><FaEnvelope /> {selectedCitizen.email}</span>
-                      <span><FaMapMarkerAlt /> {selectedCitizen.address}</span>
+                      <span><FaMapMarkerAlt /> {typeof selectedCitizen.address === 'object' && selectedCitizen.address ? `${selectedCitizen.address.street || ''}, ${selectedCitizen.address.town || selectedCitizen.address.district || ''}` : (selectedCitizen.address || selectedCitizen.fullAddress || "N/A")}</span>
                     </div>
                   </div>
 

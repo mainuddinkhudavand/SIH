@@ -47,10 +47,16 @@ import chatRoutes from "./routes/chat.js";
 
 const app = express();
 
-app.use("/uploads", express.static("uploads"));
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"]
+}));
+app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
+app.use("/uploads", express.static("uploads"));
 
 // ✅ API Gateway Middleware Layer
 app.use(responseHandler);
