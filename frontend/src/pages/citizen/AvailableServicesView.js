@@ -310,11 +310,24 @@ export default function AvailableServicesView({ onApplicationSubmitted }) {
   const fetchServicesCatalog = async () => {
     try {
       const res = await API.get("/applications/services");
-      if (res.data?.services && res.data.services.length > 0) {
-        setServices(res.data.services);
+      if (res.data?.services && Array.isArray(res.data.services) && res.data.services.length > 0) {
+        // Map backend services by serviceId and merge with DEFAULT_MASTER_SERVICES so all 18 services are present
+        const backendMap = new Map(res.data.services.map(s => [s.serviceId, s]));
+        const merged = DEFAULT_MASTER_SERVICES.map(defService => {
+          return backendMap.has(defService.serviceId) ? { ...defService, ...backendMap.get(defService.serviceId) } : defService;
+        });
+        
+        // Add any additional backend services not in DEFAULT_MASTER_SERVICES
+        res.data.services.forEach(s => {
+          if (!merged.some(m => m.serviceId === s.serviceId)) {
+            merged.push(s);
+          }
+        });
+        
+        setServices(merged);
       }
     } catch (err) {
-      console.warn("Using fallback service catalog");
+      console.warn("Using default 18-service catalog");
     } finally {
       setLoading(false);
     }

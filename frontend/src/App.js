@@ -52,6 +52,29 @@ function MainApp() {
 
   return (
     <>
+      {/* 🎓 Academic & Hackathon Prototype Notice Banner */}
+      <div style={{
+        backgroundColor: '#1e293b',
+        color: '#f8fafc',
+        fontSize: '0.78rem',
+        padding: '6px 12px',
+        textAlign: 'center',
+        fontWeight: '500',
+        letterSpacing: '0.3px',
+        borderBottom: '1px solid #334155',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
+      }}>
+        <span style={{ backgroundColor: '#2563eb', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+          SIH 2026 PROTOTYPE
+        </span>
+        <span>
+          Academic & Educational Research Project — Not an official government portal.
+        </span>
+      </div>
+
       {/* Navbar appears ONLY on HomePage '/'. Hides completely on all login & portal pages */}
       {isHomePage && <Navbar />}
 
