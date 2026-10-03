@@ -22,35 +22,8 @@ export async function seedInitialData() {
     const citizenPassword = await bcrypt.hash("Citizen@123", 10);
     const existingCitizenCount = await User.countDocuments({ role: "citizen" });
 
-    // Seed 1,000 citizens into User collection if missing
-    if (existingCitizenCount < 500) {
-      console.log(`🌱 Seeding ${CITIZENS_MASTER_DATASET.length} Master Dataset Citizen accounts into MongoDB...`);
-
-      const citizenDocs = CITIZENS_MASTER_DATASET.map((c) => ({
-        citizenId: c.citizenId,
-        name: c.fullName,
-        email: c.email || `citizen.${c.citizenId.toLowerCase()}@govconnect.in`,
-        phone: c.phone || "9876543210",
-        aadhaarNumber: c.aadhaarId,
-        password: citizenPassword,
-        role: "citizen",
-        isVerified: true,
-        kycCompleted: true,
-        isVerifiedAsset: c.isVerifiedAsset,
-        address: {
-          street: c.address,
-          town: `Village ${c.villageCode || 101}`,
-          district: "Central District",
-          state: "Maharashtra",
-          pin: "400001"
-        }
-      }));
-
-      await User.insertMany(citizenDocs, { ordered: false }).catch((e) =>
-        console.log("Bulk insert notice (some users pre-existed):", e.message)
-      );
-      console.log(`✅ ${CITIZENS_MASTER_DATASET.length} Citizen accounts initialized with password 'Citizen@123'.`);
-    }
+    // Dynamic citizen system active - zero hardcoded static citizen seeding required.
+    console.log("ℹ️ Dynamic Citizen Database Active: Profiles are generated dynamically upon Registration and Login.");
 
     const userCount = await User.countDocuments();
     if (userCount <= 1000) {

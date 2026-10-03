@@ -3,9 +3,55 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { sendEmail, sendOtpEmail } from "../utils/email.js";
+import { generateDefaultCitizenAttributes } from "../utils/citizenDataGenerator.js";
 
 function validatePassword(password) {
   return typeof password === "string" && password.length >= 6;
+}
+
+function formatUserResponse(user) {
+  const citizenAttrs = generateDefaultCitizenAttributes(user);
+  return {
+    id: user._id || user.id,
+    _id: user._id || user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone || citizenAttrs.phone,
+    role: user.role,
+    citizenId: user.citizenId || citizenAttrs.citizenId,
+    panNumber: user.panNumber || citizenAttrs.panNumber,
+    voterId: user.voterId || citizenAttrs.voterId,
+    aadhaarNumber: user.aadhaarNumber || citizenAttrs.aadhaarNumber,
+    fullAddress: user.fullAddress || citizenAttrs.fullAddress,
+    wardCode: user.wardCode || citizenAttrs.wardCode,
+    villageCode: user.villageCode || citizenAttrs.villageCode,
+    assetUsage: user.assetUsage || citizenAttrs.assetUsage,
+    plotAreaSize: user.plotAreaSize || citizenAttrs.plotAreaSize,
+    plotLocation: user.plotLocation || citizenAttrs.plotLocation,
+    surveyNumber: user.surveyNumber || citizenAttrs.surveyNumber,
+    propertyId: user.propertyId || citizenAttrs.propertyId,
+    khataNumber: user.khataNumber || citizenAttrs.khataNumber,
+    assetVerificationStatus: user.assetVerificationStatus || citizenAttrs.assetVerificationStatus,
+    municipalPropertyTaxStatus: user.municipalPropertyTaxStatus || citizenAttrs.municipalPropertyTaxStatus,
+    municipalTaxArrears: user.municipalTaxArrears !== undefined ? user.municipalTaxArrears : citizenAttrs.municipalTaxArrears,
+    annualIncome: user.annualIncome || citizenAttrs.annualIncome,
+    casteCategory: user.casteCategory || citizenAttrs.casteCategory,
+    revenueTaxStatus: user.revenueTaxStatus || citizenAttrs.revenueTaxStatus,
+    pendingRevenueDues: user.pendingRevenueDues !== undefined ? user.pendingRevenueDues : citizenAttrs.pendingRevenueDues,
+    talatiKhataNo: user.talatiKhataNo || citizenAttrs.talatiKhataNo,
+    rationCardType: user.rationCardType || citizenAttrs.rationCardType,
+    isVerifiedAsset: user.isVerifiedAsset !== undefined ? user.isVerifiedAsset : citizenAttrs.isVerifiedAsset,
+    kycCompleted: true,
+    firstLoginCompleted: true,
+    faceRegistered: true,
+    businessId: user.businessId,
+    ssoProvider: user.ssoProvider,
+    state: user.state || "Karnataka",
+    district: user.district || "Dharwad",
+    city: user.city || "Hubli",
+    officeName: user.officeName || "",
+    designation: user.designation || ""
+  };
 }
 
 // 👤 Signup (Citizen / Official Registration)
@@ -49,6 +95,14 @@ export const signup = async (req, res) => {
     const userOffice = officeName || `${userRole.toUpperCase()} Office`;
     const userDesignation = designation || `${userRole.toUpperCase()} Officer`;
 
+    // Generate full sample dataset attributes for new user
+    const citizenAttrs = generateDefaultCitizenAttributes({
+      name,
+      email: cleanEmail,
+      phone,
+      aadhaarNumber: req.body.aadhaarNumber || req.body.aadhaarId
+    });
+
     let newUser = null;
     if (mongoose.connection.readyState === 1) {
       try {
@@ -69,7 +123,8 @@ export const signup = async (req, res) => {
           faceRegistered: true,
           otp,
           otpExpires: Date.now() + 10 * 60 * 1000,
-          ssoProvider: { provider: "local" }
+          ssoProvider: { provider: "local" },
+          ...citizenAttrs
         });
       } catch (createErr) {
         console.warn("DB create user notice during signup:", createErr.message);
@@ -87,7 +142,7 @@ export const signup = async (req, res) => {
         city: userCity,
         officeName: userOffice,
         designation: userDesignation,
-        citizenId: "CITIZEN-" + Math.floor(100000 + Math.random() * 900000)
+        ...citizenAttrs
       };
     }
 
@@ -97,12 +152,14 @@ export const signup = async (req, res) => {
       console.log("Email dispatch fallback, OTP:", otp);
     }
 
+    const formattedUser = formatUserResponse(newUser);
+
     return res.json({
       message: "Account created successfully. OTP sent for verification.",
       userId: newUser._id,
-      citizenId: newUser.citizenId,
+      citizenId: formattedUser.citizenId,
       role: newUser.role,
-      user: newUser,
+      user: formattedUser,
       otp
     });
   } catch (err) {
@@ -114,22 +171,24 @@ export const signup = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: (email || "").trim().toLowerCase() });
     if (!user) return res.status(400).json({ message: "User not found" });
 
     if (user.otp === otp) {
       user.isVerified = true;
       user.otp = null;
       await user.save();
-      return res.json({ message: "Account verified successfully", citizenId: user.citizenId });
+      return res.json({
+        message: "Account verified successfully",
+        citizenId: user.citizenId,
+        user: formatUserResponse(user)
+      });
     }
     return res.status(400).json({ message: "Invalid or expired OTP" });
   } catch (err) {
     return res.status(500).json({ message: "Server error during OTP verification" });
   }
 };
-
-import { CITIZENS_MASTER_DATASET } from "../utils/routingEngine.js";
 
 // 🔑 Login (JWT Generation for Citizens & Officials via EMAIL ONLY)
 export const login = async (req, res) => {
@@ -169,84 +228,60 @@ export const login = async (req, res) => {
       }
     }
 
-    // 2. If DB user not created yet, check 1,000 Master Dataset by email
-    if (!user && CITIZENS_MASTER_DATASET && CITIZENS_MASTER_DATASET.length > 0) {
-      const masterMatch = CITIZENS_MASTER_DATASET.find(
-        (c) => (c.email || "").toLowerCase() === loginEmail
-      );
+    // If citizen/user exists in DB, ensure full sample dataset attributes are populated on DB record
+    if (user) {
+      let updated = false;
+      const citizenAttrs = generateDefaultCitizenAttributes(user);
+      for (const [key, val] of Object.entries(citizenAttrs)) {
+        if (!user[key]) {
+          user[key] = val;
+          updated = true;
+        }
+      }
+      if (updated && typeof user.save === "function" && mongoose.connection.readyState === 1) {
+        await user.save().catch(() => {});
+      }
+    }
 
-      if (masterMatch) {
-        const assignedRole = validOfficerRoles.includes(requestedRole) ? requestedRole : "citizen";
+    if (!user) {
+      if (validOfficerRoles.includes(requestedRole) || loginEmail.includes("resolver") || loginEmail.includes("talati") || loginEmail.includes("tehsildar") || loginEmail.includes("revenue") || loginEmail.includes("municipality")) {
+        const defaultRole = validOfficerRoles.includes(requestedRole)
+          ? requestedRole
+          : (loginEmail.includes("resolver") ? "resolver" : loginEmail.includes("talati") ? "talati" : loginEmail.includes("tehsildar") ? "tehsildar" : loginEmail.includes("revenue") ? "revenue" : "municipality");
+        
+        const isOfficialOrResolver = defaultRole !== "citizen";
+        const citizenAttrs = generateDefaultCitizenAttributes({ email: loginEmail, name: loginEmail.split("@")[0] });
         try {
-          const hashedPassword = await bcrypt.hash("Citizen@123", 10);
+          const hashedPassword = await bcrypt.hash(password || (defaultRole === "resolver" ? "Resolver@123" : "Official@123"), 10);
           user = await User.create({
-            citizenId: masterMatch.citizenId,
-            name: masterMatch.fullName,
-            email: masterMatch.email || loginEmail,
-            phone: masterMatch.phone || "9876543210",
-            aadhaarNumber: masterMatch.aadhaarId,
+            name: loginEmail.split("@")[0].toUpperCase(),
+            email: loginEmail,
             password: hashedPassword,
-            role: assignedRole,
-            isVerified: true,
+            role: defaultRole,
+            isVerified: isOfficialOrResolver,
+            firstLoginCompleted: isOfficialOrResolver,
             kycCompleted: true,
-            firstLoginCompleted: true,
-            isVerifiedAsset: masterMatch.isVerifiedAsset,
-            address: {
-              street: masterMatch.address,
-              town: `Village ${masterMatch.villageCode || 101}`,
-              district: "Central District",
-              state: "Maharashtra",
-              pin: "400001"
-            }
+            faceRegistered: true,
+            ...citizenAttrs
           });
-        } catch (e) {
+        } catch (createErr) {
           user = {
-            _id: "user_master_" + Date.now(),
-            citizenId: masterMatch.citizenId,
-            name: masterMatch.fullName,
-            email: masterMatch.email || loginEmail,
-            role: assignedRole,
+            _id: "user_auto_" + Date.now(),
+            name: loginEmail.split("@")[0].toUpperCase(),
+            email: loginEmail,
+            role: defaultRole,
             firstLoginCompleted: true,
-            kycCompleted: true
+            kycCompleted: true,
+            faceRegistered: true,
+            ...citizenAttrs
           };
         }
       }
     }
 
     if (!user) {
-      // Auto-create user account on the fly for demo role login if not present in DB
-      const defaultRole = validOfficerRoles.includes(requestedRole)
-        ? requestedRole
-        : (loginEmail.includes("resolver") ? "resolver" : loginEmail.includes("talati") ? "talati" : loginEmail.includes("tehsildar") ? "tehsildar" : loginEmail.includes("revenue") ? "revenue" : loginEmail.includes("municipality") ? "municipality" : "citizen");
-      const isOfficialOrResolver = defaultRole !== "citizen";
-      try {
-        const hashedPassword = await bcrypt.hash(password || (defaultRole === "resolver" ? "Resolver@123" : "Citizen@123"), 10);
-        user = await User.create({
-          name: loginEmail.split("@")[0].toUpperCase(),
-          email: loginEmail,
-          password: hashedPassword,
-          role: defaultRole,
-          isVerified: isOfficialOrResolver,
-          firstLoginCompleted: isOfficialOrResolver,
-          kycCompleted: true,
-          faceRegistered: true
-        });
-      } catch (createErr) {
-        user = {
-          _id: "user_auto_" + Date.now(),
-          name: loginEmail.split("@")[0].toUpperCase(),
-          email: loginEmail,
-          role: defaultRole,
-          firstLoginCompleted: true,
-          kycCompleted: true,
-          faceRegistered: true
-        };
-      }
-    }
-
-    if (!user) {
       return res.status(400).json({
-        message: `Could not process login for '${loginEmail}'. Please try again.`
+        message: `Account '${loginEmail}' not found. Please click 'Register' to create your account first.`
       });
     }
 
@@ -279,11 +314,12 @@ export const login = async (req, res) => {
       });
     }
 
+    const formattedUser = formatUserResponse(user);
     const payload = {
-      id: user._id,
+      id: user._id || formattedUser.id,
       email: user.email,
       role: user.role,
-      citizenId: user.citizenId,
+      citizenId: formattedUser.citizenId,
       businessId: user.businessId
     };
 
@@ -293,21 +329,7 @@ export const login = async (req, res) => {
 
     return res.json({
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        citizenId: user.citizenId,
-        aadhaarNumber: user.aadhaarNumber,
-        kycCompleted: !!user.kycCompleted,
-        isVerifiedAsset: user.isVerifiedAsset,
-        firstLoginCompleted: true,
-        faceRegistered: true,
-        businessId: user.businessId,
-        ssoProvider: user.ssoProvider
-      }
+      user: formattedUser
     });
   } catch (err) {
     console.error("Login Error:", err);
@@ -338,13 +360,19 @@ export const verifyFirstLoginOtp = async (req, res) => {
       user.faceDescriptor = faceDescriptor;
       user.faceRegistered = true;
     }
+
+    const citizenAttrs = generateDefaultCitizenAttributes(user);
+    for (const [key, val] of Object.entries(citizenAttrs)) {
+      if (!user[key]) user[key] = val;
+    }
     await user.save();
 
+    const formattedUser = formatUserResponse(user);
     const payload = {
       id: user._id,
       email: user.email,
       role: user.role,
-      citizenId: user.citizenId,
+      citizenId: formattedUser.citizenId,
       businessId: user.businessId
     };
 
@@ -356,18 +384,7 @@ export const verifyFirstLoginOtp = async (req, res) => {
       success: true,
       message: "✅ 1st-Time Email OTP Verification & Face Biometric Setup Completed!",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        citizenId: user.citizenId,
-        kycCompleted: !!user.kycCompleted,
-        firstLoginCompleted: true,
-        faceRegistered: user.faceRegistered,
-        businessId: user.businessId
-      }
+      user: formattedUser
     });
   } catch (err) {
     console.error("1st-time OTP error:", err);
@@ -391,7 +408,6 @@ export const loginWithFace = async (req, res) => {
           user = await User.findOne({ email: cleanEmail });
         }
         if (!user && userRole !== "citizen") {
-          // Allow seeded default office accounts for demonstration roles
           user = await User.findOne({ role: userRole });
         }
       } catch (dbErr) {
@@ -410,6 +426,20 @@ export const loginWithFace = async (req, res) => {
       }
     }
 
+    if (user) {
+      let updated = false;
+      const citizenAttrs = generateDefaultCitizenAttributes(user);
+      for (const [key, val] of Object.entries(citizenAttrs)) {
+        if (!user[key]) {
+          user[key] = val;
+          updated = true;
+        }
+      }
+      if (updated && typeof user.save === "function" && mongoose.connection.readyState === 1) {
+        await user.save().catch(() => {});
+      }
+    }
+
     if (!user && userRole !== "citizen") {
       const defaultEmails = {
         citizen: "citizen@egram.gov.in",
@@ -421,6 +451,7 @@ export const loginWithFace = async (req, res) => {
       };
 
       const emailForRole = cleanEmail || defaultEmails[userRole] || `${userRole}@egram.gov.in`;
+      const citizenAttrs = generateDefaultCitizenAttributes({ email: emailForRole, name: userRole.toUpperCase() });
       if (mongoose.connection.readyState === 1) {
         try {
           user = await User.create({
@@ -432,7 +463,8 @@ export const loginWithFace = async (req, res) => {
             firstLoginCompleted: true,
             faceRegistered: true,
             kycCompleted: true,
-            faceDescriptor: faceDescriptor || "BIOMETRIC_VECTOR_DEFAULT"
+            faceDescriptor: faceDescriptor || "BIOMETRIC_VECTOR_DEFAULT",
+            ...citizenAttrs
           });
         } catch (cErr) {
           user = await User.findOne({ email: emailForRole });
@@ -445,14 +477,13 @@ export const loginWithFace = async (req, res) => {
           name: `${(cleanEmail ? cleanEmail.split("@")[0] : userRole).toUpperCase()} Authorized User`,
           email: emailForRole,
           role: userRole,
-          citizenId: "OFFICER-" + Math.floor(100000 + Math.random() * 900000),
           faceRegistered: true,
-          kycCompleted: true
+          kycCompleted: true,
+          ...citizenAttrs
         };
       }
     }
 
-    // 🔒 Reject unregistered citizens who haven't performed face setup
     const isFaceValid = Boolean(
       user?.faceRegistered ||
       user?.faceDescriptor ||
@@ -466,11 +497,13 @@ export const loginWithFace = async (req, res) => {
       });
     }
 
+    const formattedUser = formatUserResponse(user);
+
     const payload = {
-      id: user._id,
+      id: user._id || formattedUser.id,
       email: user.email,
       role: user.role,
-      citizenId: user.citizenId
+      citizenId: formattedUser.citizenId
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET || "egram_secret_key", {
@@ -479,17 +512,9 @@ export const loginWithFace = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `👤 Face Biometric Recognition Verified! Logged in as ${user.name} (${user.role.toUpperCase()})`,
+      message: `👤 Face Biometric Recognition Verified! Logged in as ${formattedUser.name} (${user.role.toUpperCase()})`,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        citizenId: user.citizenId,
-        kycCompleted: !!user.kycCompleted,
-        faceRegistered: true
-      }
+      user: formattedUser
     });
   } catch (err) {
     console.error("Face login error:", err);
@@ -506,19 +531,21 @@ export const ssoCallback = async (req, res) => {
   }
 
   try {
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: email.trim().toLowerCase() });
+    const citizenAttrs = generateDefaultCitizenAttributes({ email, name });
 
     if (!user) {
       user = await User.create({
         name: name || email.split("@")[0],
-        email,
+        email: email.trim().toLowerCase(),
         role: "citizen",
         isVerified: true,
         ssoProvider: {
           provider,
           providerId: providerId || ssoToken,
           lastLogin: new Date()
-        }
+        },
+        ...citizenAttrs
       });
     } else {
       user.ssoProvider = {
@@ -529,11 +556,12 @@ export const ssoCallback = async (req, res) => {
       await user.save();
     }
 
+    const formattedUser = formatUserResponse(user);
     const payload = {
-      id: user._id,
+      id: user._id || formattedUser.id,
       email: user.email,
       role: user.role,
-      citizenId: user.citizenId,
+      citizenId: formattedUser.citizenId,
       businessId: user.businessId
     };
 
@@ -544,15 +572,7 @@ export const ssoCallback = async (req, res) => {
     return res.json({
       message: `Single Sign-On authenticated via ${provider}`,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        citizenId: user.citizenId,
-        businessId: user.businessId,
-        ssoProvider: user.ssoProvider
-      }
+      user: formattedUser
     });
   } catch (err) {
     console.error("SSO Error:", err);

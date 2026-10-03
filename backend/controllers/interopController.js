@@ -204,16 +204,32 @@ export const getPlatformMetrics = async (req, res) => {
   }
 };
 
+import { generateDefaultCitizenAttributes } from "../utils/citizenDataGenerator.js";
+
 // 4. Master Dataset Search API for Official Verification
 export const searchMasterRecords = async (req, res) => {
   try {
     const { q, office } = req.query;
-    const results = searchMasterDataset(q || "");
+    const queryStr = (q || "").toLowerCase().trim();
+    let users = await User.find({ role: "citizen" }).lean();
+    let results = users.map(u => ({ ...u, ...generateDefaultCitizenAttributes(u) }));
+
+    if (queryStr) {
+      results = results.filter(c =>
+        (c.name || "").toLowerCase().includes(queryStr) ||
+        (c.citizenId || "").toLowerCase().includes(queryStr) ||
+        (c.email || "").toLowerCase().includes(queryStr) ||
+        (c.aadhaarNumber || c.aadhaarId || "").includes(queryStr) ||
+        (c.panNumber || "").toLowerCase().includes(queryStr) ||
+        (c.propertyId || "").toLowerCase().includes(queryStr) ||
+        (c.surveyNumber || "").toLowerCase().includes(queryStr)
+      );
+    }
 
     return res.json({
       success: true,
       count: results.length,
-      totalDatasetSize: CITIZENS_MASTER_DATASET.length,
+      totalDatasetSize: users.length,
       query: q || "",
       requestingOffice: office || "General Official",
       results
@@ -223,7 +239,7 @@ export const searchMasterRecords = async (req, res) => {
   }
 };
 
-// 5. Download / Fetch Full 1,000 Member Master Dataset & Credentials API
+// 5. Download / Fetch Dynamic Citizen Dataset & Credentials API
 export const downloadMasterDataset = async (req, res) => {
   try {
     const { format } = req.query;
@@ -258,15 +274,13 @@ export const downloadMasterDataset = async (req, res) => {
       }
     }
 
-    const jsonPath = path.join(dataDir, "master_dataset_1000_members.json");
-    if (format === "json" && fs.existsSync(jsonPath)) {
-      return res.download(jsonPath, "master_dataset_1000_members.json");
-    }
+    const users = await User.find({ role: "citizen" }).lean();
+    const dataset = users.map(u => ({ ...u, ...generateDefaultCitizenAttributes(u) }));
 
     return res.json({
       success: true,
-      totalCount: CITIZENS_MASTER_DATASET.length,
-      dataset: CITIZENS_MASTER_DATASET
+      totalCount: dataset.length,
+      dataset: dataset
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

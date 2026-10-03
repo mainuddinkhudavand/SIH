@@ -347,31 +347,13 @@ export const SERVICE_OFFICE_MAP = {
   }
 };
 
-import { generateMasterDataset } from "./masterDatasetGenerator.js";
+import { generateDefaultCitizenAttributes } from "./citizenDataGenerator.js";
 
-// 👨‍👩‍👧‍👦 Master Dataset of 1,000 Citizens with ID Proofs & Linked Data across all 4 Offices
-export const CITIZENS_MASTER_DATASET = generateMasterDataset(1000);
+// Dynamic Citizen Master Dataset Export
+export const CITIZENS_MASTER_DATASET = [];
 
 export const searchMasterDataset = (searchTerm) => {
-  if (!searchTerm || !searchTerm.trim()) {
-    return CITIZENS_MASTER_DATASET.slice(0, 10);
-  }
-  const term = searchTerm.trim().toLowerCase();
-
-  return CITIZENS_MASTER_DATASET.filter((c) => {
-    return (
-      (c.fullName || "").toLowerCase().includes(term) ||
-      (c.citizenId || "").toLowerCase().includes(term) ||
-      (c.aadhaarId || "").toLowerCase().includes(term) ||
-      (c.revenue?.surveyNumber || "").toLowerCase().includes(term) ||
-      (c.municipality?.propertyId || "").toLowerCase().includes(term) ||
-      (c.talati?.khataNumber712 || "").toLowerCase().includes(term) ||
-      (c.assetDetails?.surveyNumber || "").toLowerCase().includes(term) ||
-      (c.assetDetails?.propertyId || "").toLowerCase().includes(term) ||
-      (c.assetDetails?.khataNumber || "").toLowerCase().includes(term) ||
-      (c.address || "").toLowerCase().includes(term)
-    );
-  }).slice(0, 20); // Return top 20 matches for fast response
+  return [];
 };
 
 // 📊 Realistic Master Datasets for Federated Cross-Office Queries

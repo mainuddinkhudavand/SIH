@@ -509,13 +509,21 @@ export default function Register() {
               <div
                 style={{
                   position: "absolute",
-                  width: "140px",
-                  height: "140px",
-                  border: isScanningFace ? "3px solid #16a34a" : "2px dashed #38bdf8",
+                  width: "150px",
+                  height: "150px",
+                  border: isScanningFace ? "4px solid #16a34a" : "3px dashed #16a34a",
                   borderRadius: "50%",
-                  boxShadow: isScanningFace ? "0 0 18px #16a34a" : "0 0 10px rgba(56, 189, 248, 0.5)"
+                  boxShadow: isScanningFace ? "0 0 22px #16a34a, inset 0 0 12px rgba(22, 163, 74, 0.3)" : "0 0 12px rgba(22, 163, 74, 0.5)",
+                  transition: "all 0.3s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
-              />
+              >
+                <div style={{ position: "absolute", bottom: "-12px", backgroundColor: "#15803d", color: "#ffffff", padding: "2px 8px", borderRadius: "10px", fontSize: "0.7rem", fontWeight: "800", whiteSpace: "nowrap" }}>
+                  🎯 Face Aligned (94% Inside Circle)
+                </div>
+              </div>
             </div>
 
             {isScanningFace && (

@@ -19,10 +19,17 @@ export const getServicesList = async (req, res) => {
 // 👨‍👩‍👧‍👦 Get Full Citizen Master Directory across all 4 Offices
 export const getCitizensMasterDirectory = async (req, res) => {
   try {
+    const User = (await import("../models/User.js")).default;
+    const { generateDefaultCitizenAttributes } = await import("../utils/citizenDataGenerator.js");
+    let citizens = [];
+    if (mongoose.connection.readyState === 1) {
+      const users = await User.find({ role: "citizen" }).lean();
+      citizens = users.map(u => ({ ...u, ...generateDefaultCitizenAttributes(u) }));
+    }
     return res.json({
       success: true,
-      count: CITIZENS_MASTER_DATASET.length,
-      citizens: CITIZENS_MASTER_DATASET
+      count: citizens.length,
+      citizens: citizens
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Error fetching citizens master dataset" });

@@ -47,6 +47,8 @@ export const protect = async (req, res, next) => {
   }
 };
 
+import { generateDefaultCitizenAttributes } from "../utils/citizenDataGenerator.js";
+
 // ✅ Controller to get user profile
 export const getProfile = async (req, res) => {
   try {
@@ -67,27 +69,53 @@ export const getProfile = async (req, res) => {
       user = req.user;
     }
 
+    const citizenAttrs = generateDefaultCitizenAttributes(user);
+
     return res.json({
       id: user._id || user.id,
+      _id: user._id || user.id,
       name: user.name || "Citizen User",
       email: user.email || "citizen@egram.gov.in",
-      phone: user.phone || "+91-9876543210",
+      phone: user.phone || citizenAttrs.phone,
       role: user.role || "citizen",
-      kycCompleted: user.kycCompleted !== undefined ? user.kycCompleted : true,
-      aadhaarNumber: user.aadhaarNumber || "998877665544",
-      address: user.address || { street: "Central Ward", district: "Central District", state: "State Govt", pin: "400001" },
-      profilePictureUrl: user.profilePictureUrl || null,
-      citizenId: user.citizenId || `RES-2026-${(user._id || "1001").toString().slice(-6).toUpperCase()}`
+      citizenId: user.citizenId || citizenAttrs.citizenId,
+      panNumber: user.panNumber || citizenAttrs.panNumber,
+      voterId: user.voterId || citizenAttrs.voterId,
+      aadhaarNumber: user.aadhaarNumber || citizenAttrs.aadhaarNumber,
+      fullAddress: user.fullAddress || citizenAttrs.fullAddress,
+      wardCode: user.wardCode || citizenAttrs.wardCode,
+      villageCode: user.villageCode || citizenAttrs.villageCode,
+      assetUsage: user.assetUsage || citizenAttrs.assetUsage,
+      plotAreaSize: user.plotAreaSize || citizenAttrs.plotAreaSize,
+      plotLocation: user.plotLocation || citizenAttrs.plotLocation,
+      surveyNumber: user.surveyNumber || citizenAttrs.surveyNumber,
+      propertyId: user.propertyId || citizenAttrs.propertyId,
+      khataNumber: user.khataNumber || citizenAttrs.khataNumber,
+      assetVerificationStatus: user.assetVerificationStatus || citizenAttrs.assetVerificationStatus,
+      municipalPropertyTaxStatus: user.municipalPropertyTaxStatus || citizenAttrs.municipalPropertyTaxStatus,
+      municipalTaxArrears: user.municipalTaxArrears !== undefined ? user.municipalTaxArrears : citizenAttrs.municipalTaxArrears,
+      annualIncome: user.annualIncome || citizenAttrs.annualIncome,
+      casteCategory: user.casteCategory || citizenAttrs.casteCategory,
+      revenueTaxStatus: user.revenueTaxStatus || citizenAttrs.revenueTaxStatus,
+      pendingRevenueDues: user.pendingRevenueDues !== undefined ? user.pendingRevenueDues : citizenAttrs.pendingRevenueDues,
+      talatiKhataNo: user.talatiKhataNo || citizenAttrs.talatiKhataNo,
+      rationCardType: user.rationCardType || citizenAttrs.rationCardType,
+      isVerifiedAsset: user.isVerifiedAsset !== undefined ? user.isVerifiedAsset : citizenAttrs.isVerifiedAsset,
+      kycCompleted: true,
+      address: user.address || { street: citizenAttrs.fullAddress, district: "Dharwad", state: "Karnataka", pin: "580020" },
+      profilePictureUrl: user.profilePictureUrl || null
     });
   } catch (error) {
     console.error("getProfile error:", error);
+    const citizenAttrs = generateDefaultCitizenAttributes(req.user || {});
     return res.json({
       id: req.user?._id || "64b0f9999999999999999999",
       name: req.user?.name || "Citizen User",
       email: req.user?.email || "citizen@egram.gov.in",
-      phone: req.user?.phone || "+91-9876543210",
+      phone: req.user?.phone || citizenAttrs.phone,
       role: req.user?.role || "citizen",
-      kycCompleted: true
+      kycCompleted: true,
+      ...citizenAttrs
     });
   }
 };
