@@ -245,10 +245,10 @@ export default function OfficeWorkspacesView() {
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "900", color: "#0f172a" }}>
-                🔍 {activeOffice} Officer Cross-Verification Tool (1,000 Member Master Dataset)
+                🔍 {activeOffice} Officer Cross-Verification Tool
               </h3>
               <p style={{ margin: "2px 0 0 0", fontSize: "0.85rem", color: "#64748b" }}>
-                Verify applicant land, tax, revenue, and 7/12 records across 1,000 master citizen records before approving or rejecting.
+                Verify applicant land, tax, revenue, and 7/12 records across registered citizen records before approving or rejecting.
               </p>
             </div>
           </div>

@@ -415,22 +415,12 @@ export default function Profile() {
       <div style={{ background: "linear-gradient(135deg, #081c15 0%, #1b4332 50%, #2d6a4f 100%)", borderRadius: "20px", padding: "20px 16px", color: "white", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)", marginBottom: "20px" }}>
         
         {/* Header Action Buttons in Flex Layout (Mobile Responsive) */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", marginBottom: "16px" }}>
           <button
             onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
             style={{ background: "rgba(255, 255, 255, 0.2)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.4)", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
           >
             <FaArrowLeft /> Back
-          </button>
-          <button
-            onClick={() => {
-              localStorage.clear();
-              window.dispatchEvent(new Event("storage"));
-              navigate("/login");
-            }}
-            style={{ background: "#ef4444", color: "#ffffff", border: "none", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
-          >
-            <FaSignOutAlt /> Logout
           </button>
         </div>
 

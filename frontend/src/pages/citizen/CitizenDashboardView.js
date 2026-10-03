@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import { FaFileAlt, FaCertificate, FaClock, FaCheckCircle, FaTint, FaHome, FaHeartbeat, FaExclamationCircle, FaShieldAlt, FaArrowRight, FaBullhorn } from "react-icons/fa";
 
+import { getAllApplicationsFromStore } from "../../services/applicationStore";
+
 export default function CitizenDashboardView({ onNavigateTab }) {
   const [summary, setSummary] = useState({
     totalApps: 0,
@@ -23,17 +25,29 @@ export default function CitizenDashboardView({ onNavigateTab }) {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const res = await API.get("/citizen/dashboard");
-      const apps = res.data?.applications || [];
-      const certs = res.data?.certificates || [];
+      const res = await API.get("/citizen/dashboard").catch(() => null);
+      const backendApps = res?.data?.applications || [];
+      const backendCerts = res?.data?.certificates || [];
 
-      setRecentApps(apps.slice(0, 4));
+      const localApps = getAllApplicationsFromStore();
+      
+      const appMap = new Map();
+      (localApps || []).forEach(a => appMap.set(a.applicationId || a._id, a));
+      (backendApps || []).forEach(a => appMap.set(a.applicationId || a._id, a));
+      
+      const apps = Array.from(appMap.values());
+      const certs = backendCerts.length > 0 ? backendCerts : apps.filter(a => a.issuedCertificate || a.serviceType === "Certificates");
+
+      setRecentApps(apps.slice(0, 5));
       setPendingConsentApps(apps.filter(a => a.status === "Consent Approval Pending"));
+
+      const approvedCount = apps.filter(a => (a.status || "").toLowerCase().includes("approved") || a.currentOffice === "Completed" || a.issuedCertificate).length;
+      const pendingCount = apps.filter(a => !(a.status || "").toLowerCase().includes("approved") && !(a.status || "").toLowerCase().includes("reject") && a.currentOffice !== "Completed").length;
 
       setSummary({
         totalApps: apps.length,
-        approvedApps: apps.filter(a => a.status === "Approved").length,
-        pendingApps: apps.filter(a => a.status !== "Approved" && a.status !== "Rejected").length,
+        approvedApps: approvedCount,
+        pendingApps: pendingCount,
         totalCerts: certs.length
       });
     } catch (err) {

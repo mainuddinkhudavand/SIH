@@ -32,15 +32,50 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
   const [selectedAssetCitizen, setSelectedAssetCitizen] = useState(null);
 
   const handleMasterSearch = async (overrideQuery) => {
-    const q = overrideQuery !== undefined ? overrideQuery : masterQuery;
+    const q = (overrideQuery !== undefined ? overrideQuery : masterQuery).trim().toLowerCase();
 
     setMasterSearching(true);
     setHasSearched(true);
     try {
-      const res = await API.get(`/interop/master-search?q=${encodeURIComponent((q || "").trim())}&office=${encodeURIComponent(officeName)}`).catch(() => null);
+      let backendResults = [];
+      const res = await API.get(`/interop/master-search?q=${encodeURIComponent(q)}&office=${encodeURIComponent(officeName)}`).catch(() => null);
       if (res?.data?.results) {
-        setMasterResults(res.data.results);
+        backendResults = res.data.results;
       }
+
+      // Collect local registered users from localStorage so newly registered citizens match instantly
+      const localUsers = [];
+      try {
+        const masterReg = JSON.parse(localStorage.getItem("masterUserRegistry") || "[]");
+        localUsers.push(...masterReg);
+        
+        const curUser = JSON.parse(localStorage.getItem("user") || "null");
+        if (curUser) localUsers.push(curUser);
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("registeredUser_")) {
+            const u = JSON.parse(localStorage.getItem(key) || "null");
+            if (u) localUsers.push(u);
+          }
+        }
+      } catch (e) {}
+
+      const localMatches = localUsers.filter(u => {
+        if (!q) return true;
+        const name = (u.name || u.fullName || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        const cid = (u.citizenId || "").toLowerCase();
+        const aadh = (u.aadhaarNumber || u.aadhaarId || "").toLowerCase();
+        const pan = (u.panNumber || "").toLowerCase();
+        return name.includes(q) || email.includes(q) || cid.includes(q) || aadh.includes(q) || pan.includes(q);
+      }).map(u => ({ ...u, fullName: u.fullName || u.name }));
+
+      const resultMap = new Map();
+      localMatches.forEach(u => resultMap.set((u.email || u.citizenId || Math.random()).toLowerCase(), u));
+      backendResults.forEach(u => resultMap.set((u.email || u.citizenId || Math.random()).toLowerCase(), u));
+
+      setMasterResults(Array.from(resultMap.values()));
     } catch (err) {
       console.warn("Master verification search notice:", err);
     } finally {
@@ -53,7 +88,7 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
     setMasterResults([]);
   };
 
-  const sampleChips = ["Pavan Kumar", "SRV-1001", "KHT-1001", "PROP-MH-1001", "9876-5432-1000", "SRV-1004"];
+  const sampleChips = ["SRV-1001", "KHT-1001", "PROP-MH-1001", "9876-5432-1000", "WARD-01"];
 
   return (
     <div style={{ background: "#ffffff", borderRadius: "16px", padding: "20px", border: `2px solid ${themeColor}`, marginBottom: "24px", boxShadow: "0 4px 15px -3px rgba(0,0,0,0.05)" }}>
@@ -63,10 +98,10 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
         </div>
         <div>
           <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "900", color: "#0f172a" }}>
-            🔍 {officeName} Officer Cross-Verification Bar (1,000 Member Master Dataset)
+            🔍 {officeName} Officer Cross-Verification Bar
           </h3>
           <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#64748b" }}>
-            Search official 1,000 member records by Survey #, Khata #, Aadhaar #, Property ID, or Name. Click 'View Records' to reveal matching master data.
+            Search registered citizen records by Survey #, Khata #, Aadhaar #, Property ID, or Name. Click 'View Records' to reveal matching profile data.
           </p>
         </div>
       </div>
@@ -76,7 +111,7 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
           <FaSearch style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
           <input
             type="text"
-            placeholder={`Search 1,000 Master DB records in ${officeName} (e.g. SRV-1001, KHT-1001, PROP-MH-1001, 9876-5432-1000, Name)...`}
+            placeholder={`Search registered DB records in ${officeName} (e.g. SRV-1001, KHT-1001, PROP-MH-1001, Aadhaar #, Name)...`}
             value={masterQuery}
             onChange={(e) => setMasterQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -129,7 +164,7 @@ export default function MasterVerificationSearchBar({ officeName = "Office", the
           <div style={{ fontSize: "0.85rem", fontWeight: "800", color: themeColor, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>
               {masterResults.length > 0
-                ? `Found ${masterResults.length} matching records from 1,000 member master dataset:`
+                ? `Found ${masterResults.length} matching registered citizen records:`
                 : `No matching records found for '${masterQuery}'.`}
             </span>
             <span style={{ fontSize: "0.75rem", background: `${themeColor}15`, color: themeColor, padding: "2px 8px", borderRadius: "4px" }}>

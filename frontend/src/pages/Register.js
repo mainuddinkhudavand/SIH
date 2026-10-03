@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import "./styles/Register.css";
 import API from '../services/api';
 import { useTranslation } from "react-i18next";
-import { FaCamera, FaEnvelope, FaShieldAlt, FaCheckCircle, FaArrowLeft } from "react-icons/fa";
+import { FaCamera, FaEnvelope, FaShieldAlt, FaCheckCircle, FaHome } from "react-icons/fa";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -273,10 +273,10 @@ export default function Register() {
     <div className="register-container" style={{ maxWidth: "520px", margin: "2rem auto", fontFamily: "'Inter', sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "12px" }}>
         <button
-          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
+          onClick={() => navigate("/")}
           style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
         >
-          <FaArrowLeft /> Back
+          <FaHome /> Home
         </button>
       </div>
       <h2 className="register-title" style={{ textAlign: "center", marginBottom: "6px" }}>

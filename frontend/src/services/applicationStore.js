@@ -114,54 +114,6 @@ const INITIAL_MASTER_APPLICATIONS = [
 
   // ⚖️ TEHSILDAR OFFICE APPLICATIONS
   {
-    _id: "teh-101",
-    applicationId: "CERT-847291",
-    title: "Domicile & Permanent Residence Certificate",
-    serviceId: "domicile-certificate",
-    serviceType: "Certificates",
-    governmentFee: { amount: 50, isPaid: true },
-    applicantDetails: { fullName: "Pavan Kumar", phone: "+91 98765 43210", aadhaarId: "9876-5432-1000", address: "Plot 14, Green Valley, Dist Nashik" },
-    status: "Pending Citizen Dues Payment",
-    primaryOffice: "Tehsildar",
-    currentOffice: "Tehsildar",
-    officeChain: ["Talati", "Revenue", "Tehsildar"],
-    currentStageIndex: 1,
-    pendingDues: {
-      required: true,
-      amount: 450,
-      reason: "Property Tax & Civic Water Arrears",
-      surveyOrPropertyId: "PROP-99201",
-      isPaid: false
-    },
-    stageVerifications: [
-      { officeName: "Talati", stageName: "Step 1: Land Record Audit", status: "cleared", officerRemarks: "7/12 land extract verified.", verifiedBy: "Talati Officer" },
-      { officeName: "Revenue", stageName: "Step 2: Revenue Dues Audit", status: "dues_pending", officerRemarks: "Arrears ₹450 pending payment by applicant." },
-      { officeName: "Tehsildar", stageName: "Step 3: Executive Approval", status: "pending" }
-    ],
-    documents: [{ docType: "Aadhaar Card", fileUrl: "/uploads/aadhaar.pdf" }],
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: "teh-102",
-    applicationId: "CERT-672910",
-    title: "Annual Family Income Certificate",
-    serviceId: "income-certificate",
-    serviceType: "Certificates",
-    governmentFee: { amount: 30, isPaid: true },
-    applicantDetails: { fullName: "Suresh Deshmukh", phone: "+91 98220 11223", aadhaarId: "9876-5432-4411", address: "At Post Rahuri, Taluka Rahuri" },
-    status: "Tehsildar Verification Pending",
-    primaryOffice: "Tehsildar",
-    currentOffice: "Tehsildar",
-    officeChain: ["Talati", "Tehsildar"],
-    currentStageIndex: 1,
-    stageVerifications: [
-      { officeName: "Talati", stageName: "Step 1: Village Crop & Income Audit", status: "cleared", officerRemarks: "Verified annual crop yield income ₹75,000.", verifiedBy: "Talati Officer" },
-      { officeName: "Tehsildar", stageName: "Step 2: Income Sanction", status: "pending" }
-    ],
-    documents: [{ docType: "ITR / Income Affidavit", fileUrl: "/uploads/affidavit.pdf" }],
-    createdAt: new Date().toISOString()
-  },
-  {
     _id: "teh-103",
     applicationId: "CERT-908123",
     title: "Caste Certificate & Tribe Verification",

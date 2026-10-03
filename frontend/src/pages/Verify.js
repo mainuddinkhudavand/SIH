@@ -74,13 +74,12 @@ export default function Verify() {
   };
 
   const sampleChips = [
-    { label: "Pavan Kumar (Resident)", term: "Pavan Kumar" },
     { label: "Survey # SRV-1001", term: "SRV-1001" },
     { label: "Khata # KHT-1001", term: "KHT-1001" },
     { label: "Property # PROP-MH-1001", term: "PROP-MH-1001" },
     { label: "Aadhaar # 9876-5432-1000", term: "9876-5432-1000" },
     { label: "App ID # APP-401928", term: "APP-401928" },
-    { label: "Cert ID # CERT-847291", term: "CERT-847291" }
+    { label: "Cert ID # CERT-102948", term: "CERT-102948" }
   ];
 
   return (
@@ -104,7 +103,7 @@ export default function Verify() {
           </div>
 
           <p style={{ margin: 0, color: "#94a3b8", fontSize: "1rem", maxWidth: "850px" }}>
-            Cross-verify land, revenue, municipal property, 7/12 extracts, Tehsildar income records, and digital certificates across 1,000 master citizen records and federated office databases.
+            Cross-verify land, revenue, municipal property, 7/12 extracts, Tehsildar income records, and digital certificates across registered citizen records and federated office databases.
           </p>
         </div>
 
@@ -162,7 +161,7 @@ export default function Verify() {
         {/* RESULTS SECTION */}
         {searching ? (
           <div style={{ padding: "40px", textAlign: "center", color: "#0284c7", fontWeight: "800", fontSize: "1.1rem" }}>
-            ⏳ Querying 1,000 Member Master Dataset &amp; Federated Databases...
+            ⏳ Querying Citizen Master Directory &amp; Federated Databases...
           </div>
         ) : (
           <div>
@@ -210,7 +209,7 @@ export default function Verify() {
             {masterResults.length > 0 ? (
               <div style={{ display: "grid", gap: "24px" }}>
                 <div style={{ fontSize: "1.05rem", fontWeight: "900", color: "#0f172a" }}>
-                  📋 Master Dataset Query Results ({masterResults.length} Matched Citizens from 1,000 Records):
+                  📋 Citizen Master Directory Query Results ({masterResults.length} Matched Citizens):
                 </div>
 
                 {masterResults.map((citizen) => (

@@ -10,7 +10,7 @@ import {
   FaKey as Key,
   FaCheckCircle as CheckCircle,
   FaRedo as RefreshCw,
-  FaArrowLeft
+  FaHome
 } from "react-icons/fa";
 
 export default function Login() {
@@ -437,10 +437,10 @@ export default function Login() {
     <div className="register-container" style={{ maxWidth: "480px", margin: "2rem auto", fontFamily: "'Inter', sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "12px" }}>
         <button
-          onClick={() => (window.history.length > 1 ? nav(-1) : nav("/"))}
+          onClick={() => nav("/")}
           style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "8px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem" }}
         >
-          <FaArrowLeft /> Back
+          <FaHome /> Home
         </button>
       </div>
 

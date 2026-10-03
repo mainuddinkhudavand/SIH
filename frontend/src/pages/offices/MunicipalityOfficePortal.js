@@ -258,30 +258,8 @@ export default function MunicipalityOfficePortal() {
               </p>
             </div>
 
-            {/* LOCATION JURISDICTION SELECTOR & ACTIONS */}
+            {/* ACTIONS */}
             <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ backgroundColor: "rgba(255, 255, 255, 0.15)", padding: "10px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.3)" }}>
-                <span style={{ display: "block", fontSize: "0.72rem", fontWeight: "800", textTransform: "uppercase", color: "#e0f2fe", marginBottom: "4px" }}>
-                  📍 Officer Jurisdiction Location
-                </span>
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <select value={selectedState} onChange={e => handleStateChange(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "none", fontSize: "0.82rem", fontWeight: "bold" }}>
-                    {Object.keys(locationData).map(st => (
-                      <option key={st} value={st}>{st}</option>
-                    ))}
-                  </select>
-                  <select value={selectedDistrict} onChange={e => handleDistrictChange(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "none", fontSize: "0.82rem", fontWeight: "bold" }}>
-                    {Object.keys(locationData[selectedState] || {}).map(dist => (
-                      <option key={dist} value={dist}>{dist}</option>
-                    ))}
-                  </select>
-                  <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} style={{ padding: "4px 8px", borderRadius: "6px", border: "none", fontSize: "0.82rem", fontWeight: "bold" }}>
-                    {(locationData[selectedState]?.[selectedDistrict] || []).map(ct => (
-                      <option key={ct} value={ct}>{ct}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
               <div style={{ display: "flex", gap: "8px" }}>
                 <button
